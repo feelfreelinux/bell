@@ -1,10 +1,10 @@
-#ifndef CRYPTO_H
-#define CRYPTO_H
+#ifndef BELL_CRYPTO_H
+#define BELL_CRYPTO_H
 
 #include <vector>
 #include <string>
 
-#ifdef CSPOT_USE_MBEDTLS
+#ifdef BELL_USE_MBEDTLS
 #include "CryptoMbedTLS.h"
 #define Crypto CryptoMbedTLS
 #else

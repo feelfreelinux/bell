@@ -1,5 +1,5 @@
-#ifndef CRYPTOMBEDTLS_H
-#define CRYPTOMBEDTLS_H
+#ifndef BELL_CRYPTOMBEDTLS_H
+#define BELL_CRYPTOMBEDTLS_H
 
 #include <vector>
 #include <string>

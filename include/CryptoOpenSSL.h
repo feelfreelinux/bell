@@ -1,5 +1,5 @@
-#ifndef CRYPTOOPENSSL_H
-#define CRYPTOOPENSSL_H
+#ifndef BELL_CRYPTOOPENSSL_H
+#define BELL_CRYPTOOPENSSL_H
 
 #include <vector>
 #include <string>
