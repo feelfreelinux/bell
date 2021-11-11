@@ -29,7 +29,7 @@ endif()
 
 if(${ESP_PLATFORM})
     list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/CryptoOpenSSL.cpp) # use MBedTLS 
-    idf_build_set_property(COMPILE_DEFINITIONS "-DCSPOT_USE_MBEDTLS" APPEND)
+    idf_build_set_property(COMPILE_DEFINITIONS "-DBELL_USE_MBEDTLS" APPEND)
     set(EXTRA_REQ_LIBS idf::mbedtls idf::pthread idf::mdns)
     add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation)
 else()
@@ -54,7 +54,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 set(SOURCES ${SOURCES} "tremor/mdct.c" "tremor/dsp.c" "tremor/info.c" "tremor/misc.c" "tremor/floor1.c" "tremor/floor0.c" "tremor/vorbisfile.c" "tremor/res012.c" "tremor/mapping0.c" "tremor/codebook.c" "tremor/framing.c" "tremor/bitwise.c" "tremor/floor_lookup.c" "cJSON/cJSON.c")
 
-add_library(cspot STATIC ${SOURCES})
-target_link_libraries(cspot PRIVATE ${EXTRA_REQ_LIBS})
+add_library(bell STATIC ${SOURCES})
+target_link_libraries(bell PRIVATE ${EXTRA_REQ_LIBS})
 
-target_include_directories(cspot PUBLIC "include" "protos" "tremor" ${EXTRA_REQ_LIBS} ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(bell PUBLIC "include" "protos" "tremor" ${EXTRA_REQ_LIBS} ${CMAKE_CURRENT_BINARY_DIR})

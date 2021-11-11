@@ -1,4 +1,0 @@
-[submodule "tremor"]
-	path = tremor
-	url = https://gitlab.xiph.org/xiph/tremor.git
-	branch = lowmem
