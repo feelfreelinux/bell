@@ -1,3 +1,4 @@
+#ifdef BELL_USE_MBEDTLS
 #include "CryptoMbedTLS.h"
 
 CryptoMbedTLS::CryptoMbedTLS()
@@ -230,3 +231,4 @@ std::vector<uint8_t> CryptoMbedTLS::generateVectorWithRandomData(size_t length)
 
     return randomVector;
 }
+#endif

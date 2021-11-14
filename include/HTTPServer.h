@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sstream>
-#include <EuphoniumLog.h>
+#include <BellLogger.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -21,11 +21,6 @@
 #include <string>
 #include <netdb.h>
 #include <fcntl.h>
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
 
 #ifndef SOCK_NONBLOCK
 #define SOCK_NONBLOCK O_NONBLOCK
@@ -39,6 +34,7 @@ enum class RequestType {
 
 struct HTTPRequest {
     std::map<std::string, std::string> urlParams;
+    std::map<std::string, std::string> queryParams;
     std::string body;
     int handlerId;
     int connection;
@@ -60,7 +56,7 @@ struct HTTPRoute {
 struct HTTPConnection {
     std::vector<uint8_t> buffer;
     std::string currentLine = "";
-    int contentLength;
+    int contentLength = 0;
     bool isReadingBody = false;
     std::string httpMethod;
 };
@@ -81,8 +77,11 @@ private:
     std::map<int, HTTPConnection> connections;
     void writeResponse(const HTTPResponse&);
     void findAndHandleRoute(std::string&, std::string&, int connectionFd);
-    std::vector<std::string> splitUrl(const std::string& url);
+    std::vector<std::string> splitUrl(const std::string& url, char delimiter);
     void readFromClient(int clientFd);
+    std::map<std::string, std::string> parseQueryString(const std::string &queryString);
+    unsigned char h2int(char c);
+    std::string urlDecode(std::string str);
 
 public:
     HTTPServer(int serverPort);

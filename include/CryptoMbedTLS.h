@@ -1,6 +1,7 @@
 #ifndef BELL_CRYPTOMBEDTLS_H
 #define BELL_CRYPTOMBEDTLS_H
 
+#ifdef BELL_USE_MBEDTLS
 #include <vector>
 #include <string>
 #include <memory>
@@ -72,4 +73,5 @@ public:
     std::vector<uint8_t> generateVectorWithRandomData(size_t length);
 };
 
+#endif
 #endif

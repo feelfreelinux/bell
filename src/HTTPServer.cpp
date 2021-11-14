@@ -5,13 +5,53 @@ bell::HTTPServer::HTTPServer(int serverPort)
     this->serverPort = serverPort;
 }
 
-std::vector<std::string> bell::HTTPServer::splitUrl(const std::string &url)
+unsigned char bell::HTTPServer::h2int(char c)
+{
+    if (c >= '0' && c <='9'){
+        return((unsigned char)c - '0');
+    }
+    if (c >= 'a' && c <='f'){
+        return((unsigned char)c - 'a' + 10);
+    }
+    if (c >= 'A' && c <='F'){
+        return((unsigned char)c - 'A' + 10);
+    }
+    return(0);
+}
+
+std::string bell::HTTPServer::urlDecode(std::string str)
+{
+    std::string encodedString="";
+    char c;
+    char code0;
+    char code1;
+    for (int i =0; i < str.length(); i++){
+        c=str[i];
+      if (c == '+'){
+        encodedString+=' ';  
+      }else if (c == '%') {
+        i++;
+        code0=str[i];
+        i++;
+        code1=str[i];
+        c = (h2int(code0) << 4) | h2int(code1);
+        encodedString+=c;
+      } else{
+        
+        encodedString+=c;  
+      }
+    }
+    
+   return encodedString;
+}
+
+std::vector<std::string> bell::HTTPServer::splitUrl(const std::string &url, char delimiter)
 {
     std::stringstream ssb(url);
     std::string segment;
     std::vector<std::string> seglist;
 
-    while (std::getline(ssb, segment, '/'))
+    while (std::getline(ssb, segment, delimiter))
     {
         seglist.push_back(segment);
     }
@@ -20,7 +60,7 @@ std::vector<std::string> bell::HTTPServer::splitUrl(const std::string &url)
 
 void bell::HTTPServer::registerHandler(RequestType requestType, const std::string &routeUrl, httpHandler handler)
 {
-    EUPH_LOG(info, "http", routeUrl.c_str());
+    BELL_LOG(info, "http", routeUrl.c_str());
     if (routes.find(routeUrl) == routes.end())
     {
         routes.insert({routeUrl, std::vector<HTTPRoute>()});
@@ -33,7 +73,7 @@ void bell::HTTPServer::registerHandler(RequestType requestType, const std::strin
 
 void bell::HTTPServer::listen()
 {
-    EUPH_LOG(info, "http", "Starting configuration server at port %d", this->serverPort);
+    BELL_LOG(info, "http", "Starting configuration server at port %d", this->serverPort);
 
     int fdMax;
     socklen_t addrlen;
@@ -67,7 +107,7 @@ void bell::HTTPServer::listen()
         readFdSet = activeFdSet;
         if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
         {
-            EUPH_LOG(error, "http", "Error in select");
+            BELL_LOG(error, "http", "Error in select");
             perror("select");
             exit(EXIT_FAILURE);
         }
@@ -123,7 +163,7 @@ void bell::HTTPServer::readFromClient(int clientFd)
     int nbytes = recv(clientFd, &conn.buffer[0], conn.buffer.size(), 0);
     if (nbytes < 0)
     {
-        EUPH_LOG(error, "http", "Error reading from client");
+        BELL_LOG(error, "http", "Error reading from client");
         perror("recv");
         exit(EXIT_FAILURE);
     }
@@ -142,28 +182,34 @@ void bell::HTTPServer::readFromClient(int clientFd)
                 conn.currentLine = conn.currentLine.substr(conn.currentLine.find("\r\n") + 2, conn.currentLine.size());
                 if (line.find("GET ") != std::string::npos || line.find("POST ") != std::string::npos)
                 {
-                    EUPH_LOG(info, "http", "Got following request");
-                    EUPH_LOG(info, "http", line.c_str());
+                    BELL_LOG(info, "http", "Got following request");
+                    BELL_LOG(info, "http", line.c_str());
                     conn.httpMethod = line;
                 }
 
                 if (line.find("Content-Length: ") != std::string::npos)
                 {
                     conn.contentLength = std::stoi(line.substr(16, line.size() - 1));
-                    conn.isReadingBody = true;
+                    BELL_LOG(info, "http", "Content-Length: %d", conn.contentLength);
                 }
                 if (line.size() == 0)
                 {
-                    EUPH_LOG(info, "http", conn.httpMethod.c_str());
-                    findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
+                    if (conn.contentLength != 0) {
+                        conn.isReadingBody = true;
+                    } else {
+                        BELL_LOG(info, "http", conn.httpMethod.c_str());
+                        findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
+                    }
                 }
             }
         }
         else
         {
-            if (conn.currentLine.size() == conn.contentLength)
+            BELL_LOG(info, "http", "Got %d bytes of body", conn.contentLength);
+            if (conn.currentLine.size() >= conn.contentLength)
             {
                 findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
+                closeConnection(clientFd);
             }
         }
     }
@@ -203,10 +249,35 @@ void bell::HTTPServer::respond(const HTTPResponse &response)
     write(pipeFd[1], &dummy, 1);
 }
 
+std::map<std::string, std::string> bell::HTTPServer::parseQueryString(const std::string &queryString)
+{
+    std::map<std::string, std::string> query;
+    auto prefixedString = "&" + queryString;
+    while (prefixedString.find("&") != std::string::npos) {
+        auto keyStart = prefixedString.find("&");
+        auto keyEnd = prefixedString.find("=");
+        // Find second occurence of "&" in prefixedString
+        auto valueEnd = prefixedString.find("&", keyStart + 1);
+        if (valueEnd == std::string::npos) {
+            valueEnd = prefixedString.size();
+        }
+
+        auto key = prefixedString.substr(keyStart + 1, keyEnd - 1);
+        auto value = prefixedString.substr(keyEnd + 1, valueEnd - keyEnd - 1);
+        BELL_LOG(info, "http", "Key: %s, Value: %s", key.c_str(), value.c_str());
+        query[key] = urlDecode(value);
+        prefixedString = prefixedString.substr(valueEnd);
+    }
+
+    return query;
+}
+
 void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, int connectionFd)
 {
-
+    BELL_LOG(info, "http", url.c_str());
     std::map<std::string, std::string> pathParams;
+    std::map<std::string, std::string> queryParams;
+
     for (const auto &routeSet : this->routes)
     {
         for (const auto &route : routeSet.second)
@@ -219,7 +290,9 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
             }
             else if (url.find("POST ") != std::string::npos && route.requestType == RequestType::POST)
             {
+                BELL_LOG(info, "http", "GOT POST, path");
                 path = path.substr(5);
+                BELL_LOG(info, "http", path.c_str());
             }
             else
             {
@@ -228,8 +301,18 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
 
             path = path.substr(0, path.find(" "));
 
-            auto routeSplit = splitUrl(routeSet.first);
-            auto urlSplit = splitUrl(path);
+            BELL_LOG(info, "http", routeSet.first.c_str());
+            BELL_LOG(info, "http", path.c_str());
+
+            if (path.find("?") != std::string::npos)
+            {
+                auto urlEncodedSplit = splitUrl(path, '?');
+                path = urlEncodedSplit[0];
+                queryParams = this->parseQueryString(urlEncodedSplit[1]);
+            }
+
+            auto routeSplit = splitUrl(routeSet.first, '/');
+            auto urlSplit = splitUrl(path, '/');
             bool matches = true;
 
             pathParams.clear();
@@ -258,9 +341,15 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
 
             if (matches)
             {
+                if (body.find("&") != std::string::npos)
+                {
+                    queryParams = this->parseQueryString(body);
+                }
+
                 HTTPRequest req = {
                     .urlParams = pathParams,
                     .body = body,
+                    .queryParams = queryParams,
                     .handlerId = 0,
                     .connection = connectionFd};
 
