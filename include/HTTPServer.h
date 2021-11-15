@@ -64,7 +64,6 @@ struct HTTPConnection {
 class HTTPServer {
 private:
     std::regex routerPattern = std::regex(":([^\\/]+)?");
-    int serverPort;
     fd_set master;
     fd_set readFds;
     int pipeFd[2];
@@ -85,6 +84,8 @@ private:
 
 public:
     HTTPServer(int serverPort);
+    
+    int serverPort;
     void registerHandler(RequestType requestType, const std::string&, httpHandler);
     void respond(const HTTPResponse&);
     void closeConnection(int connection);

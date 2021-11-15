@@ -12,6 +12,7 @@ namespace bell
     class AbstractLogger
     {
     public:
+        bool enableSubmodule = false;
         virtual void debug(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
         virtual void error(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
         virtual void info(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
@@ -27,6 +28,10 @@ namespace bell
 
             printf(colorRed);
             printf("D ");
+            if (enableSubmodule) {
+                printf(colorReset);
+                printf("[%s] ", submodule.c_str());
+            }
             printFilename(filename);
             printf(":%d: ", line);
             va_list args;
@@ -41,6 +46,10 @@ namespace bell
 
             printf(colorRed);
             printf("E ");
+            if (enableSubmodule) {
+                printf(colorReset);
+                printf("[%s] ", submodule.c_str());
+            }
             printFilename(filename);
             printf(":%d: ", line);
             printf(colorRed);
@@ -56,6 +65,10 @@ namespace bell
 
             printf(colorBlue);
             printf("I ");
+            if (enableSubmodule) {
+                printf(colorReset);
+                printf("[%s] ", submodule.c_str());
+            }
             printFilename(filename);
             printf(":%d: ", line);
             printf(colorReset);
@@ -92,6 +105,7 @@ namespace bell
     };
 
     void setDefaultLogger();
+    void enableSubmoduleLogging();
 }
 
 #define BELL_LOG(type, ...)                                      \

@@ -182,8 +182,6 @@ void bell::HTTPServer::readFromClient(int clientFd)
                 conn.currentLine = conn.currentLine.substr(conn.currentLine.find("\r\n") + 2, conn.currentLine.size());
                 if (line.find("GET ") != std::string::npos || line.find("POST ") != std::string::npos)
                 {
-                    BELL_LOG(info, "http", "Got following request");
-                    BELL_LOG(info, "http", line.c_str());
                     conn.httpMethod = line;
                 }
 
@@ -197,7 +195,6 @@ void bell::HTTPServer::readFromClient(int clientFd)
                     if (conn.contentLength != 0) {
                         conn.isReadingBody = true;
                     } else {
-                        BELL_LOG(info, "http", conn.httpMethod.c_str());
                         findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
                     }
                 }
@@ -205,7 +202,6 @@ void bell::HTTPServer::readFromClient(int clientFd)
         }
         else
         {
-            BELL_LOG(info, "http", "Got %d bytes of body", conn.contentLength);
             if (conn.currentLine.size() >= conn.contentLength)
             {
                 findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
@@ -264,7 +260,6 @@ std::map<std::string, std::string> bell::HTTPServer::parseQueryString(const std:
 
         auto key = prefixedString.substr(keyStart + 1, keyEnd - 1);
         auto value = prefixedString.substr(keyEnd + 1, valueEnd - keyEnd - 1);
-        BELL_LOG(info, "http", "Key: %s, Value: %s", key.c_str(), value.c_str());
         query[key] = urlDecode(value);
         prefixedString = prefixedString.substr(valueEnd);
     }
@@ -274,7 +269,6 @@ std::map<std::string, std::string> bell::HTTPServer::parseQueryString(const std:
 
 void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, int connectionFd)
 {
-    BELL_LOG(info, "http", url.c_str());
     std::map<std::string, std::string> pathParams;
     std::map<std::string, std::string> queryParams;
 
@@ -290,9 +284,7 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
             }
             else if (url.find("POST ") != std::string::npos && route.requestType == RequestType::POST)
             {
-                BELL_LOG(info, "http", "GOT POST, path");
                 path = path.substr(5);
-                BELL_LOG(info, "http", path.c_str());
             }
             else
             {
@@ -300,9 +292,6 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
             }
 
             path = path.substr(0, path.find(" "));
-
-            BELL_LOG(info, "http", routeSet.first.c_str());
-            BELL_LOG(info, "http", path.c_str());
 
             if (path.find("?") != std::string::npos)
             {

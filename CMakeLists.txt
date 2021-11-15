@@ -51,9 +51,11 @@ endif()
 include_directories("include")
 include_directories("tremor")
 include_directories("bell")
+include_directories("libhelix-aac")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 set(SOURCES ${SOURCES} "cJSON/cJSON.c" "tremor/mdct.c" "tremor/dsp.c" "tremor/info.c" "tremor/misc.c" "tremor/floor1.c" "tremor/floor0.c" "tremor/vorbisfile.c" "tremor/res012.c" "tremor/mapping0.c" "tremor/codebook.c" "tremor/framing.c" "tremor/bitwise.c" "tremor/floor_lookup.c")
+set(SOURCES ${SOURCES} "libhelix-aac/aacdec.c" "libhelix-aac/aactabs.c" "libhelix-aac/bitstream.c" "libhelix-aac/buffers.c" "libhelix-aac/dct4.c" "libhelix-aac/decelmnt.c" "libhelix-aac/dequant.c" "libhelix-aac/fft.c" "libhelix-aac/filefmt.c" "libhelix-aac/huffman.c" "libhelix-aac/hufftabs.c" "libhelix-aac/imdct.c" "libhelix-aac/noiseless.c" "libhelix-aac/pns.c" "libhelix-aac/sbr.c" "libhelix-aac/sbrfft.c" "libhelix-aac/sbrfreq.c" "libhelix-aac/sbrhfadj.c" "libhelix-aac/sbrhfgen.c" "libhelix-aac/sbrhuff.c" "libhelix-aac/sbrimdct.c" "libhelix-aac/sbrmath.c" "libhelix-aac/sbrqmf.c" "libhelix-aac/sbrside.c" "libhelix-aac/sbrtabs.c" "libhelix-aac/stproc.c" "libhelix-aac/tns.c" "libhelix-aac/trigtabs.c")
 
 add_library(bell STATIC ${SOURCES})
 target_link_libraries(bell PRIVATE ${EXTRA_REQ_LIBS})
