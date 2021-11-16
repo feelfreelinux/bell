@@ -46,10 +46,14 @@
 #ifndef _AACCOMMON_H
 #define _AACCOMMON_H
 
-#include <pgmspace.h>
-#define ARDUINO
-#define USE_DEFAULT_STDLIB
+//#include <Arduino.h>
+//#include <pgmspace.h>
+#include "helix_pgm.h"
+
 // Can't fit in ESP8266 RAM
+#ifndef ESP8266
+  #define AAC_ENABLE_SBR 1 
+#endif
 
 #pragma GCC optimize ("O3")
 

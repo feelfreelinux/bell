@@ -47,6 +47,7 @@ if(UNIX AND NOT APPLE)
     set(EXTRA_REQ_LIBS ${EXTRA_REQ_LIBS} dns_sd) # add apple bonjur compatibility library for linux
     # TODO: migrate from this to native linux mDNS
 endif()
+add_definitions( -DUSE_DEFAULT_STDLIB=1)
 
 include_directories("include")
 include_directories("tremor")
@@ -60,4 +61,4 @@ set(SOURCES ${SOURCES} "libhelix-aac/aacdec.c" "libhelix-aac/aactabs.c" "libheli
 add_library(bell STATIC ${SOURCES})
 target_link_libraries(bell PRIVATE ${EXTRA_REQ_LIBS})
 
-target_include_directories(bell PUBLIC "include" "protos" "tremor" "cJSON" ${EXTRA_REQ_LIBS} ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(bell PUBLIC "include" "protos" "tremor" "libhelix-aac" "cJSON" ${EXTRA_REQ_LIBS} ${CMAKE_CURRENT_BINARY_DIR})

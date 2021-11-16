@@ -100,8 +100,8 @@ namespace bell
         static constexpr const char *colorReset = "\e[0m";
         static constexpr const char *colorRed = "\e[0;31m";
         static constexpr const char *colorBlue = "\e[0;34m";
-        static constexpr const int NColors = 16;
-        static constexpr int allColors[NColors] = {30, 31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97};
+        static constexpr const int NColors = 15;
+        static constexpr int allColors[NColors] = {31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97};
     };
 
     void setDefaultLogger();

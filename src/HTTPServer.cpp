@@ -60,7 +60,6 @@ std::vector<std::string> bell::HTTPServer::splitUrl(const std::string &url, char
 
 void bell::HTTPServer::registerHandler(RequestType requestType, const std::string &routeUrl, httpHandler handler)
 {
-    BELL_LOG(info, "http", routeUrl.c_str());
     if (routes.find(routeUrl) == routes.end())
     {
         routes.insert({routeUrl, std::vector<HTTPRoute>()});
@@ -174,6 +173,7 @@ void bell::HTTPServer::readFromClient(int clientFd)
     else
     {
         conn.currentLine += std::string(conn.buffer.data(), conn.buffer.data() + nbytes);
+READBODY:
         if (!conn.isReadingBody)
         {
             while (conn.currentLine.find("\r\n") != std::string::npos)
@@ -194,6 +194,7 @@ void bell::HTTPServer::readFromClient(int clientFd)
                 {
                     if (conn.contentLength != 0) {
                         conn.isReadingBody = true;
+                        goto READBODY;
                     } else {
                         findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
                     }

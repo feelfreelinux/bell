@@ -45,7 +45,11 @@
 
 #ifndef _AACDEC_H
 #define _AACDEC_H
-#define ARDUINO
+
+#ifndef USE_DEFAULT_STDLIB
+#define USE_DEFAULT_STDLIB
+#endif
+
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 #
 #elif defined(_WIN32) && defined(_WIN32_WCE) && defined(ARM)
@@ -70,12 +74,10 @@
 #
 #elif defined(ARDUINO)
 #
+#elif defined(USE_DEFAULT_STDLIB)
+#
 #else
 #error No platform defined. See valid options in aacdec.h
-#endif
-
-#ifndef USE_DEFAULT_STDLIB
-#define USE_DEFAULT_STDLIB
 #endif
 
 #ifdef __cplusplus
@@ -100,7 +102,9 @@ extern "C" {
 #define AAC_PROFILE_SSR		2
 
 /* define these to enable decoder features */
-
+#if defined(HELIX_FEATURE_AUDIO_CODEC_AAC_SBR)
+#define AAC_ENABLE_SBR
+#endif //  HELIX_FEATURE_AUDIO_CODEC_AAC_SBR.
 #define AAC_ENABLE_MPEG4
 
 enum {
