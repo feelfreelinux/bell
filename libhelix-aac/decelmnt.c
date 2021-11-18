@@ -373,11 +373,6 @@ int DecodeNextElement(AACDecInfo *aacDecInfo, unsigned char **buf, int *bitOffse
 
 	/* init bitstream reader */
 	SetBitstreamPointer(&bsi, (*bitsAvail + 7) >> 3, *buf);
-	// ps - avoid illegal access to memory
-	if (bsi.nBytes<0){
-		return ERR_AAC_SYNTAX_ELEMENT;
-	}
-
 	GetBits(&bsi, *bitOffset);
 
 	/* read element ID (save last ID for SBR purposes) */

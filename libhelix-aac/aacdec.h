@@ -46,10 +46,6 @@
 #ifndef _AACDEC_H
 #define _AACDEC_H
 
-#ifndef USE_DEFAULT_STDLIB
-#define USE_DEFAULT_STDLIB
-#endif
-
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 #
 #elif defined(_WIN32) && defined(_WIN32_WCE) && defined(ARM)
@@ -64,6 +60,8 @@
 #
 #elif defined(__GNUC__) && defined(__i386__)
 #
+#elif defined(__APPLE__)
+#
 #elif defined(__GNUC__) && defined(__amd64__)
 #
 #elif defined(__GNUC__) && (defined(__powerpc__) || defined(__POWERPC__))
@@ -74,10 +72,12 @@
 #
 #elif defined(ARDUINO)
 #
-#elif defined(USE_DEFAULT_STDLIB)
-#
 #else
 #error No platform defined. See valid options in aacdec.h
+#endif
+
+#ifndef USE_DEFAULT_STDLIB
+#define USE_DEFAULT_STDLIB
 #endif
 
 #ifdef __cplusplus

@@ -1,5 +1,3 @@
-#pragma once
-
 #ifdef ESP8266
 #  include "pgmspace.h"
 #elif defined(ARDUINO) && __has_include(<pgm_space.h>)

@@ -46,10 +46,15 @@
 #ifndef _AACCOMMON_H
 #define _AACCOMMON_H
 
-//#include <Arduino.h>
-//#include <pgmspace.h>
-#include "helix_pgm.h"
-
+#ifdef ESP8266
+#  include "pgmspace.h"
+#elif defined(ARDUINO) && __has_include(<pgm_space.h>)
+#  include <pgm_space.h>
+#else
+#  define PROGMEM
+#  define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+#  define pgm_read_word(addr) (*(const unsigned short *)(addr))
+#endif
 // Can't fit in ESP8266 RAM
 #ifndef ESP8266
   #define AAC_ENABLE_SBR 1 
