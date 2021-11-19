@@ -7,42 +7,51 @@ bell::HTTPServer::HTTPServer(int serverPort)
 
 unsigned char bell::HTTPServer::h2int(char c)
 {
-    if (c >= '0' && c <='9'){
-        return((unsigned char)c - '0');
+    if (c >= '0' && c <= '9')
+    {
+        return ((unsigned char)c - '0');
     }
-    if (c >= 'a' && c <='f'){
-        return((unsigned char)c - 'a' + 10);
+    if (c >= 'a' && c <= 'f')
+    {
+        return ((unsigned char)c - 'a' + 10);
     }
-    if (c >= 'A' && c <='F'){
-        return((unsigned char)c - 'A' + 10);
+    if (c >= 'A' && c <= 'F')
+    {
+        return ((unsigned char)c - 'A' + 10);
     }
-    return(0);
+    return (0);
 }
 
 std::string bell::HTTPServer::urlDecode(std::string str)
 {
-    std::string encodedString="";
+    std::string encodedString = "";
     char c;
     char code0;
     char code1;
-    for (int i =0; i < str.length(); i++){
-        c=str[i];
-      if (c == '+'){
-        encodedString+=' ';  
-      }else if (c == '%') {
-        i++;
-        code0=str[i];
-        i++;
-        code1=str[i];
-        c = (h2int(code0) << 4) | h2int(code1);
-        encodedString+=c;
-      } else{
-        
-        encodedString+=c;  
-      }
+    for (int i = 0; i < str.length(); i++)
+    {
+        c = str[i];
+        if (c == '+')
+        {
+            encodedString += ' ';
+        }
+        else if (c == '%')
+        {
+            i++;
+            code0 = str[i];
+            i++;
+            code1 = str[i];
+            c = (h2int(code0) << 4) | h2int(code1);
+            encodedString += c;
+        }
+        else
+        {
+
+            encodedString += c;
+        }
     }
-    
-   return encodedString;
+
+    return encodedString;
 }
 
 std::vector<std::string> bell::HTTPServer::splitUrl(const std::string &url, char delimiter)
@@ -74,9 +83,6 @@ void bell::HTTPServer::listen()
 {
     BELL_LOG(info, "http", "Starting configuration server at port %d", this->serverPort);
 
-    int fdMax;
-    socklen_t addrlen;
-
     // setup address
     struct addrinfo hints, *server;
     memset(&hints, 0, sizeof hints);
@@ -87,7 +93,6 @@ void bell::HTTPServer::listen()
 
     int sockfd = socket(server->ai_family,
                         server->ai_socktype, server->ai_protocol);
-    pipe(pipeFd);
     struct sockaddr_in clientname;
     socklen_t incomingSockSize;
     int i;
@@ -98,17 +103,18 @@ void bell::HTTPServer::listen()
 
     FD_ZERO(&activeFdSet);
     FD_SET(sockfd, &activeFdSet);
-    FD_SET(pipeFd[0], &activeFdSet);
 
     for (;;)
     {
+        BELL_LOG(info, "http", "Main lock guard");
+        std::unique_lock lock(this->responseMutex);
         /* Block until input arrives on one or more active sockets. */
         readFdSet = activeFdSet;
         if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
         {
             BELL_LOG(error, "http", "Error in select");
             perror("select");
-            exit(EXIT_FAILURE);
+            // exit(EXIT_FAILURE);
         }
 
         /* Service all the sockets with input pending. */
@@ -130,21 +136,10 @@ void bell::HTTPServer::listen()
                     FD_SET(newFd, &activeFdSet);
 
                     HTTPConnection conn = {
-                        .buffer = std::vector<uint8_t>(128)};
+                        .buffer = std::vector<uint8_t>(128),
+                        .httpMethod = ""};
 
                     this->connections.insert({newFd, conn});
-                }
-                else if (i == pipeFd[0])
-                {
-                    char dummy;
-                    read(pipeFd[0], &dummy, 1);
-
-                    if (responseQueue.size() > 0)
-                    {
-                        auto response = responseQueue.front();
-                        responseQueue.pop();
-                        writeResponse(response);
-                    }
                 }
                 else
                 {
@@ -152,6 +147,21 @@ void bell::HTTPServer::listen()
                     readFromClient(i);
                 }
             }
+
+        for (auto it = this->connections.cbegin(); it != this->connections.cend() /* not hoisted */; /* no increment */)
+        {
+            if ((*it).second.toBeClosed)
+            {
+                BELL_LOG(info, "http", "Closed conn");
+                close((*it).first);
+                FD_CLR((*it).first, &activeFdSet);
+                this->connections.erase(it++); // or "it = m.erase(it)" since C++11
+            }
+            else
+            {
+                ++it;
+            }
+        }
     }
 }
 
@@ -173,7 +183,7 @@ void bell::HTTPServer::readFromClient(int clientFd)
     else
     {
         conn.currentLine += std::string(conn.buffer.data(), conn.buffer.data() + nbytes);
-READBODY:
+    READBODY:
         if (!conn.isReadingBody)
         {
             while (conn.currentLine.find("\r\n") != std::string::npos)
@@ -192,10 +202,13 @@ READBODY:
                 }
                 if (line.size() == 0)
                 {
-                    if (conn.contentLength != 0) {
+                    if (conn.contentLength != 0)
+                    {
                         conn.isReadingBody = true;
                         goto READBODY;
-                    } else {
+                    }
+                    else
+                    {
                         findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
                     }
                 }
@@ -214,9 +227,8 @@ READBODY:
 
 void bell::HTTPServer::closeConnection(int connection)
 {
-    close(connection);
-    FD_CLR(connection, &activeFdSet);
-    this->connections.erase(connection);
+
+    this->connections[connection].toBeClosed = true;
 }
 
 void bell::HTTPServer::writeResponse(const HTTPResponse &response)
@@ -238,24 +250,21 @@ void bell::HTTPServer::writeResponse(const HTTPResponse &response)
 
 void bell::HTTPServer::respond(const HTTPResponse &response)
 {
-    // add response to response queue
-    responseQueue.push(response);
-
-    // write one byte to pipeFd[1]
-    int dummy = 1;
-    write(pipeFd[1], &dummy, 1);
+    writeResponse(response);
 }
 
 std::map<std::string, std::string> bell::HTTPServer::parseQueryString(const std::string &queryString)
 {
     std::map<std::string, std::string> query;
     auto prefixedString = "&" + queryString;
-    while (prefixedString.find("&") != std::string::npos) {
+    while (prefixedString.find("&") != std::string::npos)
+    {
         auto keyStart = prefixedString.find("&");
         auto keyEnd = prefixedString.find("=");
         // Find second occurence of "&" in prefixedString
         auto valueEnd = prefixedString.find("&", keyStart + 1);
-        if (valueEnd == std::string::npos) {
+        if (valueEnd == std::string::npos)
+        {
             valueEnd = prefixedString.size();
         }
 
@@ -338,8 +347,8 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
 
                 HTTPRequest req = {
                     .urlParams = pathParams,
-                    .body = body,
                     .queryParams = queryParams,
+                    .body = body,
                     .handlerId = 0,
                     .connection = connectionFd};
 
@@ -349,8 +358,8 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
         }
     }
     writeResponse(HTTPResponse{
-                .status = 404,
-                .body = "Not found",
-                .connectionFd = connectionFd
-            });
+        .connectionFd = connectionFd,
+        .status = 404,
+        .body = "Not found",
+    });
 }

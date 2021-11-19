@@ -48,7 +48,7 @@
 
 #ifdef ESP8266
 #  include "pgmspace.h"
-#elif defined(ARDUINO) && __has_include(<pgm_space.h>)
+#elif defined(ESP_PLATFORM) && __has_include(<pgm_space.h>)
 #  include <pgm_space.h>
 #else
 #  define PROGMEM

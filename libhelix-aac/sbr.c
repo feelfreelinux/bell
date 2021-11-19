@@ -43,7 +43,7 @@
  * sbr.c - top level functions for SBR
  **************************************************************************************/
 
-#if defined(USE_DEFAULT_STDLIB) || defined(ARDUINO)
+#if defined(USE_DEFAULT_STDLIB) || defined(ESP_PLATFORM)
 #include <stdio.h>
 #include <stdlib.h>
 #else

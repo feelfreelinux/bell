@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <string>
 #include <netdb.h>
+#include <mutex>
 #include <fcntl.h>
 
 #ifndef SOCK_NONBLOCK
@@ -59,6 +60,7 @@ struct HTTPConnection {
     int contentLength = 0;
     bool isReadingBody = false;
     std::string httpMethod;
+    bool toBeClosed = false;
 };
 
 class HTTPServer {
@@ -66,9 +68,6 @@ private:
     std::regex routerPattern = std::regex(":([^\\/]+)?");
     fd_set master;
     fd_set readFds;
-    int pipeFd[2];
-    
-    std::queue<HTTPResponse> responseQueue;
     fd_set activeFdSet, readFdSet;
     bool isClosed = true;
     bool writingResponse = false;
@@ -77,6 +76,7 @@ private:
     void writeResponse(const HTTPResponse&);
     void findAndHandleRoute(std::string&, std::string&, int connectionFd);
     std::vector<std::string> splitUrl(const std::string& url, char delimiter);
+    std::mutex responseMutex;
     void readFromClient(int clientFd);
     std::map<std::string, std::string> parseQueryString(const std::string &queryString);
     unsigned char h2int(char c);

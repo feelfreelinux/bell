@@ -14,16 +14,23 @@ namespace bell
     class Task
     {
     public:
-        Task() {}
+        std::string taskName; 
+        int stackSize, core;
+        Task(std::string taskName, int stackSize, int core) {
+            this->taskName = taskName;
+            this->stackSize = stackSize;
+            this->core = core;
+        }
         virtual ~Task() {}
 
         bool startTask()
         {
 #ifdef ESP_PLATFORM
             esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
-            cfg.stack_size = (8 * 1024);
+            cfg.stack_size = stackSize;
             cfg.inherit_cfg = true;
-            cfg.pin_to_core = 1;
+            cfg.thread_name = this->taskName.c_str();
+            cfg.pin_to_core = core;
             esp_pthread_set_cfg(&cfg);
 #endif
             return (pthread_create(&_thread, NULL, taskEntryFunc, this) == 0);

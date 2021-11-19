@@ -316,7 +316,7 @@ static __inline Word64 xSAR64(Word64 x, int n)
 }
 //mw
 
-#elif defined(__APPLE__) || defined(ARDUINO)
+#elif defined(__APPLE__) || defined(ESP_PLATFORM)
 
 static __inline int FASTABS(int x)
 {

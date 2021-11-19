@@ -45,7 +45,7 @@
 #define Word64 uint64_t
  #ifdef ESP8266
 #  include "pgmspace.h"
-#elif defined(ARDUINO) && __has_include(<pgm_space.h>)
+#elif defined(ESP_PLATFORM) && __has_include(<pgm_space.h>)
 #  include <pgm_space.h>
 #else
 #  define PROGMEM
@@ -71,7 +71,7 @@
 #
 #elif defined(_OPENWAVE_SIMULATOR) || defined(_OPENWAVE_ARMULATOR)
 #
-#elif defined (ARDUINO)
+#elif defined (ESP_PLATFORM)
 #
 #else
 #error No platform defined. See valid options in mp3dec.h
