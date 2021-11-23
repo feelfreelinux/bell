@@ -16,6 +16,15 @@ int WrappedSemaphore::wait()
     return 0;
 }
 
+int WrappedSemaphore::twait(long milliseconds)
+{
+    // wait on semaphore with timeout
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_nsec += (milliseconds % 1000) * 1000000;
+    return sem_timedwait(&this->semaphoreHandle, &ts);
+}
+
 void WrappedSemaphore::give()
 {
     sem_post(&this->semaphoreHandle);

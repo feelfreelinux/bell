@@ -106,8 +106,6 @@ void bell::HTTPServer::listen()
 
     for (;;)
     {
-        BELL_LOG(info, "http", "Main lock guard");
-        std::unique_lock lock(this->responseMutex);
         /* Block until input arrives on one or more active sockets. */
         readFdSet = activeFdSet;
         if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
@@ -152,7 +150,6 @@ void bell::HTTPServer::listen()
         {
             if ((*it).second.toBeClosed)
             {
-                BELL_LOG(info, "http", "Closed conn");
                 close((*it).first);
                 FD_CLR((*it).first, &activeFdSet);
                 this->connections.erase(it++); // or "it = m.erase(it)" since C++11
@@ -219,7 +216,6 @@ void bell::HTTPServer::readFromClient(int clientFd)
             if (conn.currentLine.size() >= conn.contentLength)
             {
                 findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
-                closeConnection(clientFd);
             }
         }
     }
@@ -231,26 +227,91 @@ void bell::HTTPServer::closeConnection(int connection)
     this->connections[connection].toBeClosed = true;
 }
 
+void bell::HTTPServer::writeResponseEvents(int connFd)
+{
+    std::lock_guard lock(this->responseMutex);
+
+    std::stringstream stream;
+    stream << "HTTP/1.1 200 OK\r\n";
+    stream << "Server: EUPHONIUM\r\n";
+    stream << "Connection: keep-alive\r\n";
+    stream << "Content-type: text/event-stream\r\n";
+    stream << "Cache-Control: no-cache\r\n";
+    stream << "Access-Control-Allow-Origin: *\r\n";
+    stream << "\r\n";
+
+    auto responseStr = stream.str();
+
+    write(connFd, responseStr.c_str(), responseStr.size());
+    this->connections[connFd].isEventConnection = true;
+}
+
 void bell::HTTPServer::writeResponse(const HTTPResponse &response)
 {
+    std::lock_guard lock(this->responseMutex);
+
+    auto fileSize = response.body.size();
+
+    if (response.responseReader != nullptr)
+    {
+        fileSize = response.responseReader->getTotalSize();
+    }
+
     std::stringstream stream;
     stream << "HTTP/1.1 " << response.status << " OK\r\n";
     stream << "Server: EUPHONIUM\r\n";
     stream << "Connection: close\r\n";
     stream << "Content-type: " << response.contentType << "\r\n";
-    stream << "Content-length:" << response.body.size() << "\r\n";
+    stream << "Content-length:" << fileSize << "\r\n";
     stream << "Access-Control-Allow-Origin: *\r\n";
     stream << "\r\n";
-    stream << response.body;
+
+    if (response.body.size() > 0)
+    {
+        stream << response.body;
+    }
 
     auto responseStr = stream.str();
+
     write(response.connectionFd, responseStr.c_str(), responseStr.size());
+
+    if (response.responseReader != nullptr)
+    {
+        size_t read;
+        do
+        {
+            read = response.responseReader->read(responseBuffer.data(), responseBuffer.size());
+            if (read > 0)
+            {
+                write(response.connectionFd, responseBuffer.data(), read);
+            }
+        } while (read > 0);
+    }
     this->closeConnection(response.connectionFd);
 }
 
 void bell::HTTPServer::respond(const HTTPResponse &response)
 {
     writeResponse(response);
+}
+
+void bell::HTTPServer::publishEvent(const std::string &eventName, const std::string &eventData) {
+    std::lock_guard lock(this->responseMutex);
+    BELL_LOG(info, "http", "Publishing event");
+
+    std::stringstream stream;
+    stream << "event: " << eventName << "\n";
+    stream << "data: " << eventData << "\n\n";
+    auto responseStr = stream.str();
+
+    // Reply to all event-connections
+    for (auto it = this->connections.cbegin(); it != this->connections.cend(); ++it)
+    {
+        if ((*it).second.isEventConnection)
+        {
+            write(it->first, responseStr.c_str(), responseStr.size());
+        }
+    }
 }
 
 std::map<std::string, std::string> bell::HTTPServer::parseQueryString(const std::string &queryString)
@@ -281,6 +342,13 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
 {
     std::map<std::string, std::string> pathParams;
     std::map<std::string, std::string> queryParams;
+
+    if (url.find("GET /events") != std::string::npos)
+    {
+        // Handle SSE endpoint here
+        writeResponseEvents(connectionFd);
+        return;
+    }
 
     for (const auto &routeSet : this->routes)
     {

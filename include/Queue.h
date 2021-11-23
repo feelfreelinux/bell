@@ -100,7 +100,7 @@ namespace bell
             std::unique_lock<std::mutex> lk(m_mutex);
             while (!m_queue.empty())
             {
-                delete m_queue.front();
+                //delete m_queue.front();
                 m_queue.pop();
             }
         }
