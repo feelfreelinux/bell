@@ -8,7 +8,7 @@ file(GLOB SOURCES "src/*.cpp" "src/*.c")
 # Add platform specific sources
 
 if(${ESP_PLATFORM})
-    file(GLOB ESP_PLATFORM_SOURCES "src/platform/esp/*.cpp" "src/platform/esp/*.c")
+    file(GLOB ESP_PLATFORM_SOURCES "src/platform/esp/*.cpp" "src/platform/esp/*.c" "src/asm/biquad_f32_ae32.S")
     set(SOURCES ${SOURCES} ${ESP_PLATFORM_SOURCES} )
 endif()
 

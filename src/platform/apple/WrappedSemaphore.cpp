@@ -18,7 +18,6 @@ int WrappedSemaphore::wait()
 
 int WrappedSemaphore::twait(long milliseconds)
 {
-    return wait();
     dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, (NSEC_PER_SEC / 1000) * milliseconds);
 
     return dispatch_semaphore_wait(semaphoreHandle, timeout);
