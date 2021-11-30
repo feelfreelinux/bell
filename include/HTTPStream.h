@@ -4,6 +4,9 @@
 #include <string>
 #include <BellLogger.h>
 #include <ByteStream.h>
+#include <BellSocket.h>
+#include <TCPSocket.h>
+#include <platform/TLSSocket.h>
 
 /*
 * HTTPStream
@@ -21,13 +24,18 @@ namespace bell
         CLOSED
     };
 
-    class HTTPStream: public ByteStream
+    class HTTPStream : public ByteStream
     {
     public:
         HTTPStream();
         ~HTTPStream();
 
-        int sockFd;
+        std::unique_ptr<bell::Socket> socket;
+
+
+        bool hasFixedSize = false;
+        size_t contentLength = -1;
+        size_t currentPos = -1;
 
         StreamStatus status = StreamStatus::OPENING;
 
@@ -53,10 +61,9 @@ namespace bell
         */
         size_t skip(size_t nbytes);
 
-        size_t position() { return 0; }
-        
-        size_t size() { return 0; }
+        size_t position() { return currentPos; }
 
+        size_t size() { return contentLength; }
 
         // Closes the connection
         void close();

@@ -295,7 +295,8 @@ void bell::HTTPServer::respond(const HTTPResponse &response)
     writeResponse(response);
 }
 
-void bell::HTTPServer::publishEvent(const std::string &eventName, const std::string &eventData) {
+void bell::HTTPServer::publishEvent(std::string eventName, std::string eventData)
+{
     std::lock_guard lock(this->responseMutex);
     BELL_LOG(info, "http", "Publishing event");
 
@@ -404,6 +405,11 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
             else
             {
                 matches = false;
+            }
+
+            if (routeSplit.back().find("*") != std::string::npos && urlSplit[0] == routeSplit[0])
+            {
+                matches = true;
             }
 
             if (matches)

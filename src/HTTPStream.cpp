@@ -31,12 +31,28 @@ void bell::HTTPStream::close()
     {
         status = StreamStatus::CLOSED;
         BELL_LOG(info, "httpStream", "Closing socket");
-        ::close(this->sockFd);
+        socket->close();
+        BELL_LOG(info, "httpStream", "Closed socket");
     }
 }
 
 void bell::HTTPStream::connectToUrl(std::string url)
 {
+    std::string portString;
+    // check if url contains "https"
+    if (url.find("https") != std::string::npos)
+    {
+        socket = std::make_unique<bell::TLSSocket>();
+        portString = "443";
+    }
+    else
+    {
+        socket = std::make_unique<bell::TCPSocket>();
+        portString = "80";
+    }
+
+    socket->open(url);
+
     // remove https or http from url
     url.erase(0, url.find("://") + 3);
 
@@ -44,7 +60,6 @@ void bell::HTTPStream::connectToUrl(std::string url)
     std::string hostUrl = url.substr(0, url.find('/'));
     std::string pathUrl = url.substr(url.find('/'));
 
-    std::string portString = "80";
     // check if hostUrl contains ':'
     if (hostUrl.find(':') != std::string::npos)
     {
@@ -53,42 +68,6 @@ void bell::HTTPStream::connectToUrl(std::string url)
         portString = hostUrl.substr(hostUrl.find(':') + 1);
         hostUrl = host;
     }
-
-    int domain = AF_INET;         // IP_v4
-    int socketType = SOCK_STREAM; // Sequenced, reliable, connection-based byte streams.
-
-    addrinfo hints, *addr;
-    //fine-tune hints according to which socket you want to open
-    hints.ai_family = domain;
-    hints.ai_socktype = socketType;
-    hints.ai_protocol = IPPROTO_IP; // no enum : possible value can be read in /etc/protocols
-    hints.ai_flags = AI_CANONNAME | AI_ALL | AI_ADDRCONFIG;
-
-    BELL_LOG(info, "http", "%s %s", hostUrl.c_str(), portString.c_str());
-
-    if (getaddrinfo(hostUrl.c_str(), portString.c_str(), &hints, &addr) != 0)
-    {
-        BELL_LOG(error, "webradio", "DNS lookup error");
-        throw std::runtime_error("Resolve failed");
-    }
-
-    sockFd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-
-    if (connect(sockFd, addr->ai_addr, addr->ai_addrlen) < 0)
-    {
-        close();
-        BELL_LOG(error, "http", "Could not connect to %s", url.c_str());
-        throw std::runtime_error("Resolve failed");
-    }
-
-    int flag = 1;
-    setsockopt(sockFd,  /* socket affected */
-               IPPROTO_TCP,   /* set option at TCP level */
-               TCP_NODELAY,   /* name of option */
-               (char *)&flag, /* the cast is historical cruft */
-               sizeof(int));  /* length of option value */
-
-    freeaddrinfo(addr);
 
     // Prepare HTTP get header
     std::stringstream ss;
@@ -100,7 +79,7 @@ void bell::HTTPStream::connectToUrl(std::string url)
     std::string request = ss.str();
 
     // Send the request
-    if (send(sockFd, request.c_str(), request.length(), 0) != (int)request.length())
+    if (socket->write((uint8_t*)request.c_str(), request.length()) != (int)request.length())
     {
         close();
         BELL_LOG(error, "http", "Can't send request");
@@ -117,7 +96,7 @@ void bell::HTTPStream::connectToUrl(std::string url)
 
     while (status == StreamStatus::READING_HEADERS)
     {
-        nbytes = recv(sockFd, &buffer[0], buffer.size(), 0);
+        nbytes = socket->read(&buffer[0], buffer.size());
         if (nbytes < 0)
         {
             BELL_LOG(error, "http", "Error reading from client");
@@ -147,6 +126,16 @@ void bell::HTTPStream::connectToUrl(std::string url)
                     close();
                     return connectToUrl(newUrl);
                 }
+                // handle content-length
+                if (line.find("Content-Length:") != std::string::npos)
+                {
+                    auto contentLengthStr = line.substr(16);
+                    BELL_LOG(info, "http", "Content size %s", contentLengthStr.c_str());
+
+                    // convert contentLengthStr to size_t
+                    this->contentLength = std::stoi(contentLengthStr);
+                    hasFixedSize = true;
+                }
                 else if (line.find("200 OK") != std::string::npos)
                 {
                     statusOkay = true;
@@ -169,18 +158,24 @@ size_t bell::HTTPStream::read(uint8_t *buf, size_t nbytes)
         return 0;
     }
 
-    int nread = recv(sockFd, buf, nbytes, 0);
+    int nread = socket->read(buf, nbytes);
     if (nread < 0)
     {
-        BELL_LOG(error, "http", "Error reading from client %d", sockFd);
+        BELL_LOG(error, "http", "Error reading from client");
         close();
 
         perror("recv");
         exit(EXIT_FAILURE);
     }
-    else if (nread == 0)
+
+    if (this->hasFixedSize)
     {
-        BELL_LOG(error, "http", "Client disconnected");
+        this->currentPos += nread;
+    }
+
+    if (nread < nbytes)
+    {
+        return read(buf + nread, nbytes - nread);
     }
     return nread;
 }

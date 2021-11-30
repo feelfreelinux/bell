@@ -15,6 +15,9 @@ namespace bell::mpeg
 
     public:
         MpegDashDemuxer(std::shared_ptr<ByteStream> stream);
+        ~MpegDashDemuxer() {
+            reader->close();
+        }
         void parse();
         std::unique_ptr<bell::mpeg::MpegBox> readBox();
         // std::vector<Mp4Track> getTracks();
