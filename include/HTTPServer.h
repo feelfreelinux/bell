@@ -87,6 +87,7 @@ namespace bell
     {
         int connectionFd;
         int status;
+        bool useGzip = false;
         std::string body;
         std::string contentType;
         std::unique_ptr<ResponseReader> responseReader;

@@ -262,6 +262,11 @@ void bell::HTTPServer::writeResponse(const HTTPResponse &response)
     stream << "Server: EUPHONIUM\r\n";
     stream << "Connection: close\r\n";
     stream << "Content-type: " << response.contentType << "\r\n";
+
+    if (response.useGzip) {
+        stream << "Content-encoding: gzip" << "\r\n";
+    }
+
     stream << "Content-length:" << fileSize << "\r\n";
     stream << "Access-Control-Allow-Origin: *\r\n";
     stream << "\r\n";

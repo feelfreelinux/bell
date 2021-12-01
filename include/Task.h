@@ -36,7 +36,7 @@ namespace bell
                 xTaskBuffer = (StaticTask_t *)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
                 xStack = (StackType_t *)heap_caps_malloc(this->stackSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
 
-                return (xTaskCreateStatic(taskEntryFuncPSRAM, this->taskName.c_str(), this->stackSize, this, 2, xStack, xTaskBuffer) != NULL);
+                return (xTaskCreateStaticPinnedToCore(taskEntryFuncPSRAM, this->taskName.c_str(), this->stackSize, this, 2, xStack, xTaskBuffer, this->core) != NULL);
             }
             else
             {

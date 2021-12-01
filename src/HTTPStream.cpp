@@ -36,11 +36,11 @@ void bell::HTTPStream::close()
     }
 }
 
-void bell::HTTPStream::connectToUrl(std::string url)
+void bell::HTTPStream::connectToUrl(std::string url, bool disableSSL)
 {
     std::string portString;
     // check if url contains "https"
-    if (url.find("https") != std::string::npos)
+    if (url.find("https") != std::string::npos && !disableSSL)
     {
         socket = std::make_unique<bell::TLSSocket>();
         portString = "443";

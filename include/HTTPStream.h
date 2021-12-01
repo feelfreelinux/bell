@@ -44,7 +44,7 @@ namespace bell
         *
         * @param url the http url to connect to
         */
-        void connectToUrl(std::string url);
+        void connectToUrl(std::string url, bool disableSSL = false);
 
         /*
         * Reads data from the stream.
