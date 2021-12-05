@@ -171,7 +171,7 @@ void bell::HTTPServer::readFromClient(int clientFd)
     {
         BELL_LOG(error, "http", "Error reading from client");
         perror("recv");
-        exit(EXIT_FAILURE);
+        this->closeConnection(clientFd);
     }
     else if (nbytes == 0)
     {
@@ -187,7 +187,7 @@ void bell::HTTPServer::readFromClient(int clientFd)
             {
                 auto line = conn.currentLine.substr(0, conn.currentLine.find("\r\n"));
                 conn.currentLine = conn.currentLine.substr(conn.currentLine.find("\r\n") + 2, conn.currentLine.size());
-                if (line.find("GET ") != std::string::npos || line.find("POST ") != std::string::npos)
+                if (line.find("GET ") != std::string::npos || line.find("POST ") != std::string::npos || line.find("OPTIONS ") != std::string::npos)
                 {
                     conn.httpMethod = line;
                 }
@@ -238,6 +238,8 @@ void bell::HTTPServer::writeResponseEvents(int connFd)
     stream << "Content-type: text/event-stream\r\n";
     stream << "Cache-Control: no-cache\r\n";
     stream << "Access-Control-Allow-Origin: *\r\n";
+    stream << "Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS\r\n";
+    stream << "Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token\r\n";
     stream << "\r\n";
 
     auto responseStr = stream.str();
@@ -263,12 +265,16 @@ void bell::HTTPServer::writeResponse(const HTTPResponse &response)
     stream << "Connection: close\r\n";
     stream << "Content-type: " << response.contentType << "\r\n";
 
-    if (response.useGzip) {
-        stream << "Content-encoding: gzip" << "\r\n";
+    if (response.useGzip)
+    {
+        stream << "Content-encoding: gzip"
+               << "\r\n";
     }
 
     stream << "Content-length:" << fileSize << "\r\n";
     stream << "Access-Control-Allow-Origin: *\r\n";
+    stream << "Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS\r\n";
+    stream << "Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token\r\n";
     stream << "\r\n";
 
     if (response.body.size() > 0)
@@ -349,6 +355,25 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
     std::map<std::string, std::string> pathParams;
     std::map<std::string, std::string> queryParams;
 
+    if (url.find("OPTIONS /") != std::string::npos)
+    {
+        std::stringstream stream;
+        stream << "HTTP/1.1 200 OK\r\n";
+        stream << "Server: EUPHONIUM\r\n";
+        stream << "Allow: OPTIONS, GET, HEAD, POST\r\n";
+        stream << "Connection: close\r\n";
+        stream << "Access-Control-Allow-Origin: *\r\n";
+        stream << "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n";
+        stream << "Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token\r\n";
+        stream << "\r\n";
+
+        auto responseStr = stream.str();
+
+        write(connectionFd, responseStr.c_str(), responseStr.size());
+        closeConnection(connectionFd);
+        return;
+    }
+
     if (url.find("GET /events") != std::string::npos)
     {
         // Handle SSE endpoint here
@@ -412,7 +437,7 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body, i
                 matches = false;
             }
 
-            if (routeSplit.back().find("*") != std::string::npos && urlSplit[0] == routeSplit[0])
+            if (routeSplit.back().find("*") != std::string::npos && urlSplit[1] == routeSplit[1])
             {
                 matches = true;
             }
