@@ -43,6 +43,10 @@ else()
     find_package(Threads REQUIRED)
 endif()
 
+if (${BELL_DISABLE_CODECS}) 
+    list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/DecoderGlobals.cpp) # use OpenSSL
+endif()
+
 if(UNIX AND NOT APPLE)
     set(EXTRA_REQ_LIBS ${EXTRA_REQ_LIBS} dns_sd) # add apple bonjur compatibility library for linux
     # TODO: migrate from this to native linux mDNS

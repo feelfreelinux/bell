@@ -1,3 +1,4 @@
+#ifndef BELL_DISABLE_CODECS
 #ifndef DECODER_GLOBALS_H
 #define DECODER_GLOBALS_H
 
@@ -47,4 +48,5 @@ namespace bell
     void createDecoders();
 }
 
+#endif
 #endif
