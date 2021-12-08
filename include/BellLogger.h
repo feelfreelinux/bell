@@ -12,9 +12,10 @@ namespace bell
     class AbstractLogger
     {
     public:
-        virtual void debug(std::string filename, std::string submodule, int line, const char *format, ...) = 0;
-        virtual void error(std::string filename, std::string submodule, int line, const char *format, ...) = 0;
-        virtual void info(std::string filename, std::string submodule, int line, const char *format, ...) = 0;
+        bool enableSubmodule = false;
+        virtual void debug(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
+        virtual void error(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
+        virtual void info(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
     };
 
     extern std::shared_ptr<bell::AbstractLogger> bellGlobalLogger;
@@ -22,11 +23,15 @@ namespace bell
     {
     public:
         // static bool enableColors = true;
-        void debug(std::string filename, std::string submodule, int line, const char *format, ...)
+        void debug(std::string filename, int line, std::string submodule, const char *format, ...)
         {
 
             printf(colorRed);
             printf("D ");
+            if (enableSubmodule) {
+                printf(colorReset);
+                printf("[%s] ", submodule.c_str());
+            }
             printFilename(filename);
             printf(":%d: ", line);
             va_list args;
@@ -36,11 +41,15 @@ namespace bell
             printf("\n");
         };
 
-        void error(std::string filename, std::string submodule, int line, const char *format, ...)
+        void error(std::string filename, int line, std::string submodule, const char *format, ...)
         {
 
             printf(colorRed);
             printf("E ");
+            if (enableSubmodule) {
+                printf(colorReset);
+                printf("[%s] ", submodule.c_str());
+            }
             printFilename(filename);
             printf(":%d: ", line);
             printf(colorRed);
@@ -51,11 +60,15 @@ namespace bell
             printf("\n");
         };
 
-        void info(std::string filename, std::string submodule, int line, const char *format, ...)
+        void info(std::string filename, int line, std::string submodule, const char *format, ...)
         {
 
             printf(colorBlue);
             printf("I ");
+            if (enableSubmodule) {
+                printf(colorReset);
+                printf("[%s] ", submodule.c_str());
+            }
             printFilename(filename);
             printf(":%d: ", line);
             printf(colorReset);
@@ -87,17 +100,18 @@ namespace bell
         static constexpr const char *colorReset = "\e[0m";
         static constexpr const char *colorRed = "\e[0;31m";
         static constexpr const char *colorBlue = "\e[0;34m";
-        static constexpr const int NColors = 16;
-        static constexpr int allColors[NColors] = {30, 31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97};
+        static constexpr const int NColors = 15;
+        static constexpr int allColors[NColors] = {31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97};
     };
 
     void setDefaultLogger();
+    void enableSubmoduleLogging();
 }
 
-#define CSPOT_LOG(type, ...)                                      \
+#define BELL_LOG(type, ...)                                      \
     do                                                            \
     {                                                             \
-        cspotGlobalLogger->type(__FILE__, __LINE__, __VA_ARGS__); \
+        bell::bellGlobalLogger->type(__FILE__, __LINE__, __VA_ARGS__); \
     } while (0)
 
 #endif

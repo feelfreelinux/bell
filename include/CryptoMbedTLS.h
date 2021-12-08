@@ -1,6 +1,7 @@
 #ifndef BELL_CRYPTOMBEDTLS_H
 #define BELL_CRYPTOMBEDTLS_H
 
+#ifdef BELL_USE_MBEDTLS
 #include <vector>
 #include <string>
 #include <memory>
@@ -36,6 +37,7 @@ static unsigned char DHGenerator[1] = {2};
 class CryptoMbedTLS {
 private:
     mbedtls_md_context_t sha1Context;
+    mbedtls_aes_context aesCtx;
 public:
     CryptoMbedTLS();
     ~CryptoMbedTLS();
@@ -72,4 +74,5 @@ public:
     std::vector<uint8_t> generateVectorWithRandomData(size_t length);
 };
 
+#endif
 #endif

@@ -13,85 +13,139 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sstream>
-#include <EuphoniumLog.h>
+#include <BellLogger.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fstream>
 #include <sys/socket.h>
 #include <string>
 #include <netdb.h>
+#include <mutex>
 #include <fcntl.h>
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
 
 #ifndef SOCK_NONBLOCK
 #define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
-namespace bell {
-enum class RequestType {
-    GET,
-    POST
-};
+namespace bell
+{
+    class ResponseReader
+    {
+    public:
+        ResponseReader(){};
+        virtual ~ResponseReader() = default;
 
-struct HTTPRequest {
-    std::map<std::string, std::string> urlParams;
-    std::string body;
-    int handlerId;
-    int connection;
-};
+        virtual size_t getTotalSize() = 0;
+        virtual size_t read(char *buffer, size_t size) = 0;
+    };
 
-struct HTTPResponse {
-    int connectionFd;
-    int status;
-    std::string body;
-    std::string contentType;
-};
+    class FileResponseReader : public ResponseReader
+    {
+    public:
+        FILE *file;
+        size_t fileSize;
+        FileResponseReader(std::string fileName)
+        {
+            file = fopen(fileName.c_str(), "r");
+            fseek(file, 0, SEEK_END); // seek to end of file
+            fileSize = ftell(file);       // get current file pointer
+            fseek(file, 0, SEEK_SET); // seek back to beginning of file
+        };
+        ~FileResponseReader()
+        {
+            fclose(file);
+        };
 
-typedef std::function<void(HTTPRequest&)> httpHandler;
-struct HTTPRoute {
-    RequestType requestType;
-    httpHandler handler;
-};
+        size_t read(char *buffer, size_t size)
+        {
+            return fread(buffer, 1, size, file);
+        }
 
-struct HTTPConnection {
-    std::vector<uint8_t> buffer;
-    std::string currentLine = "";
-    int contentLength;
-    bool isReadingBody = false;
-    std::string httpMethod;
-};
+        size_t getTotalSize()
+        {
+            return fileSize;
+        }
+    };
 
-class HTTPServer {
-private:
-    std::regex routerPattern = std::regex(":([^\\/]+)?");
-    int serverPort;
-    fd_set master;
-    fd_set readFds;
-    int pipeFd[2];
-    
-    std::queue<HTTPResponse> responseQueue;
-    fd_set activeFdSet, readFdSet;
-    bool isClosed = true;
-    bool writingResponse = false;
-    std::map<std::string, std::vector<HTTPRoute>> routes;
-    std::map<int, HTTPConnection> connections;
-    void writeResponse(const HTTPResponse&);
-    void findAndHandleRoute(std::string&, std::string&, int connectionFd);
-    std::vector<std::string> splitUrl(const std::string& url);
-    void readFromClient(int clientFd);
+    enum class RequestType
+    {
+        GET,
+        POST
+    };
 
-public:
-    HTTPServer(int serverPort);
-    void registerHandler(RequestType requestType, const std::string&, httpHandler);
-    void respond(const HTTPResponse&);
-    void closeConnection(int connection);
-    void listen();
-};
+    struct HTTPRequest
+    {
+        std::map<std::string, std::string> urlParams;
+        std::map<std::string, std::string> queryParams;
+        std::string body;
+        int handlerId;
+        int connection;
+    };
+
+    struct HTTPResponse
+    {
+        int connectionFd;
+        int status;
+        bool useGzip = false;
+        std::string body;
+        std::string contentType;
+        std::unique_ptr<ResponseReader> responseReader;
+    };
+
+    typedef std::function<void(HTTPRequest &)> httpHandler;
+    struct HTTPRoute
+    {
+        RequestType requestType;
+        httpHandler handler;
+    };
+
+    struct HTTPConnection
+    {
+        std::vector<uint8_t> buffer;
+        std::string currentLine = "";
+        int contentLength = 0;
+        bool isReadingBody = false;
+        std::string httpMethod;
+        bool toBeClosed = false;
+        bool isEventConnection = false;
+    };
+
+    class HTTPServer
+    {
+    private:
+        std::regex routerPattern = std::regex(":([^\\/]+)?");
+        fd_set master;
+        fd_set readFds;
+        fd_set activeFdSet, readFdSet;
+
+        bool isClosed = true;
+        bool writingResponse = false;
+
+        std::map<std::string, std::vector<HTTPRoute>> routes;
+        std::map<int, HTTPConnection> connections;
+        void writeResponse(const HTTPResponse &);
+        void writeResponseEvents(int connFd);
+        void findAndHandleRoute(std::string &, std::string &, int connectionFd);
+
+        std::vector<std::string> splitUrl(const std::string &url, char delimiter);
+        std::mutex responseMutex;
+        std::vector<char> responseBuffer = std::vector<char>(128);
+
+        void readFromClient(int clientFd);
+        std::map<std::string, std::string> parseQueryString(const std::string &queryString);
+        unsigned char h2int(char c);
+        std::string urlDecode(std::string str);
+
+    public:
+        HTTPServer(int serverPort);
+
+        int serverPort;
+        void registerHandler(RequestType requestType, const std::string &, httpHandler);
+        void respond(const HTTPResponse &);
+        void publishEvent(std::string eventName, std::string eventData);
+        void closeConnection(int connection);
+        void listen();
+    };
 }
 #endif
-
-

@@ -16,7 +16,16 @@ WrappedSemaphore::~WrappedSemaphore()
 
 int WrappedSemaphore::wait()
 {
-    if (xSemaphoreTake(semaphoreHandle, 1000) == pdTRUE) {
+    if (xSemaphoreTake(semaphoreHandle, portMAX_DELAY) == pdTRUE) {
+        return 0;
+    }
+
+    return 1;
+}
+
+int WrappedSemaphore::twait(long milliseconds)
+{
+    if (xSemaphoreTake(semaphoreHandle, milliseconds / portTICK_PERIOD_MS) == pdTRUE) {
         return 0;
     }
 

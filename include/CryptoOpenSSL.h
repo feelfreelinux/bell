@@ -50,6 +50,12 @@ public:
     void sha1Init();
     void sha1Update(const std::string& s);
     void sha1Update(const std::vector<uint8_t>& vec);
+
+    void connectSSL(std::string url);
+    int readSSL(uint8_t* buf, int len);
+    int writeSSL(uint8_t* buf, int len);
+    void closeSSL();
+    
     std::string sha1Final();
     std::vector<uint8_t> sha1FinalBytes();
 

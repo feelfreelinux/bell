@@ -25,6 +25,7 @@ public:
     ~WrappedSemaphore();
 
     int wait();
+    int twait(long milliseconds = 10);
     void give();
 };
 
