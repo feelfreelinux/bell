@@ -43,8 +43,9 @@ else()
     find_package(Threads REQUIRED)
 endif()
 
-if (${BELL_DISABLE_CODECS}) 
+if (BELL_DISABLE_CODECS) 
     list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/DecoderGlobals.cpp) # use OpenSSL
+	add_definitions(-DBELL_DISABLE_CODECS)
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -60,7 +61,12 @@ include_directories("libhelix-aac")
 include_directories("libhelix-mp3")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
-set(SOURCES ${SOURCES} "cJSON/cJSON.c" "tremor/mdct.c" "tremor/dsp.c" "tremor/info.c" "tremor/misc.c" "tremor/floor1.c" "tremor/floor0.c" "tremor/vorbisfile.c" "tremor/res012.c" "tremor/mapping0.c" "tremor/codebook.c" "tremor/framing.c" "tremor/bitwise.c" "tremor/floor_lookup.c")
+if (NOT BELL_DISABLE_CJSON) 
+	set(SOURCES ${SOURCES} "cJSON/cJSON.c")
+endif()
+if (NOT BELL_DISABLE_TREMOR) 
+	set(SOURCES ${SOURCES} "tremor/mdct.c" "tremor/dsp.c" "tremor/info.c" "tremor/misc.c" "tremor/floor1.c" "tremor/floor0.c" "tremor/vorbisfile.c" "tremor/res012.c" "tremor/mapping0.c" "tremor/codebook.c" "tremor/framing.c" "tremor/bitwise.c" "tremor/floor_lookup.c")
+endif()
 set(SOURCES ${SOURCES} "libhelix-aac/aacdec.c" "libhelix-aac/aactabs.c" "libhelix-aac/bitstream.c" "libhelix-aac/buffers.c" "libhelix-aac/dct4.c" "libhelix-aac/decelmnt.c" "libhelix-aac/dequant.c" "libhelix-aac/fft.c" "libhelix-aac/filefmt.c" "libhelix-aac/huffman.c" "libhelix-aac/hufftabs.c" "libhelix-aac/imdct.c" "libhelix-aac/noiseless.c" "libhelix-aac/pns.c" "libhelix-aac/sbr.c" "libhelix-aac/sbrfft.c" "libhelix-aac/sbrfreq.c" "libhelix-aac/sbrhfadj.c" "libhelix-aac/sbrhfgen.c" "libhelix-aac/sbrhuff.c" "libhelix-aac/sbrimdct.c" "libhelix-aac/sbrmath.c" "libhelix-aac/sbrqmf.c" "libhelix-aac/sbrside.c" "libhelix-aac/sbrtabs.c" "libhelix-aac/stproc.c" "libhelix-aac/tns.c" "libhelix-aac/trigtabs.c")
 set(SOURCES ${SOURCES} "libhelix-mp3/bitstream.c" "libhelix-mp3/buffers.c" "libhelix-mp3/dct32.c" "libhelix-mp3/dequant.c" "libhelix-mp3/dqchan.c" "libhelix-mp3/huffman.c" "libhelix-mp3/hufftabs.c" "libhelix-mp3/imdct.c" "libhelix-mp3/mp3dec.c" "libhelix-mp3/mp3tabs.c" "libhelix-mp3/polyphase.c" "libhelix-mp3/scalfact.c" "libhelix-mp3/stproc.c" "libhelix-mp3/subband.c" "libhelix-mp3/trigtabs.c")
 
