@@ -2,6 +2,8 @@
 #define BELL_BASE_HTTP_SERV
 
 #include <cstdio>
+#include <string>
+#include <map>
 
 namespace bell {
 
@@ -73,11 +75,25 @@ public:
     BaseHTTPServer() {};
     virtual ~BaseHTTPServer() = default;
 
+    /**
+     * Should contain server's bind port
+     */
     int serverPort;
-    virtual void registerHandler(RequestType requestType, const std::string &,
+
+    /**
+     * Called when handler is being registered on the http server
+     *
+     * @param requestType GET or POST
+     * @param endpoint registering under
+     * httpHandler lambda to be called when given endpoint gets executed
+     */
+    virtual void registerHandler(RequestType requestType, const std::string & endpoint,
                                  httpHandler) = 0;
+
+    /**
+     * Writes given response to a fd
+     */
     virtual void respond(const HTTPResponse &) = 0;
-    virtual void listen() = 0;
 };
 } // namespace bell
 
