@@ -7,6 +7,7 @@
 #elif __APPLE__
 #include <dispatch/dispatch.h>
 #else
+#include <time.h>
 #include <semaphore.h>
 #endif
 
