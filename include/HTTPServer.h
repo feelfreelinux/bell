@@ -60,7 +60,6 @@ namespace bell
     public:
         HTTPServer(int serverPort);
 
-        int serverPort;
         void registerHandler(RequestType requestType, const std::string &, httpHandler);
         void respond(const HTTPResponse &);
         void publishEvent(std::string eventName, std::string eventData);
