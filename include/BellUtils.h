@@ -1,6 +1,16 @@
 #ifndef EUPHONIUM_BELL_UTILS
 #define EUPHONIUM_BELL_UTILS
 
+#include <random>
+#include <string.h>
+#include <vector>
+
+namespace bell {
+
+std::string generateRandomUUID();
+
+} // namespace bell
+
 #ifdef ESP_PLATFORM
 #include <freertos/FreeRTOS.h>
 
