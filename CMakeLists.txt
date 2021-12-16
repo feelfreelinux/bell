@@ -86,5 +86,6 @@ else()
 endif()
 
 add_library(bell STATIC ${SOURCES})
-target_link_libraries(bell PRIVATE ${EXTRA_LIBS})
+# PUBLIC to propagate esp-idf includes to bell dependents
+target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
 target_include_directories(bell PUBLIC "include" ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
