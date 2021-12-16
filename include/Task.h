@@ -18,12 +18,16 @@ namespace bell
         int stackSize, core;
         bool isRunning = false;
         bool runOnPSRAM;
-        Task(std::string taskName, int stackSize, int core, bool runOnPSRAM = true)
+        Task(std::string taskName, int stackSize, int priority, int core, bool runOnPSRAM = true)
         {
             this->taskName = taskName;
             this->stackSize = stackSize;
             this->core = core;
             this->runOnPSRAM = runOnPSRAM;
+#ifdef ESP_PLATFORM
+			this->priority = ESP_TASK_PRIO_MIN + 1 + priority;
+			if (this->priority < 0) this->priority = ESP_TASK_PRIO_MIN + 1;
+#endif
         }
         virtual ~Task() {}
 
@@ -45,6 +49,7 @@ namespace bell
                 cfg.inherit_cfg = true;
                 cfg.thread_name = this->taskName.c_str();
                 cfg.pin_to_core = core;
+				cfg.prio = priority;
                 esp_pthread_set_cfg(&cfg);
             }
 #endif
@@ -59,8 +64,12 @@ namespace bell
                 {
                     vTaskDelay(100 / portTICK_PERIOD_MS);
                 }
-                heap_caps_free(xTaskBuffer);
                 heap_caps_free(xStack);
+				// TCB are cleanup in IDLE task, so need to schedule
+				vTaskPrioritySet(NULL, tskIDLE_PRIORITY);
+				vTaskDelay(1);							
+				vTaskPrioritySet(NULL, priority);
+				heap_caps_free(xTaskBuffer);
             }
             else
             {
@@ -76,6 +85,7 @@ namespace bell
 
     private:
 #ifdef ESP_PLATFORM
+		int priority;
         StaticTask_t *xTaskBuffer;
         StackType_t *xStack;
 #endif
