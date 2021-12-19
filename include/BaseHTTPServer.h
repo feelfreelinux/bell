@@ -53,6 +53,7 @@ struct HTTPResponse {
     bool useGzip = false;
     std::string body;
     std::string contentType;
+    std::vector<std::string> extraHeaders = std::vector<std::string>();
     std::unique_ptr<ResponseReader> responseReader;
 };
 
