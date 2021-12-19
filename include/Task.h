@@ -4,6 +4,7 @@
 #ifdef ESP_PLATFORM
 #include <esp_pthread.h>
 #include <freertos/FreeRTOS.h>
+#include <freertos/timers.h>
 #include <freertos/task.h>
 #endif
 
@@ -65,11 +66,13 @@ namespace bell
                     vTaskDelay(100 / portTICK_PERIOD_MS);
                 }
                 heap_caps_free(xStack);
-				// TCB are cleanup in IDLE task, so need to schedule
-				vTaskPrioritySet(NULL, tskIDLE_PRIORITY);
-				vTaskDelay(1);							
-				vTaskPrioritySet(NULL, priority);
-				heap_caps_free(xTaskBuffer);
+				// TCB are cleanup in IDLE task, so give it some time
+				TimerHandle_t timer = xTimerCreate( "cleanup", pdMS_TO_TICKS(5000), pdFALSE, xTaskBuffer, 
+													[](TimerHandle_t xTimer) {
+														heap_caps_free(pvTimerGetTimerID(xTimer));
+														xTimerDelete(xTimer, portMAX_DELAY);
+													} );	
+				xTimerStart(timer, portMAX_DELAY);
             }
             else
             {
