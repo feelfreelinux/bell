@@ -25,6 +25,7 @@ class HTTPClient {
         std::shared_ptr<bell::Socket> dataSocket;
         int contentLength;
         bool hasFixedSize = false;
+        bool isChunked = false;
         void close();
 
         HTTPClient() {};
