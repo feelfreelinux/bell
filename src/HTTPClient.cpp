@@ -208,7 +208,16 @@ std::string bell::HTTPClient::readToString() {
                     bufPos += count;
                     chunkRemaining -= count;
                     bufRemaining -= count;
-                } else if (bufRemaining > 2) {
+                    if (!chunkRemaining && bufRemaining >= 2) {
+                        // skip \r\n
+                        bufPos += 2;
+                        bufRemaining -= 2;
+                    } else if (!chunkRemaining) {
+                        // chunk is fully read and probably \r remains; ignore it
+                        bufRemaining = 0;
+                    }
+                } else {
+                    // TODO handle cases where the hex chunk size is on the buffer boundary
                     auto *chunkSizePos = bufPos;
                     bufPos = strstr(bufPos, "\r\n") + 2;
                     bufRemaining -= bufPos - chunkSizePos;
@@ -224,9 +233,8 @@ std::string bell::HTTPClient::readToString() {
         return result;
     }
 
-    std::vector<uint8_t> buffer = std::vector<uint8_t>(128);
     do {
-        read = readFromSocket(buffer.data(), 128);
+        read = readFromSocket((uint8_t*)buffer.data(), 128);
         result += std::string(buffer.data(), buffer.data() + read); 
     } while (result.find("\r\n\r\n") == std::string::npos);
 
