@@ -34,6 +34,7 @@ namespace bell
 
 
         bool hasFixedSize = false;
+        std::vector<uint8_t> remainingData;
         size_t contentLength = -1;
         size_t currentPos = -1;
 

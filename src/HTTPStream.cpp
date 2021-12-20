@@ -175,7 +175,7 @@ size_t bell::HTTPStream::read(uint8_t *buf, size_t nbytes)
 
     if (nread < nbytes)
     {
-        return read(buf + nread, nbytes - nread);
+        return nread + read(buf + nread, nbytes - nread);
     }
     return nread;
 }

@@ -3,6 +3,7 @@
 
 #ifdef ESP_PLATFORM
 #include <esp_pthread.h>
+#include <esp_task.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/timers.h>
 #include <freertos/task.h>
