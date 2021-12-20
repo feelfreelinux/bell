@@ -62,6 +62,7 @@ namespace bell
 
         void registerHandler(RequestType requestType, const std::string &, httpHandler);
         void respond(const HTTPResponse &);
+        void redirectTo(const std::string&, int connectionFd);
         void publishEvent(std::string eventName, std::string eventData);
         void closeConnection(int connection);
         void listen();
