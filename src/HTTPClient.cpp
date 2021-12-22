@@ -2,7 +2,7 @@
 #include "TCPSocket.h"
 
 void bell::HTTPClient::close() {
-    if (status != ClientStatus::CLOSED) {
+	if (status != ClientStatus::CLOSED) {
         dataSocket->close();
         status = ClientStatus::CLOSED;
     }
@@ -146,6 +146,11 @@ void bell::HTTPClient::readHeaders() {
                     this->contentLength = std::stoi(contentLengthStr);
                     hasFixedSize = true;
                 }
+                else if (line.find("Transfer-Encoding: chunked") != std::string::npos)
+                {
+                    BELL_LOG(info, "http", "Transfer encoding chunked");
+                    this->isChunked = true;
+                } 
                 else if (line.find("200 OK") != std::string::npos)
                 {
                     statusOkay = true;
@@ -154,8 +159,8 @@ void bell::HTTPClient::readHeaders() {
                 {
                     BELL_LOG(info, "http", "Ready to receive data! %d", currentLine.size());
                     if (currentLine.size() > 0) {
-                        remainingData = std::vector<uint8_t>(currentLine.size() - 1);
-                        remainingData.assign(currentLine.begin(), currentLine.end() - 1);
+                        remainingData = std::vector<uint8_t>(currentLine.size());
+                        remainingData.assign(currentLine.begin(), currentLine.end());
                     }
                     status = ClientStatus::READING_DATA;
                 }
@@ -182,12 +187,54 @@ size_t bell::HTTPClient::readFromSocket(uint8_t * data, size_t len) {
 }
 
 std::string bell::HTTPClient::readToString() {
-    std::string result = "";
-    int read;
+    std::string result;
+    size_t read;
+    std::vector<char> buffer = std::vector<char>(128);
 
-    std::vector<uint8_t> buffer = std::vector<uint8_t>(128);
+    if (this->isChunked) {
+        size_t chunkSize;
+        size_t chunkRemaining = 0;
+        size_t bufRemaining;
+        char *bufPos;
+        do {
+            read = readFromSocket((uint8_t *)buffer.data(), 128);
+            bufPos = buffer.data();
+            bufPos[read] = '\0';
+            bufRemaining = read;
+            while (bufRemaining) {
+                if (chunkRemaining) {
+                    auto count = std::min(bufRemaining, chunkRemaining);
+                    result += std::string(bufPos, bufPos + count);
+                    bufPos += count;
+                    chunkRemaining -= count;
+                    bufRemaining -= count;
+                    if (!chunkRemaining && bufRemaining >= 2) {
+                        // skip \r\n
+                        bufPos += 2;
+                        bufRemaining -= 2;
+                    } else if (!chunkRemaining) {
+                        // chunk is fully read and probably \r remains; ignore it
+                        bufRemaining = 0;
+                    }
+                } else {
+                    // TODO handle cases where the hex chunk size is on the buffer boundary
+                    auto *chunkSizePos = bufPos;
+                    bufPos = strstr(bufPos, "\r\n") + 2;
+                    bufRemaining -= bufPos - chunkSizePos;
+                    auto chunkSizeHex = std::string(chunkSizePos, bufPos - 2);
+                    chunkSize = std::stoul(chunkSizeHex, nullptr, 16);
+                    if (!chunkSize) {
+                        break;
+                    }
+                    chunkRemaining = chunkSize;
+                }
+            }
+        } while (chunkSize);
+        return result;
+    }
+
     do {
-        read = readFromSocket(buffer.data(), 128);
+        read = readFromSocket((uint8_t*)buffer.data(), 128);
         result += std::string(buffer.data(), buffer.data() + read); 
     } while (result.find("\r\n\r\n") == std::string::npos);
 
