@@ -27,8 +27,8 @@ namespace bell
             this->core = core;
             this->runOnPSRAM = runOnPSRAM;
 #ifdef ESP_PLATFORM
-			this->priority = ESP_TASK_PRIO_MIN + 1 + priority;
-			if (this->priority < 0) this->priority = ESP_TASK_PRIO_MIN + 1;
+			this->priority = CONFIG_ESP32_PTHREAD_TASK_PRIO_DEFAULT + priority;
+			if (this->priority < 0) this->priority = ESP_TASK_PRIO_MIN;
 #endif
         }
         virtual ~Task() {}
@@ -38,11 +38,10 @@ namespace bell
 #ifdef ESP_PLATFORM
             if (runOnPSRAM)
             {
-
                 xTaskBuffer = (StaticTask_t *)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
                 xStack = (StackType_t *)heap_caps_malloc(this->stackSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
 
-                return (xTaskCreateStaticPinnedToCore(taskEntryFuncPSRAM, this->taskName.c_str(), this->stackSize, this, 2, xStack, xTaskBuffer, this->core) != NULL);
+                return (xTaskCreateStaticPinnedToCore(taskEntryFuncPSRAM, this->taskName.c_str(), this->stackSize, this, this->priority, xStack, xTaskBuffer, this->core) != NULL);
             }
             else
             {
@@ -51,7 +50,7 @@ namespace bell
                 cfg.inherit_cfg = true;
                 cfg.thread_name = this->taskName.c_str();
                 cfg.pin_to_core = core;
-				cfg.prio = priority;
+				cfg.prio = this->priority;
                 esp_pthread_set_cfg(&cfg);
             }
 #endif
