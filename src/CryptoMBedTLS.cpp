@@ -165,7 +165,7 @@ void CryptoMbedTLS::dhInit()
     mbedtls_mpi_free(&prime);
     mbedtls_mpi_free(&generator);
     mbedtls_mpi_free(&privKey);
-    //mbedtls_mpi_free(&res);
+    mbedtls_mpi_free(&res);
 }
 
 std::vector<uint8_t> CryptoMbedTLS::dhCalculateShared(const std::vector<uint8_t> &remoteKey)
