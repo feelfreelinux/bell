@@ -103,7 +103,7 @@ namespace bell
                 //delete m_queue.front();
                 m_queue.pop();
             }
-			lk.unlock();
+            lk.unlock();
             m_cv.notify_one();
         }
         /// <summary> Check queue in forced exit state. </summary>
