@@ -270,7 +270,6 @@ void bell::HTTPServer::writeResponse(const HTTPResponse &response) {
         } while (read > 0);
     }
 
-    BELL_LOG(info, "HTTP", "Closing connection");
     this->closeConnection(response.connectionFd);
 }
 
@@ -336,7 +335,6 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body,
                                           int connectionFd) {
     std::map<std::string, std::string> pathParams;
     std::map<std::string, std::string> queryParams;
-    BELL_LOG(info, "http", "URL %s", url.c_str());
 
     if (url.find("OPTIONS /") != std::string::npos) {
         std::stringstream stream;
@@ -419,6 +417,7 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body,
                 HTTPRequest req = {.urlParams = pathParams,
                                    .queryParams = queryParams,
                                    .body = body,
+                                   .url = path,
                                    .handlerId = 0,
                                    .connection = connectionFd};
 
