@@ -43,6 +43,7 @@ struct HTTPRequest {
     std::map<std::string, std::string> urlParams;
     std::map<std::string, std::string> queryParams;
     std::string body;
+    std::string url;
     int handlerId;
     int connection;
 };
