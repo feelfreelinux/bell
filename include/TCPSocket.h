@@ -17,6 +17,7 @@
 #include <fstream>
 #include <netinet/tcp.h>
 #include <BellLogger.h>
+#include <sys/ioctl.h>
 
 namespace bell
 {
@@ -32,50 +33,36 @@ namespace bell
             close();
         };
 
-        void open(std::string url)
+        void open(std::string host, uint16_t port)
         {
-            // remove https or http from url
-            url.erase(0, url.find("://") + 3);
-
-            // split by first "/" in url
-            std::string hostUrl = url.substr(0, url.find('/'));
-            std::string pathUrl = url.substr(url.find('/'));
-
-            std::string portString = "80";
-
-            // check if hostUrl contains ':'
-            if (hostUrl.find(':') != std::string::npos)
-            {
-                // split by ':'
-                std::string host = hostUrl.substr(0, hostUrl.find(':'));
-                portString = hostUrl.substr(hostUrl.find(':') + 1);
-                hostUrl = host;
-            }
-
+			int err;
             int domain = AF_INET;
             int socketType = SOCK_STREAM;
 
-            addrinfo hints, *addr;
+            struct addrinfo hints{}, *addr;
             //fine-tune hints according to which socket you want to open
             hints.ai_family = domain;
             hints.ai_socktype = socketType;
             hints.ai_protocol = IPPROTO_IP; // no enum : possible value can be read in /etc/protocols
             hints.ai_flags = AI_CANONNAME | AI_ALL | AI_ADDRCONFIG;
 
-            BELL_LOG(info, "http", "%s %s", hostUrl.c_str(), portString.c_str());
+            BELL_LOG(info, "http", "%s %d", host.c_str(), port);
 
-            if (getaddrinfo(hostUrl.c_str(), portString.c_str(), &hints, &addr) != 0)
-            {
-                BELL_LOG(error, "webradio", "DNS lookup error");
+            char portStr[6];
+			sprintf(portStr, "%u", port);
+			err = getaddrinfo(host.c_str(), portStr, &hints, &addr);
+            if (err != 0) {
+                BELL_LOG(error, "http", "getaddrinfo(): %s", gai_strerror(err));
                 throw std::runtime_error("Resolve failed");
             }
 
             sockFd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
-            if (connect(sockFd, addr->ai_addr, addr->ai_addrlen) < 0)
+			err = connect(sockFd, addr->ai_addr, addr->ai_addrlen);
+            if (err < 0)
             {
                 close();
-                BELL_LOG(error, "http", "Could not connect to %s", url.c_str());
+                BELL_LOG(error, "http", "Could not connect to %s. Error %d", host.c_str(), errno);
                 throw std::runtime_error("Resolve failed");
             }
 
@@ -96,6 +83,12 @@ namespace bell
         size_t write(uint8_t *buf, size_t len) {
             return send(sockFd, buf, len, 0);
         }
+
+		size_t poll() {
+			int value;
+			ioctl(sockFd, FIONREAD, &value);
+			return value;
+		}
 
         void close() {
             if (!isClosed) {

@@ -65,7 +65,7 @@ void bell::HTTPServer::registerHandler(RequestType requestType,
 }
 
 void bell::HTTPServer::listen() {
-    BELL_LOG(info, "http", "Starting configuration server at port %d",
+    BELL_LOG(info, "http", "Starting server at port %d",
              this->serverPort);
 
     // setup address
@@ -170,8 +170,8 @@ void bell::HTTPServer::readFromClient(int clientFd) {
                 if (line.find("Content-Length: ") != std::string::npos) {
                     conn.contentLength =
                         std::stoi(line.substr(16, line.size() - 1));
-                    BELL_LOG(info, "http", "Content-Length: %d",
-                             conn.contentLength);
+                    //BELL_LOG(info, "http", "Content-Length: %d",
+                    //         conn.contentLength);
                 }
                 if (line.size() == 0) {
                     if (conn.contentLength != 0) {
@@ -201,7 +201,7 @@ void bell::HTTPServer::writeResponseEvents(int connFd) {
 
     std::stringstream stream;
     stream << "HTTP/1.1 200 OK\r\n";
-    stream << "Server: EUPHONIUM\r\n";
+    stream << "Server: bell-http\r\n";
     stream << "Connection: keep-alive\r\n";
     stream << "Content-type: text/event-stream\r\n";
     stream << "Cache-Control: no-cache\r\n";
@@ -229,7 +229,7 @@ void bell::HTTPServer::writeResponse(const HTTPResponse &response) {
 
     std::stringstream stream;
     stream << "HTTP/1.1 " << response.status << " OK\r\n";
-    stream << "Server: EUPHONIUM\r\n";
+    stream << "Server: bell-http\r\n";
     stream << "Connection: close\r\n";
     stream << "Content-type: " << response.contentType << "\r\n";
 
@@ -284,7 +284,7 @@ void bell::HTTPServer::redirectTo(const std::string & url, int connectionFd) {
     std::lock_guard lock(this->responseMutex);
     std::stringstream stream;
     stream << "HTTP/1.1 301 Moved Permanently\r\n";
-    stream << "Server: EUPHONIUM\r\n";
+    stream << "Server: bell-http\r\n";
     stream << "Connection: close\r\n";
     stream << "Location: " << url << "\r\n\r\n";
     auto responseStr = stream.str();
@@ -316,11 +316,11 @@ std::map<std::string, std::string>
 bell::HTTPServer::parseQueryString(const std::string &queryString) {
     std::map<std::string, std::string> query;
     auto prefixedString = "&" + queryString;
-    while (prefixedString.find("&") != std::string::npos) {
-        auto keyStart = prefixedString.find("&");
-        auto keyEnd = prefixedString.find("=");
+    while (prefixedString.find('&') != std::string::npos) {
+        auto keyStart = prefixedString.find('&');
+        auto keyEnd = prefixedString.find('=');
         // Find second occurence of "&" in prefixedString
-        auto valueEnd = prefixedString.find("&", keyStart + 1);
+        auto valueEnd = prefixedString.find('&', keyStart + 1);
         if (valueEnd == std::string::npos) {
             valueEnd = prefixedString.size();
         }
@@ -342,7 +342,7 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body,
     if (url.find("OPTIONS /") != std::string::npos) {
         std::stringstream stream;
         stream << "HTTP/1.1 200 OK\r\n";
-        stream << "Server: EUPHONIUM\r\n";
+        stream << "Server: bell-http\r\n";
         stream << "Allow: OPTIONS, GET, HEAD, POST\r\n";
         stream << "Connection: close\r\n";
         stream << "Access-Control-Allow-Origin: *\r\n";
@@ -378,9 +378,9 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body,
                 continue;
             }
 
-            path = path.substr(0, path.find(" "));
+            path = path.substr(0, path.find(' '));
 
-            if (path.find("?") != std::string::npos) {
+            if (path.find('?') != std::string::npos) {
                 auto urlEncodedSplit = splitUrl(path, '?');
                 path = urlEncodedSplit[0];
                 queryParams = this->parseQueryString(urlEncodedSplit[1]);
@@ -407,13 +407,13 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body,
                 matches = false;
             }
 
-            if (routeSplit.back().find("*") != std::string::npos &&
+            if (routeSplit.back().find('*') != std::string::npos &&
                 urlSplit[1] == routeSplit[1]) {
                 matches = true;
             }
 
             if (matches) {
-                if (body.find("&") != std::string::npos) {
+                if (body.find('&') != std::string::npos) {
                     queryParams = this->parseQueryString(body);
                 }
 

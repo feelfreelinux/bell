@@ -9,7 +9,9 @@ namespace bell {
             Socket() {};
             virtual ~Socket() = default;
 
-            virtual void open(std::string url) = 0;
+			void open(const std::string &url);
+			virtual void open(std::string host, uint16_t port) = 0;
+			virtual size_t poll() = 0;
             virtual size_t write(uint8_t* buf, size_t len) = 0;
             virtual size_t read(uint8_t* buf, size_t len) = 0;
             virtual void close() = 0;
