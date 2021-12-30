@@ -58,10 +58,11 @@ public:
   TLSSocket();
   ~TLSSocket() { close(); };
 
-  void open(std::string host);
+  void open(std::string host, uint16_t port);
 
   size_t read(uint8_t *buf, size_t len);
   size_t write(uint8_t *buf, size_t len);
+  size_t poll();
 
   void close();
 };
