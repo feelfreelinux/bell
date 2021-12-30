@@ -259,6 +259,8 @@ void bell::HTTPServer::writeResponse(const HTTPResponse &response) {
 
     write(response.connectionFd, responseStr.c_str(), responseStr.size());
 
+    BELL_LOG(info, "http", "starting write...");
+
     if (response.responseReader != nullptr) {
         size_t read;
         do {
@@ -268,6 +270,7 @@ void bell::HTTPServer::writeResponse(const HTTPResponse &response) {
                 write(response.connectionFd, responseBuffer.data(), read);
             }
         } while (read > 0);
+        response.responseReader->close();
     }
 
     this->closeConnection(response.connectionFd);

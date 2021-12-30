@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <vector>
 
 namespace bell {
 
@@ -16,6 +17,7 @@ class ResponseReader {
 
     virtual size_t getTotalSize() = 0;
     virtual size_t read(char *buffer, size_t size) = 0;
+    virtual void close() = 0;
 };
 
 class FileResponseReader : public ResponseReader {
@@ -32,6 +34,10 @@ class FileResponseReader : public ResponseReader {
 
     size_t read(char *buffer, size_t size) {
         return fread(buffer, 1, size, file);
+    }
+
+    void close() {
+        fclose(file);
     }
 
     size_t getTotalSize() { return fileSize; }
