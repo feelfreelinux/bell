@@ -21,25 +21,10 @@ bell::TLSSocket::TLSSocket()
   }
 }
 
-void bell::TLSSocket::open(std::string url)
+void bell::TLSSocket::open(std::string hostUrl, uint16_t port)
 {
-  // initialize
   int ret;
-  url.erase(0, url.find("://") + 3);
-  std::string hostUrl = url.substr(0, url.find('/'));
-  std::string pathUrl = url.substr(url.find('/'));
-
-  std::string portString = "443";
-  // check if hostUrl contains ':'
-  if (hostUrl.find(':') != std::string::npos)
-  {
-    // split by ':'
-    std::string host = hostUrl.substr(0, hostUrl.find(':'));
-    portString = hostUrl.substr(hostUrl.find(':') + 1);
-    hostUrl = host;
-  }
-
-  if ((ret = mbedtls_net_connect(&server_fd, hostUrl.c_str(), "443",
+  if ((ret = mbedtls_net_connect(&server_fd, hostUrl.c_str(), std::to_string(port).c_str(),
                                  MBEDTLS_NET_PROTO_TCP)) != 0)
   {
     BELL_LOG(error, "http_tls", "failed! connect returned %d\n", ret);
@@ -80,6 +65,10 @@ size_t bell::TLSSocket::read(uint8_t *buf, size_t len)
 size_t bell::TLSSocket::write(uint8_t *buf, size_t len)
 {
   return mbedtls_ssl_write(&ssl, buf, len);
+}
+
+size_t bell::TLSSocket::poll() {
+  return mbedtls_ssl_get_bytes_avail(&ssl);
 }
 
 void bell::TLSSocket::close()
