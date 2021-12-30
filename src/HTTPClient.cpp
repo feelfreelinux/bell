@@ -196,8 +196,6 @@ bool HTTPClient::HTTPResponse::skipRaw(size_t len, bool dontRead) {
 size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 	if (isComplete) {
 		// end of chunked stream was found OR complete body was read
-		if (dst)
-			dst[0] = '\0';
 		return 0;
 	}
 	auto *dstStart = dst ? dst : nullptr;
@@ -231,7 +229,7 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 		while (chunkRemaining && toRead) {
 			size_t count = std::min(toRead, std::min(bufRemaining, chunkRemaining));
 			if (dst) {
-				strncpy(dst, bufPtr, count);
+				memcpy(dst, bufPtr, count);
 				dst += count; // move the dst pointer
 			}
 			read += count;			 // increment read counter
@@ -252,15 +250,15 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 		isComplete = true;
 	this->bodyRead += read;
 	// BELL_LOG(debug, "http", "Read %d of %d bytes", bodyRead, contentLength);
-	if (dst)
-		dstStart[read] = '\0';
 	return read;
 }
 
 std::string HTTPClient::HTTPResponse::readToString() {
 	if (this->contentLength) {
 		std::string result(this->contentLength, '\0');
-		this->read(result.data(), this->contentLength);
+		auto *data = result.data();
+		auto len = this->read(data, this->contentLength);
+		data[len] = '\0';
 		this->close();
 		return result;
 	}
@@ -269,6 +267,7 @@ std::string HTTPClient::HTTPResponse::readToString() {
 	size_t len;
 	do {
 		len = this->read(buffer, BUF_SIZE);
+		buffer[len] = '\0';
 		result += std::string(buffer);
 	} while (len);
 	this->close();
