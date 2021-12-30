@@ -88,7 +88,6 @@ bool HTTPClient::readHeader(const char *&header, const char *name) {
 size_t HTTPClient::HTTPResponse::readRaw(char *dst) {
 	size_t len = this->socket->read((uint8_t *)dst, BUF_SIZE);
 	//	BELL_LOG(debug, "http", "Read %d bytes", len);
-	this->bodyRead += len; // after reading headers this gets overwritten
 	dst[len] = '\0';
 	return len;
 }
@@ -128,7 +127,6 @@ void HTTPClient::HTTPResponse::readHeaders() {
 				if (lineEnd + 2 < this->buf + len) {
 					this->bufPtr = lineEnd + 2;
 					this->bufRemaining = len - (this->bufPtr - this->buf);
-					this->bodyRead = this->bufRemaining;
 					this->isStreaming =
 						!this->isComplete && !this->contentLength && (len < BUF_SIZE || this->socket->poll() == 0);
 				}
@@ -169,7 +167,7 @@ void HTTPClient::HTTPResponse::readHeaders() {
 	} while (!complete);
 }
 
-bool HTTPClient::HTTPResponse::skip(size_t len, bool dontRead) {
+bool HTTPClient::HTTPResponse::skipRaw(size_t len, bool dontRead) {
 	size_t skip = 0;
 	if (len > bufRemaining) {
 		skip = len - bufRemaining;
@@ -198,13 +196,14 @@ bool HTTPClient::HTTPResponse::skip(size_t len, bool dontRead) {
 size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 	if (isComplete) {
 		// end of chunked stream was found OR complete body was read
-		dst[0] = '\0';
+		if (dst)
+			dst[0] = '\0';
 		return 0;
 	}
-	auto *dstStart = dst;
+	auto *dstStart = dst ? dst : nullptr;
 	size_t read = 0;
 	while (toRead) { // this loop ends after original toRead
-		skip(0);	 // ensure the buffer contains data, wait if necessary
+		skipRaw(0);	 // ensure the buffer contains data, wait if necessary
 		if (isChunked && !chunkRemaining) {
 			if (*bufPtr == '0') { // all chunks were read *and emitted*
 				isComplete = true;
@@ -213,7 +212,7 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 			auto *endPtr = bufPtr;
 			if (strchr(bufPtr, '\r') == nullptr) {						// buf doesn't contain complete chunk size
 				auto size = std::string(bufPtr, bufPtr + bufRemaining); // take the rest of the buffer
-				if (!skip(bufRemaining))								// skip the rest, read another buf
+				if (!skipRaw(bufRemaining))								// skip the rest, read another buf
 					break;												// -> no more data
 				endPtr = strchr(bufPtr, '\r');							// find the end of the actual number
 				if (endPtr == nullptr)									// something's wrong
@@ -223,25 +222,27 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 			} else {
 				chunkRemaining = strtol(bufPtr, &endPtr, 16); // read the hex size
 			}
-			if (!skip(endPtr - bufPtr + 2)) // skip the size and \r\n
-				break;						// -> no more data, break out of main loop
+			if (!skipRaw(endPtr - bufPtr + 2)) // skip the size and \r\n
+				break;						   // -> no more data, break out of main loop
 		} else if (contentLength && !chunkRemaining) {
 			chunkRemaining = contentLength;
 		}
 
 		while (chunkRemaining && toRead) {
 			size_t count = std::min(toRead, std::min(bufRemaining, chunkRemaining));
-			strncpy(dst, bufPtr, count);
-			dst += count;			 // move the dst pointer
+			if (dst) {
+				strncpy(dst, bufPtr, count);
+				dst += count; // move the dst pointer
+			}
 			read += count;			 // increment read counter
 			chunkRemaining -= count; // decrease chunk remaining size
 			toRead -= count;		 // decrease local remaining size
-			if (!skip(count)) {		 // eat some buffer
+			if (!skipRaw(count)) {	 // eat some buffer
 				toRead = 0;			 // -> no more data, break out of main loop
 				break;
 			}
-			if (isChunked && !chunkRemaining && !skip(2, isStreaming)) // skip the \r\n for chunked encoding
-				toRead = 0;											   // -> no more data, break out of main loop
+			if (isChunked && !chunkRemaining && !skipRaw(2, isStreaming)) // skip the \r\n for chunked encoding
+				toRead = 0;												  // -> no more data, break out of main loop
 		}
 		if (isStreaming && !bufRemaining) { // stream with no buffer available, just yield the current chunk
 			break;
@@ -249,8 +250,10 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 	}
 	if (!isChunked && contentLength && !chunkRemaining)
 		isComplete = true;
+	this->bodyRead += read;
 	// BELL_LOG(debug, "http", "Read %d of %d bytes", bodyRead, contentLength);
-	dstStart[read] = '\0';
+	if (dst)
+		dstStart[read] = '\0';
 	return read;
 }
 
