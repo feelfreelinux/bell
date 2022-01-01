@@ -4,11 +4,15 @@ project(bell)
 
 # Configurable options
 option(BELL_DISABLE_CODECS "Disable libhelix AAC and MP3 codecs" OFF)
+option(BELL_DISABLE_SINKS "Disable built-in audio sink implementations" OFF)
+option(BELL_USE_ALSA "Enable ALSA sink" OFF)
+option(BELL_USE_PORTAUDIO "Enable PortAudio sink" OFF)
 set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, optional")
 set(BELL_EXTERNAL_TREMOR "" CACHE STRING "External tremor library target name, optional")
 
 # CMake options
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 add_definitions(-DUSE_DEFAULT_STDLIB=1)
 
 # Main library sources
@@ -67,6 +71,33 @@ else()
         set_source_files_properties(${LIBHELIX_AAC_SOURCES} PROPERTIES COMPILE_FLAGS -DESP_PLATFORM)
         set_source_files_properties(${LIBHELIX_MP3_SOURCES} PROPERTIES COMPILE_FLAGS -DESP_PLATFORM)
     endif()
+endif()
+
+if(NOT BELL_DISABLE_SINKS)
+    set(PLATFORM "unix")
+    if(ESP_PLATFORM)
+        set(PLATFORM "esp")
+    endif()
+    # Add all built-in audio sinks
+    file(GLOB SINK_SOURCES "src/sinks/${PLATFORM}/*.cpp" "src/sinks/${PLATFORM}/*.c")
+    # Find ALSA if required, else remove the sink
+    if(BELL_USE_ALSA)
+        find_package(ALSA REQUIRED)
+        list(APPEND EXTRA_INCLUDES ${ALSA_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${ALSA_LIBRARIES})
+    else()
+        list(REMOVE_ITEM SINK_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/sinks/unix/ALSAAudioSink.cpp)
+    endif()
+    # Find PortAudio if required, else remove the sink
+    if(BELL_USE_PORTAUDIO)
+        find_package(portaudio REQUIRED)
+        list(APPEND EXTRA_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
+    else()
+        list(REMOVE_ITEM SINK_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/sinks/unix/PortAudioSink.cpp)
+    endif()
+    list(APPEND SOURCES ${SINK_SOURCES})
+    list(APPEND EXTRA_INCLUDES "include/sinks/${PLATFORM}")
 endif()
 
 if(BELL_EXTERNAL_CJSON)
