@@ -71,8 +71,13 @@ SPDIFAudioSink::SPDIFAudioSink(uint8_t spdifPin)
     // initialize S/PDIF buffer
     spdif_buf_init();
     spdif_ptr = spdif_buf;
+	this->spdifPin = spdifPin;
+	this->initialize(44100);
+	startI2sFeed(SPDIF_BUF_SIZE * 16);
+}
 
-    int sample_rate = 44100 * 2;
+void SPDIFAudioSink::initialize(uint16_t sampleRate) {
+    int sample_rate = sampleRate * 2;
     int bclk = sample_rate * 64 * 2;
     int mclk = (I2S_BUG_MAGIC / bclk) * bclk;
 
@@ -97,12 +102,16 @@ SPDIFAudioSink::SPDIFAudioSink(uint8_t spdifPin)
     };
     i2s_driver_install((i2s_port_t)0, &i2s_config, 0, NULL);
     i2s_set_pin((i2s_port_t)0, &pin_config);
-
-    startI2sFeed(SPDIF_BUF_SIZE * 16);
 }
 
 SPDIFAudioSink::~SPDIFAudioSink()
 {
+}
+
+bool SPDIFAudioSink::setRate(uint16_t sampleRate) {
+	i2s_driver_uninstall((i2s_port_t)0);
+	this->initialize(sampleRate);
+	return true;
 }
 
 int num_frames = 0;

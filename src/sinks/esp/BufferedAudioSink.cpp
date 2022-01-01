@@ -39,3 +39,8 @@ void BufferedAudioSink::feedPCMFramesInternal(const void *pvItem, size_t xItemSi
 {
     xRingbufferSend(dataBuffer, pvItem, xItemSize, portMAX_DELAY);
 }
+
+bool BufferedAudioSink::setRate(uint16_t sampleRate) {
+	i2s_set_sample_rates((i2s_port_t)0, sampleRate);
+	return true;
+}

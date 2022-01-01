@@ -13,10 +13,14 @@
 
 class SPDIFAudioSink : public BufferedAudioSink
 {
+private:
+  	uint8_t spdifPin;
 public:
     explicit SPDIFAudioSink(uint8_t spdifPin);
     ~SPDIFAudioSink() override;
     void feedPCMFrames(const uint8_t *buffer, size_t bytes) override;
+	void initialize(uint16_t sampleRate);
+	bool setRate(uint16_t sampleRate) override;
 private:
 };
 

@@ -15,6 +15,7 @@ class BufferedAudioSink : public AudioSink
 {
 public:
     void feedPCMFrames(const uint8_t *buffer, size_t bytes);
+	bool setRate(uint16_t sampleRate) override;
 protected:
     void startI2sFeed(size_t buf_size = 4096 * 8);
     void feedPCMFramesInternal(const void *pvItem, size_t xItemSize);

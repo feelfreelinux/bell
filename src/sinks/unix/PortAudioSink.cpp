@@ -3,6 +3,10 @@
 PortAudioSink::PortAudioSink()
 {
     Pa_Initialize();
+	this->initialize(44100);
+}
+
+void PortAudioSink::initialize(uint16_t sampleRate) {
     PaStreamParameters outputParameters;
     outputParameters.device = Pa_GetDefaultOutputDevice();
     if (outputParameters.device == paNoDevice) {
@@ -20,7 +24,7 @@ PortAudioSink::PortAudioSink()
         &stream,
         NULL,
         &outputParameters,
-        44100,
+		sampleRate,
         4096 / 4,
         paClipOff,
         NULL, // blocking api
@@ -33,6 +37,14 @@ PortAudioSink::~PortAudioSink()
 {
     Pa_StopStream(stream);
     Pa_Terminate();
+}
+
+bool PortAudioSink::setRate(uint16_t sampleRate) {
+	if (Pa_GetStreamInfo(stream)->sampleRate != sampleRate) {
+		Pa_StopStream(stream);
+		this->initialize(sampleRate);
+	}
+	return true;
 }
 
 void PortAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes)
