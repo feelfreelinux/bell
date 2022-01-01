@@ -52,7 +52,6 @@ namespace bell
 			sprintf(portStr, "%u", port);
 			err = getaddrinfo(host.c_str(), portStr, &hints, &addr);
             if (err != 0) {
-                BELL_LOG(error, "http", "getaddrinfo(): %s", gai_strerror(err));
                 throw std::runtime_error("Resolve failed");
             }
 

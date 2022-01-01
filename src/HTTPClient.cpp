@@ -176,7 +176,7 @@ bool HTTPClient::HTTPResponse::skipRaw(size_t len, bool dontRead) {
 	bufRemaining -= len;
 	bufPtr += len;
 	if (!bufRemaining && !dontRead) { // don't read more data after a chunk's \r\n
-		if (isComplete || contentLength && bodyRead >= contentLength && !chunkRemaining) {
+		if (isComplete || (contentLength && bodyRead >= contentLength && !chunkRemaining)) {
 			isComplete = true;
 			return false;
 		}
