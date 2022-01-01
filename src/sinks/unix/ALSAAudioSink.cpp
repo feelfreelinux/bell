@@ -85,10 +85,10 @@ void ALSAAudioSink::runTask()
     }
 }
 
-void ALSAAudioSink::feedPCMFrames(std::vector<uint8_t> &data)
+void ALSAAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes)
 {
 
-    buff.insert(buff.end(), data.begin(), data.end());
+    buff.insert(buff.end(), buffer, buffer + bytes);
     while (buff.size() > this->buff_size)
     {
         auto ptr = std::make_unique<std::vector<uint8_t>>(this->buff.begin(), this->buff.begin() + this->buff_size);

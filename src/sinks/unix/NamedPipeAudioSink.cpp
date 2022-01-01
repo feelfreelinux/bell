@@ -13,9 +13,9 @@ NamedPipeAudioSink::~NamedPipeAudioSink()
     this->namedPipeFile.close();
 }
 
-void NamedPipeAudioSink::feedPCMFrames(std::vector<uint8_t> &data)
+void NamedPipeAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes)
 {
     // Write the actual data
-    this->namedPipeFile.write((char *)&data[0], data.size());
+    this->namedPipeFile.write((char*)buffer, (long)bytes);
     this->namedPipeFile.flush();
 }

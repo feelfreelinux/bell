@@ -9,7 +9,7 @@ class NamedPipeAudioSink : public AudioSink
 public:
     NamedPipeAudioSink();
     ~NamedPipeAudioSink();
-    void feedPCMFrames(std::vector<uint8_t> &data);
+    void feedPCMFrames(const uint8_t *buffer, size_t bytes);
     
 private:
     std::ofstream namedPipeFile;

@@ -9,7 +9,7 @@ class AudioSink
   public:
 	AudioSink() {}
 	virtual ~AudioSink() {}
-	virtual void feedPCMFrames(std::vector<uint8_t> &data) = 0;
+	virtual void feedPCMFrames(const uint8_t *buffer, size_t bytes) = 0;
 	virtual void volumeChanged(uint16_t volume) {}
 	bool softwareVolumeControl = true;
 	bool usign = false;

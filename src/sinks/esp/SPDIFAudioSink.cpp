@@ -107,9 +107,9 @@ SPDIFAudioSink::~SPDIFAudioSink()
 
 int num_frames = 0;
 
-void SPDIFAudioSink::feedPCMFrames(std::vector<uint8_t> &data)
+void SPDIFAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes)
 {
-    for (int i = 0; i < data.size(); i += 2)
+    for (int i = 0; i < bytes; i += 2)
     {
         /**
          * What is this, and why does it work?
@@ -160,8 +160,8 @@ void SPDIFAudioSink::feedPCMFrames(std::vector<uint8_t> &data)
          * I did not come up with this, all credit goes to
          * github.com/amedes/esp_a2dp_sink_spdif
          */
-        uint32_t lo = ((uint32_t)(bmc_convert[data[i]]) << 16);
-        uint32_t hi = (uint32_t)((int16_t)bmc_convert[data[i+1]]);
+        uint32_t lo = ((uint32_t)(bmc_convert[buffer[i]]) << 16);
+        uint32_t hi = (uint32_t)((int16_t)bmc_convert[buffer[i+1]]);
 
         *(spdif_ptr + 1) = ((lo ^ hi) << 1) >> 1;
 

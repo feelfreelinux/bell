@@ -14,7 +14,7 @@
 class BufferedAudioSink : public AudioSink
 {
 public:
-    void feedPCMFrames(std::vector<uint8_t> &data);
+    void feedPCMFrames(const uint8_t *buffer, size_t bytes);
 protected:
     void startI2sFeed(size_t buf_size = 4096 * 8);
     void feedPCMFramesInternal(const void *pvItem, size_t xItemSize);

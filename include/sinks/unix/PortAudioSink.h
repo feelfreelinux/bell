@@ -11,7 +11,7 @@ class PortAudioSink : public AudioSink
 public:
     PortAudioSink();
     ~PortAudioSink();
-    void feedPCMFrames(std::vector<uint8_t> &data);
+    void feedPCMFrames(const uint8_t *buffer, size_t bytes);
     
 private:
     PaStream *stream;

@@ -30,9 +30,9 @@ void BufferedAudioSink::startI2sFeed(size_t buf_size)
     xTaskCreatePinnedToCore(&i2sFeed, "i2sFeed", 4096, NULL, 10, NULL, tskNO_AFFINITY);
 }
 
-void BufferedAudioSink::feedPCMFrames(std::vector<uint8_t> &data)
+void BufferedAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes)
 {
-    feedPCMFramesInternal(&data[0], data.size());
+    feedPCMFramesInternal(buffer, bytes);
 }
 
 void BufferedAudioSink::feedPCMFramesInternal(const void *pvItem, size_t xItemSize)

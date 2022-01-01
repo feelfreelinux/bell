@@ -16,7 +16,7 @@ class SPDIFAudioSink : public BufferedAudioSink
 public:
     explicit SPDIFAudioSink(uint8_t spdifPin);
     ~SPDIFAudioSink() override;
-    void feedPCMFrames(std::vector<uint8_t> &data) override;
+    void feedPCMFrames(const uint8_t *buffer, size_t bytes) override;
 private:
 };
 
