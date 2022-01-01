@@ -94,7 +94,7 @@ function(bell_add_proto src) # Add .proto files or globs to the sources list
     set(PROTO_SOURCES ${PROTO_SOURCES} ${PROTO_SRCS} CACHE INTERNAL "")
 endfunction()
 function(bell_build_proto) # Configure "proto" build target with previously gathered sources
-    add_subdirectory(${PROTO_DIR})
+    add_subdirectory(${PROTO_WORKDIR})
     set(EXTRA_LIBS ${EXTRA_LIBS} proto PARENT_SCOPE)
 endfunction()
 
