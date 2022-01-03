@@ -5,6 +5,6 @@
 [submodule "cJSON"]
 	path = cJSON
 	url = https://github.com/DaveGamble/cJSON
-[submodule "proto/cpp-reflection"]
-	path = proto/cpp-reflection
-	url = https://github.com/alufers/cpp-reflection
+[submodule "nanopb"]
+	path = nanopb
+	url = https://github.com/nanopb/nanopb

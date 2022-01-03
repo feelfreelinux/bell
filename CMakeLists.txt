@@ -10,13 +10,20 @@ option(BELL_USE_PORTAUDIO "Enable PortAudio sink" OFF)
 set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, optional")
 set(BELL_EXTERNAL_TREMOR "" CACHE STRING "External tremor library target name, optional")
 
+add_definitions(-DPB_ENABLE_MALLOC)
+
+# Include nanoPB library
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/nanopb/extra)
+find_package(Nanopb REQUIRED)
+include_directories(${NANOPB_INCLUDE_DIRS})
+
 # CMake options
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 add_definitions(-DUSE_DEFAULT_STDLIB=1)
 
 # Main library sources
-file(GLOB SOURCES "src/*.cpp" "src/*.c")
+file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c")
 
 # Add platform specific sources
 if(ESP_PLATFORM)
@@ -130,6 +137,8 @@ function(bell_build_proto) # Configure "proto" build target with previously gath
 endfunction()
 
 add_library(bell STATIC ${SOURCES})
+
+message(${NANOPB_INCLUDE_DIRS})
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
 target_include_directories(bell PUBLIC "include" ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
