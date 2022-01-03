@@ -123,19 +123,6 @@ else()
     list(APPEND SOURCES ${TREMOR_SOURCES})
 endif()
 
-# Protobuf building helper functions
-set(PROTO_SOURCES "" CACHE INTERNAL "")
-set(PROTO_WORKDIR ${CMAKE_CURRENT_SOURCE_DIR}/proto CACHE INTERNAL "")
-set(PROTO_BINDIR ${CMAKE_CURRENT_BINARY_DIR}/proto CACHE INTERNAL "")
-function(bell_add_proto src) # Add .proto files or globs to the sources list
-    file(GLOB PROTO_SRCS ${src})
-    set(PROTO_SOURCES ${PROTO_SOURCES} ${PROTO_SRCS} CACHE INTERNAL "")
-endfunction()
-function(bell_build_proto) # Configure "proto" build target with previously gathered sources
-    add_subdirectory(${PROTO_WORKDIR})
-    set(EXTRA_LIBS ${EXTRA_LIBS} proto PARENT_SCOPE)
-endfunction()
-
 add_library(bell STATIC ${SOURCES})
 
 message(${NANOPB_INCLUDE_DIRS})
