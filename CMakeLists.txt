@@ -14,7 +14,7 @@ set(BELL_EXTERNAL_TREMOR "" CACHE STRING "External tremor library target name, o
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/nanopb/extra)
 add_definitions(-DPB_ENABLE_MALLOC)
 find_package(Nanopb REQUIRED)
-include_directories(${NANOPB_INCLUDE_DIRS})
+list(APPEND EXTRA_INCLUDES ${NANOPB_INCLUDE_DIRS})
 
 # CMake options
 set(CMAKE_CXX_STANDARD 17)
