@@ -151,7 +151,7 @@ void HTTPClient::HTTPResponse::readHeaders() {
 				this->isRedirect = true;
 				this->location = std::string(header);
 			} else {
-				auto *colonPtr = strchr(header, ':');
+				char *colonPtr = (char*) strchr(header, ':');
 				if (colonPtr) {
 					auto *valuePtr = colonPtr + 1;
 					while (*valuePtr == ' ')
