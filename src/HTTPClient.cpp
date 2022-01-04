@@ -233,6 +233,7 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 				dst += count; // move the dst pointer
 			}
 			read += count;			 // increment read counter
+			bodyRead += count;		 // increment total response size
 			chunkRemaining -= count; // decrease chunk remaining size
 			toRead -= count;		 // decrease local remaining size
 			if (!skipRaw(count)) {	 // eat some buffer
@@ -248,7 +249,6 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 	}
 	if (!isChunked && contentLength && !chunkRemaining)
 		isComplete = true;
-	this->bodyRead += read;
 	// BELL_LOG(debug, "http", "Read %d of %d bytes", bodyRead, contentLength);
 	return read;
 }
