@@ -15,7 +15,7 @@ namespace bell
         /// Queue
         std::queue<dataType> m_queue;
         /// Mutex to controll multiple access
-        std::mutex m_mutex;
+        mutable std::mutex m_mutex;
         /// Conditional variable used to fire event
         std::condition_variable m_cv;
         /// Atomic variable used to terminate immediately wpop and wtpop functions

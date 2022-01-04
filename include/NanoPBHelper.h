@@ -41,6 +41,4 @@ void pbDecode(T &result, const pb_msgdesc_t *fields, std::vector<uint8_t> &data)
     }
 }
 
-void pbFree(const pb_msgdesc_t *fields, void *src_struct);
-
 #endif
