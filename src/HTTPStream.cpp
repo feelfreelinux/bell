@@ -155,6 +155,7 @@ size_t bell::HTTPStream::read(uint8_t *buf, size_t nbytes)
     if (status != StreamStatus::READING_DATA)
     {
         BELL_LOG(error, "http", "Not ready to read data");
+        exit(0);
         return 0;
     }
 

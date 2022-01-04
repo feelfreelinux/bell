@@ -37,10 +37,6 @@ void packString(char *&dst, std::string stringToPack)
     strcpy(dst, stringToPack.c_str());
 }
 
-void pbFree(const pb_msgdesc_t *fields, void *src_struct) {
-    pb_release(fields, src_struct);
-}
-
 pb_bytes_array_t* vectorToPbArray(const std::vector<uint8_t>& vectorToPack)
 {
     auto size = static_cast<pb_size_t>(vectorToPack.size());
