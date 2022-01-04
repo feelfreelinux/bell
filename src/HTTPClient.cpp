@@ -45,9 +45,9 @@ void HTTPClient::executeImpl(const struct HTTPRequest &request, const char *url,
 	stream << path << " HTTP/1.1" << endl;
 	stream << "Host: " << hostnameStr << ":" << port << endl;
 	stream << "Accept: */*" << endl;
-	if (!request.body.empty()) {
+	if (request.body != nullptr) {
 		stream << "Content-Type: " << request.contentType << endl;
-		stream << "Content-Length: " << request.body.size() << endl;
+		stream << "Content-Length: " << strlen(request.body) << endl;
 	}
 	for (const auto &header : request.headers) {
 		stream << header.first << ": " << header.second << endl;

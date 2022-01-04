@@ -22,9 +22,9 @@ class HTTPClient {
 	struct HTTPRequest {
 		HTTPMethod method = HTTPMethod::GET;
 		std::string url;
-		std::string body;
+		const char *body = nullptr;
+		const char *contentType = nullptr;
 		std::map<std::string, std::string> headers;
-		std::string contentType;
 		int maxRedirects = -1;
 	};
 
