@@ -83,8 +83,6 @@ namespace bell
         {
             std::string basenameStr(filename.substr(filename.rfind("/") + 1));
             unsigned long hash = 5381;
-            int c;
-
             for (char const &c : basenameStr)
             {
                 hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
