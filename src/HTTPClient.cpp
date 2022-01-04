@@ -240,15 +240,19 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 				toRead = 0;			 // -> no more data, break out of main loop
 				break;
 			}
-			if (isChunked && !chunkRemaining && !skipRaw(2, isStreaming)) // skip the \r\n for chunked encoding
-				toRead = 0;												  // -> no more data, break out of main loop
+			if (isChunked && !chunkRemaining) { // bufPtr is on the end of chunk
+				if (!skipRaw(2, isStreaming))	// skip the \r\n for chunked encoding
+					toRead = 0;					// -> no more data, break out of main loop
+				if (bufRemaining > 1 && bufPtr[0] == '0' && bufPtr[1] == '\r') // this is the last chunk
+					isComplete = true;
+			}
 		}
 		if (isStreaming && !bufRemaining) { // stream with no buffer available, just yield the current chunk
 			break;
 		}
 	}
 	if (!isChunked && contentLength && !chunkRemaining)
-		isComplete = true;
+		isComplete = true; // entire response was read
 	// BELL_LOG(debug, "http", "Read %d of %d bytes", bodyRead, contentLength);
 	return read;
 }
