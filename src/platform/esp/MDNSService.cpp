@@ -29,7 +29,7 @@ void MDNSService::registerService(
         serviceType.c_str(), /* service_type */
         serviceProto.c_str(), /* proto */
         servicePort, /* port */
-        txtItems.first(), /* txt */
+        txtItems.data(), /* txt */
         txtItems.size() /* num_items */
     );
 }
