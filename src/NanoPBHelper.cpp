@@ -63,7 +63,7 @@ const char *pb_encode_to_string(const pb_msgdesc_t *fields, const void *data) {
 
 static bool pb_read_from_http(pb_istream_t *stream, pb_byte_t *buf, size_t count) {
 	auto *response = (bell::HTTPClient::HTTPResponse *)stream->state;
-	size_t len = response->read(buf, count);
+	size_t len = response->read(buf, count, /* wait */ true);
 	if (response->isComplete)
 		stream->bytes_left = count; // count is subtracted after the callback
 	return len == count;

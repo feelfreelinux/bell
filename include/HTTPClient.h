@@ -55,7 +55,7 @@ class HTTPClient {
 		}
 
 		void readHeaders();
-		size_t read(char *dst, size_t len);
+		size_t read(char *dst, size_t len, bool wait = false);
 		std::string readToString();
 
 		inline size_t skip(size_t len) override {
@@ -63,6 +63,9 @@ class HTTPClient {
 		}
 		inline size_t read(uint8_t *dst, size_t len) override {
 			return read((char *)dst, len);
+		}
+		inline size_t read(uint8_t *dst, size_t len, bool wait) {
+			return read((char *)dst, len, wait);
 		}
 		inline size_t size() override {
 			return contentLength;

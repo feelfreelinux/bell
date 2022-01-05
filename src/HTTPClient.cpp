@@ -168,7 +168,7 @@ void HTTPClient::HTTPResponse::readHeaders() {
 			lineBuf.clear();
 			line = lineEnd + 2; // skip \r\n
 		} while (true);
-	} while (!complete);
+	} while (!complete && len); // if len == 0, the connection is closed
 }
 
 bool HTTPClient::HTTPResponse::skipRaw(size_t len, bool dontRead) {
@@ -186,7 +186,7 @@ bool HTTPClient::HTTPResponse::skipRaw(size_t len, bool dontRead) {
 		}
 		bufRemaining = this->readRaw(this->buf);
 		if (!bufRemaining)
-			return false; // no more data - shouldn't happen for valid responses
+			return false; // if len == 0, the connection is closed
 		bufPtr = this->buf + skip;
 		bufRemaining -= skip;
 		if (!contentLength && bufRemaining < BUF_SIZE) {
@@ -197,7 +197,7 @@ bool HTTPClient::HTTPResponse::skipRaw(size_t len, bool dontRead) {
 	return true;
 }
 
-size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
+size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead, bool wait) {
 	if (isComplete) {
 		// end of chunked stream was found OR complete body was read
 		return 0;
@@ -251,7 +251,7 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 					isComplete = true;
 			}
 		}
-		if (isStreaming && !bufRemaining) { // stream with no buffer available, just yield the current chunk
+		if (isStreaming && !bufRemaining && !wait) { // stream with no buffer available, just yield the current chunk
 			break;
 		}
 	}
