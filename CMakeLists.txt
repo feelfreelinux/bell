@@ -97,4 +97,4 @@ add_library(bell STATIC ${SOURCES})
 message(${NANOPB_INCLUDE_DIRS})
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
-target_include_directories(bell PUBLIC "include" ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(bell PUBLIC "include" "include/platform" ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
