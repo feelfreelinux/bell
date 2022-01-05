@@ -26,6 +26,8 @@ class HTTPClient {
 		const char *contentType = nullptr;
 		std::map<std::string, std::string> headers;
 		int maxRedirects = -1;
+		std::ostream *dumpFs = nullptr;
+		std::ostream *dumpRawFs = nullptr;
 	};
 
 	struct HTTPResponse : public ByteStream {
@@ -42,6 +44,8 @@ class HTTPClient {
 		bool isComplete = false;
 		bool isRedirect = false;
 		size_t redirectCount = 0;
+		std::ostream *dumpFs = nullptr;
+		std::ostream *dumpRawFs = nullptr;
 
 		void close() override {
 			socket->close();

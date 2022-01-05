@@ -7,6 +7,8 @@ using namespace bell;
 
 struct HTTPClient::HTTPResponse *HTTPClient::execute(const struct HTTPRequest &request) {
 	auto *response = new HTTPResponse();
+	response->dumpFs = request.dumpFs;
+	response->dumpRawFs = request.dumpRawFs;
 	auto *url = request.url.c_str();
 	HTTPClient::executeImpl(request, url, response);
 	return response;
@@ -87,6 +89,8 @@ bool HTTPClient::readHeader(const char *&header, const char *name) {
 
 size_t HTTPClient::HTTPResponse::readRaw(char *dst) {
 	size_t len = this->socket->read((uint8_t *)dst, BUF_SIZE);
+	if (dumpRawFs)
+		dumpRawFs->write(dst, (long)len);
 	//	BELL_LOG(debug, "http", "Read %d bytes", len);
 	dst[len] = '\0';
 	return len;
@@ -253,6 +257,8 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead) {
 	}
 	if (!isChunked && contentLength && !chunkRemaining)
 		isComplete = true; // entire response was read
+	if (dumpFs && dstStart)
+		dumpFs->write(dstStart, (long)read);
 	// BELL_LOG(debug, "http", "Read %d of %d bytes", bodyRead, contentLength);
 	return read;
 }
