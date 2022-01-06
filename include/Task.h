@@ -10,6 +10,7 @@
 #endif
 
 #include <pthread.h>
+#include <string>
 
 namespace bell
 {
