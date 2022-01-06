@@ -4,18 +4,20 @@ project(bell)
 
 # Configurable options
 option(BELL_DISABLE_CODECS "Disable libhelix AAC and MP3 codecs" OFF)
+option(BELL_DISABLE_SINKS "Disable built-in audio sink implementations" OFF)
+option(BELL_USE_ALSA "Enable ALSA sink" OFF)
+option(BELL_USE_PORTAUDIO "Enable PortAudio sink" OFF)
 set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, optional")
 set(BELL_EXTERNAL_TREMOR "" CACHE STRING "External tremor library target name, optional")
-
-add_definitions(-DPB_ENABLE_MALLOC)
 
 # Include nanoPB library
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/nanopb/extra)
 find_package(Nanopb REQUIRED)
-include_directories(${NANOPB_INCLUDE_DIRS})
+list(APPEND EXTRA_INCLUDES ${NANOPB_INCLUDE_DIRS})
 
 # CMake options
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 add_definitions(-DUSE_DEFAULT_STDLIB=1)
 
 # Main library sources
@@ -76,6 +78,33 @@ else()
     endif()
 endif()
 
+if(NOT BELL_DISABLE_SINKS)
+    set(PLATFORM "unix")
+    if(ESP_PLATFORM)
+        set(PLATFORM "esp")
+    endif()
+    # Add all built-in audio sinks
+    file(GLOB SINK_SOURCES "src/sinks/${PLATFORM}/*.cpp" "src/sinks/${PLATFORM}/*.c")
+    # Find ALSA if required, else remove the sink
+    if(BELL_USE_ALSA)
+        find_package(ALSA REQUIRED)
+        list(APPEND EXTRA_INCLUDES ${ALSA_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${ALSA_LIBRARIES})
+    else()
+        list(REMOVE_ITEM SINK_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/sinks/unix/ALSAAudioSink.cpp)
+    endif()
+    # Find PortAudio if required, else remove the sink
+    if(BELL_USE_PORTAUDIO)
+        find_package(portaudio REQUIRED)
+        list(APPEND EXTRA_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
+    else()
+        list(REMOVE_ITEM SINK_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/sinks/unix/PortAudioSink.cpp)
+    endif()
+    list(APPEND SOURCES ${SINK_SOURCES})
+    list(APPEND EXTRA_INCLUDES "include/sinks/${PLATFORM}")
+endif()
+
 if(BELL_EXTERNAL_CJSON)
     list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_CJSON})
 else()
@@ -93,8 +122,7 @@ else()
 endif()
 
 add_library(bell STATIC ${SOURCES})
-
-message(${NANOPB_INCLUDE_DIRS})
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
 target_include_directories(bell PUBLIC "include" "include/platform" ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC)

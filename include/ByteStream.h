@@ -1,7 +1,8 @@
 #ifndef BELL_BYTE_READER_H
 #define BELL_BYTE_READER_H
 
-#include "stdlib.h"
+#include <stdlib.h>
+#include <stdint.h>
 
 /**
  * A class for reading bytes from a stream. Further implemented in HTTPStream.h

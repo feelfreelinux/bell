@@ -46,7 +46,7 @@ namespace bell
             hints.ai_protocol = IPPROTO_IP; // no enum : possible value can be read in /etc/protocols
             hints.ai_flags = AI_CANONNAME | AI_ALL | AI_ADDRCONFIG;
 
-            BELL_LOG(info, "http", "%s %d", host.c_str(), port);
+            // BELL_LOG(info, "http", "%s %d", host.c_str(), port);
 
             char portStr[6];
 			sprintf(portStr, "%u", port);
