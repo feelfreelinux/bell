@@ -7,13 +7,15 @@ using namespace bell;
 
 void HTTPClient::HTTPResponse::close() {
 	socket = nullptr;
-	free(buf);
+	if (buf)
+		free(buf);
 	buf = nullptr;
 	bufPtr = nullptr;
 }
 HTTPClient::HTTPResponse::~HTTPResponse() {
 	socket = nullptr;
-	free(buf);
+	if (buf)
+		free(buf);
 }
 
 HTTPResponse_t HTTPClient::execute(const struct HTTPRequest &request) {
