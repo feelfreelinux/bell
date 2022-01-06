@@ -12,7 +12,6 @@ set(BELL_EXTERNAL_TREMOR "" CACHE STRING "External tremor library target name, o
 
 # Include nanoPB library
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/nanopb/extra)
-add_definitions(-DPB_ENABLE_MALLOC)
 find_package(Nanopb REQUIRED)
 list(APPEND EXTRA_INCLUDES ${NANOPB_INCLUDE_DIRS})
 
@@ -126,3 +125,4 @@ add_library(bell STATIC ${SOURCES})
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
 target_include_directories(bell PUBLIC "include" "include/platform" ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC)

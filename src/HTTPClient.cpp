@@ -5,16 +5,29 @@
 
 using namespace bell;
 
-struct HTTPClient::HTTPResponse *HTTPClient::execute(const struct HTTPRequest &request) {
-	auto *response = new HTTPResponse();
-	response->dumpFs = request.dumpFs;
-	response->dumpRawFs = request.dumpRawFs;
-	auto *url = request.url.c_str();
-	HTTPClient::executeImpl(request, url, response);
-	return response;
+void HTTPClient::HTTPResponse::close() {
+	socket = nullptr;
+	free(buf);
+	buf = nullptr;
+	bufPtr = nullptr;
+}
+HTTPClient::HTTPResponse::~HTTPResponse() {
+	socket = nullptr;
+	free(buf);
 }
 
-void HTTPClient::executeImpl(const struct HTTPRequest &request, const char *url, struct HTTPResponse *&response) {
+HTTPResponse_t HTTPClient::execute(const struct HTTPRequest &request) {
+	auto response = std::make_unique<HTTPResponse>();
+	response->dumpFs = request.dumpFs;
+	response->dumpRawFs = request.dumpRawFs;
+	return HTTPClient::executeImpl(request, std::move(response));
+}
+
+HTTPResponse_t HTTPClient::executeImpl(const struct HTTPRequest &request, HTTPResponse_t response) {
+	const char *url = request.url.c_str();
+	if (response->isRedirect) {
+		url = response->location.c_str();
+	}
 	bool https = url[4] == 's';
 	uint16_t port = https ? 443 : 80;
 	auto *hostname = url + (https ? 8 : 7);
@@ -62,9 +75,7 @@ void HTTPClient::executeImpl(const struct HTTPRequest &request, const char *url,
 	if (len != data.size()) {
 		response->close();
 		BELL_LOG(error, "http", "Writing failed: wrote %d of %d bytes", len, data.size());
-		free(response);
-		response = nullptr;
-		return;
+		return nullptr;
 	}
 
 	response->readHeaders();
@@ -72,8 +83,9 @@ void HTTPClient::executeImpl(const struct HTTPRequest &request, const char *url,
 	if (response->isRedirect && (request.maxRedirects < 0 || response->redirectCount < request.maxRedirects)) {
 		response->redirectCount++;
 		response->close(); // close the previous socket
-		HTTPClient::executeImpl(request, response->location.c_str(), response);
+		return HTTPClient::executeImpl(request, std::move(response));
 	}
+	return response;
 }
 
 bool HTTPClient::readHeader(const char *&header, const char *name) {

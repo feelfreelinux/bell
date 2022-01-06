@@ -47,12 +47,8 @@ class HTTPClient {
 		std::ostream *dumpFs = nullptr;
 		std::ostream *dumpRawFs = nullptr;
 
-		void close() override {
-			socket->close();
-			free(buf);
-			buf = nullptr;
-			bufPtr = nullptr;
-		}
+		~HTTPResponse();
+		void close() override;
 
 		void readHeaders();
 		size_t read(char *dst, size_t len, bool wait = false);
@@ -85,13 +81,16 @@ class HTTPClient {
 		bool skipRaw(size_t len, bool dontRead = false);
 	};
 
+	typedef std::unique_ptr<struct HTTPClient::HTTPResponse> HTTPResponse_t;
+
   private:
-	static void executeImpl(const struct HTTPRequest &request, const char *url, struct HTTPResponse *&response);
+	static HTTPResponse_t executeImpl(const struct HTTPRequest &request, HTTPResponse_t response);
 	static bool readHeader(const char *&header, const char *name);
 
   public:
-	static struct HTTPResponse *execute(const struct HTTPRequest &request);
+	static HTTPResponse_t execute(const struct HTTPRequest &request);
 };
+typedef std::unique_ptr<struct HTTPClient::HTTPResponse> HTTPResponse_t;
 } // namespace bell
 
 #endif
