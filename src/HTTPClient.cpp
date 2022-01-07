@@ -103,6 +103,9 @@ bool HTTPClient::readHeader(const char *&header, const char *name) {
 
 size_t HTTPClient::HTTPResponse::readRaw(char *dst) {
 	size_t len = this->socket->read((uint8_t *)dst, BUF_SIZE);
+	if (len == 0 || len == -1) {
+		isComplete = true;
+	}
 	if (dumpRawFs)
 		dumpRawFs->write(dst, (long)len);
 	//	BELL_LOG(debug, "http", "Read %d bytes", len);
