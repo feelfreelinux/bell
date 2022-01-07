@@ -83,7 +83,7 @@ void SPDIFAudioSink::initialize(uint16_t sampleRate) {
 
     i2s_config_t i2s_config = {
         .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-    	.sample_rate = sample_rate,
+    	.sample_rate = (uint32_t) sample_rate,
         .bits_per_sample = (i2s_bits_per_sample_t)32,
         .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
         .communication_format = I2S_COMM_FORMAT_STAND_I2S,
