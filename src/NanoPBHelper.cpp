@@ -50,3 +50,33 @@ pb_bytes_array_t* vectorToPbArray(const std::vector<uint8_t>& vectorToPack)
 std::vector<uint8_t> pbArrayToVector(pb_bytes_array_t* pbArray) {
     return std::vector<uint8_t>(pbArray->bytes, pbArray->bytes + pbArray->size);
 }
+
+const char *pb_encode_to_string(const pb_msgdesc_t *fields, const void *data) {
+	size_t len;
+	pb_get_encoded_size(&len, fields, data);
+	auto *buf = static_cast<uint8_t *>(malloc(len + 1));
+	auto ostream = pb_ostream_from_buffer(buf, len);
+	pb_encode(&ostream, fields, data);
+	buf[len] = '\0';
+	return reinterpret_cast<const char *>(buf);
+}
+
+static bool pb_read_from_http(pb_istream_t *stream, pb_byte_t *buf, size_t count) {
+	auto *response = (bell::HTTPClient::HTTPResponse *)stream->state;
+	size_t len = response->read(buf, count, /* wait */ true);
+	if (response->isComplete)
+		stream->bytes_left = count; // count is subtracted after the callback
+	return len == count;
+}
+
+pb_istream_t pb_istream_from_http(bell::HTTPClient::HTTPResponse *response, size_t length) {
+	if (!length)
+		length = response->contentLength;
+	if (!length)
+		length = SIZE_MAX;
+	return {
+		.callback = &pb_read_from_http,
+		.state = response,
+		.bytes_left = length,
+	};
+}

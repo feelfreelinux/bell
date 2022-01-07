@@ -1,4 +1,4 @@
-#include "MDNSService.h"
+#include "platform/MDNSService.h"
 
 /**
  * Linux implementation of MDNSService using avahi.
