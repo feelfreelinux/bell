@@ -15,13 +15,13 @@ std::string generateRandomUUID();
 #include <freertos/FreeRTOS.h>
 
 #define BELL_SLEEP_MS(ms) vTaskDelay(ms / portTICK_PERIOD_MS)
-#define BELL_YIELD() vTaskYield()
+#define BELL_YIELD() taskYIELD()
 
 #else
 #include <unistd.h>
 
 #define BELL_SLEEP_MS(ms) usleep(ms * 1000)
-#define BELL_YIELD() ()
+#define BELL_YIELD() ;
 
 #endif
 #endif
