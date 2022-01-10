@@ -42,6 +42,10 @@ void pbDecode(T &result, const pb_msgdesc_t *fields, std::vector<uint8_t> &data)
     }
 }
 
+void pbPutString(const std::string &stringToPack, char* dst);
+void pbPutCharArray(const char * stringToPack, char* dst);
+void pbPutBytes(const std::vector<uint8_t> &data, pb_bytes_array_t &dst);
+
 const char* pb_encode_to_string(const pb_msgdesc_t *fields, const void *data);
 pb_istream_t pb_istream_from_http(bell::HTTPClient::HTTPResponse *response, size_t length = 0);
 

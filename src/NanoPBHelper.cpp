@@ -47,6 +47,22 @@ pb_bytes_array_t* vectorToPbArray(const std::vector<uint8_t>& vectorToPack)
     return result;
 }
 
+void pbPutString(const std::string &stringToPack, char* dst) {
+    stringToPack.copy(dst, stringToPack.size());
+    dst[stringToPack.size()] = '\0';
+}
+
+void pbPutCharArray(const char * stringToPack, char* dst) {
+    // copy stringToPack into dst
+    strcpy(dst, stringToPack);
+    //dst[sizeof(stringToPack)-1] = '\0';
+}
+
+void pbPutBytes(const std::vector<uint8_t> &data, pb_bytes_array_t &dst) {
+    dst.size = data.size();
+    std::copy(data.begin(), data.end(), dst.bytes);
+}
+
 std::vector<uint8_t> pbArrayToVector(pb_bytes_array_t* pbArray) {
     return std::vector<uint8_t>(pbArray->bytes, pbArray->bytes + pbArray->size);
 }
