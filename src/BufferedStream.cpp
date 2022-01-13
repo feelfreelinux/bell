@@ -24,17 +24,16 @@ BufferedStream::BufferedStream(
 }
 
 BufferedStream::~BufferedStream() {
-	this->terminate = true;
-	this->source->close();
-	const std::lock_guard lock(runningMutex);
-	this->source = nullptr;
+	this->close();
 	free(buf);
 }
 
 void BufferedStream::close() {
 	this->terminate = true;
-	this->source->close();
+	this->readSem.give(); // force a read operation
 	const std::lock_guard lock(runningMutex);
+	if (this->source)
+		this->source->close();
 	this->source = nullptr;
 }
 
@@ -49,19 +48,22 @@ void BufferedStream::reset() {
 
 bool BufferedStream::open(const std::shared_ptr<bell::ByteStream> &stream) {
 	if (this->running)
-		return false;
-	this->source = stream;
+		this->close();
 	reset();
+	this->source = stream;
 	startTask();
-	return true;
+	return source.get();
 }
 
 bool BufferedStream::open(const StreamReader &newReader, size_t initialOffset) {
 	if (this->running)
-		return false;
+		this->close();
+	reset();
 	this->reader = newReader;
+	this->source = newReader(initialOffset);
 	this->bufferTotal = initialOffset;
-	return this->open(this->reader(initialOffset));
+	startTask();
+	return source.get();
 }
 
 bool BufferedStream::isReady() const {
@@ -134,6 +136,8 @@ void BufferedStream::runTask() {
 			// buffer ready, wait for any read operations
 			this->readSem.wait();
 		}
+		if (terminate)
+			break;
 		if (readAvailable > readAt)
 			continue;
 		// here, the buffer needs re-filling

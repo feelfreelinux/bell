@@ -13,9 +13,7 @@ void HTTPClient::HTTPResponse::close() {
 	bufPtr = nullptr;
 }
 HTTPClient::HTTPResponse::~HTTPResponse() {
-	socket = nullptr;
-	if (buf)
-		free(buf);
+	this->close();
 }
 
 HTTPResponse_t HTTPClient::execute(const struct HTTPRequest &request) {
