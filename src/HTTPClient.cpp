@@ -287,7 +287,7 @@ std::string HTTPClient::HTTPResponse::readToString() {
 		return result;
 	}
 	std::string result;
-	char buffer[BUF_SIZE];
+        char buffer[BUF_SIZE+1]; // make space for null-terminator
 	size_t len;
 	do {
 		len = this->read(buffer, BUF_SIZE);
