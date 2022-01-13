@@ -102,6 +102,8 @@ bool HTTPClient::readHeader(const char *&header, const char *name) {
 }
 
 size_t HTTPClient::HTTPResponse::readRaw(char *dst) {
+	if (!this->socket)
+		return 0; // socket is already closed, I guess
 	size_t len = this->socket->read((uint8_t *)dst, BUF_SIZE);
 	if (len == 0 || len == -1) {
 		isComplete = true;

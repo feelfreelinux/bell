@@ -6,6 +6,7 @@
 #include "Task.h"
 #include "WrappedSemaphore.h"
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <mutex>
 
@@ -22,10 +23,15 @@
  *
  * If the actual reading code can't be modified, waitForReady allows to wait for buffer readiness
  * during reading. Keep in mind that using the semaphore is probably more resource effective.
- * In this case, endWithSource should be enabled, otherwise the read() will block forever when
- * the source stream ends.
+ *
+ * The source stream (passed to open() or returned by the reader) should implement the read()
+ * method correctly, such as that 0 is returned if, and only if the stream ends.
  */
 class BufferedStream : public bell::ByteStream, bell::Task {
+  public:
+	typedef std::shared_ptr<bell::ByteStream> StreamPtr;
+	typedef std::function<StreamPtr(size_t rangeStart)> StreamReader;
+
   public:
 	/**
 	 * @param taskName name to use for the reading task
@@ -44,14 +50,23 @@ class BufferedStream : public bell::ByteStream, bell::Task {
 		size_t readSize,
 		size_t readyThreshold,
 		size_t notReadyThreshold,
-		bool waitForReady = false,
-		bool endWithSource = false);
+		bool waitForReady = false);
 	~BufferedStream() override;
-	bool open(const std::shared_ptr<bell::ByteStream> &stream);
+	bool open(const StreamPtr &stream);
+	bool open(const StreamReader &newReader, size_t initialOffset = 0);
 	void close() override;
 
 	// inherited methods
   public:
+	/**
+	 * Read len bytes from the buffer to dst. If waitForReady is enabled
+	 * and readAvailable is lower than notReadyThreshold, the function
+	 * will block until readyThreshold bytes is available.
+	 *
+	 * @returns number of bytes copied to dst (might be lower than len,
+	 * if the buffer does not contain len bytes available), or 0 if the source
+	 * stream is already closed and there is no reader attached.
+	 */
 	size_t read(uint8_t *dst, size_t len) override;
 	size_t skip(size_t len) override;
 	size_t position() override;
@@ -63,6 +78,10 @@ class BufferedStream : public bell::ByteStream, bell::Task {
 	 * Total amount of bytes served to read().
 	 */
 	size_t readTotal;
+	/**
+	 * Total amount of bytes read from source.
+	 */
+	size_t bufferTotal;
 	/**
 	 * Amount of bytes available to read from the buffer.
 	 */
@@ -85,6 +104,7 @@ class BufferedStream : public bell::ByteStream, bell::Task {
 	WrappedSemaphore readySem;
 
   private:
+	std::mutex runningMutex;
 	bool running = false;
 	bool terminate = false;
 	WrappedSemaphore readSem; // signal to start writing to buffer after reading from it
@@ -95,12 +115,12 @@ class BufferedStream : public bell::ByteStream, bell::Task {
 	size_t readyThreshold;
 	size_t notReadyThreshold;
 	bool waitForReady;
-	bool endWithSource;
 	uint8_t *buf;
 	uint8_t *bufEnd;
 	uint8_t *bufReadPtr;
 	uint8_t *bufWritePtr;
-	std::shared_ptr<bell::ByteStream> source;
+	StreamPtr source;
+	StreamReader reader;
 	void runTask() override;
 	void reset();
 	size_t lengthBetween(uint8_t *me, uint8_t *other);

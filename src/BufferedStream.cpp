@@ -10,8 +10,7 @@ BufferedStream::BufferedStream(
 	size_t readSize,
 	size_t readyThreshold,
 	size_t notReadyThreshold,
-	bool waitForReady,
-	bool endWithSource)
+	bool waitForReady)
 	: bell::Task(taskName, 1024, 5, 0) {
 	this->bufferSize = bufferSize;
 	this->readAt = bufferSize - readThreshold;
@@ -19,7 +18,6 @@ BufferedStream::BufferedStream(
 	this->readyThreshold = readyThreshold;
 	this->notReadyThreshold = notReadyThreshold;
 	this->waitForReady = waitForReady;
-	this->endWithSource = endWithSource;
 	this->buf = static_cast<uint8_t *>(malloc(bufferSize));
 	this->bufEnd = buf + bufferSize;
 	reset();
@@ -27,14 +25,24 @@ BufferedStream::BufferedStream(
 
 BufferedStream::~BufferedStream() {
 	this->terminate = true;
-	source = nullptr;
+	this->source->close();
+	const std::lock_guard lock(runningMutex);
+	this->source = nullptr;
 	free(buf);
+}
+
+void BufferedStream::close() {
+	this->terminate = true;
+	this->source->close();
+	const std::lock_guard lock(runningMutex);
+	this->source = nullptr;
 }
 
 void BufferedStream::reset() {
 	this->bufReadPtr = this->buf;
 	this->bufWritePtr = this->buf;
 	this->readTotal = 0;
+	this->bufferTotal = 0;
 	this->readAvailable = 0;
 	this->terminate = false;
 }
@@ -48,9 +56,12 @@ bool BufferedStream::open(const std::shared_ptr<bell::ByteStream> &stream) {
 	return true;
 }
 
-void BufferedStream::close() {
-	this->terminate = true;
-	source = nullptr;
+bool BufferedStream::open(const StreamReader &newReader, size_t initialOffset) {
+	if (this->running)
+		return false;
+	this->reader = newReader;
+	this->bufferTotal = initialOffset;
+	return this->open(this->reader(initialOffset));
 }
 
 bool BufferedStream::isReady() const {
@@ -87,10 +98,12 @@ size_t BufferedStream::lengthBetween(uint8_t *me, uint8_t *other) {
 
 size_t BufferedStream::read(uint8_t *dst, size_t len) {
 	if (waitForReady && isNotReady()) {
-		while (!isReady()) {}
+		while (source && !isReady()) {} // end waiting after termination
 	}
-	if (!running && !readAvailable)
+	if (!running && !readAvailable) {
+		reset();
 		return 0;
+	}
 	size_t read = 0;
 	size_t toReadTotal = std::min(readAvailable.load(), len);
 	while (toReadTotal > 0) {
@@ -112,6 +125,7 @@ size_t BufferedStream::read(uint8_t *dst, size_t len) {
 }
 
 void BufferedStream::runTask() {
+	const std::lock_guard lock(runningMutex);
 	running = true;
 	while (!terminate) {
 		if (!source)
@@ -127,21 +141,26 @@ void BufferedStream::runTask() {
 		bool wasReady = isReady();
 		do {
 			size_t toRead = std::min(readSize, lengthBetween(bufWritePtr, bufReadPtr));
-			if (!source)
+			if (!source) {
+				len = 0;
 				break;
+			}
 			len = source->read(bufWritePtr, toRead);
-			if (!len && endWithSource)
-				terminate = true;
 			readAvailable += len;
+			bufferTotal += len;
 			bufWritePtr += len;
 			if (bufWritePtr >= bufEnd) // TODO is == enough here?
 				bufWritePtr = buf;
 		} while (len && readSize < bufferSize - readAvailable); // loop until there's no more free space in the buffer
+		if (!len && reader)
+			source = reader(bufferTotal);
+		else if (!len)
+			terminate = true;
 		// signal that buffer is ready for reading
 		if (!wasReady && isReady()) {
 			this->readySem.give();
 		}
 	}
+	source = nullptr;
 	running = false;
-	reset();
 }

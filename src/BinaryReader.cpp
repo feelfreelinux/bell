@@ -39,7 +39,7 @@ int16_t bell::BinaryReader::readShort() {
     
     return static_cast<int16_t>(
         (b[1])      |
-        (b[1] << 8));
+        (b[0] << 8));
 }
 
 
