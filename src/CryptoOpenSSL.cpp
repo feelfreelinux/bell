@@ -99,7 +99,7 @@ std::vector<uint8_t> CryptoOpenSSL::sha1HMAC(const std::vector<uint8_t>& inputKe
 }
 
 // AES CTR
-void CryptoOpenSSL::aesCTRXcrypt(const std::vector<uint8_t>& key, std::vector<uint8_t>& iv, std::vector<uint8_t> &data)
+void CryptoOpenSSL::aesCTRXcrypt(const std::vector<uint8_t>& key, std::vector<uint8_t>& iv, uint8_t* buffer, size_t nbytes)
 {
     // Prepare AES_KEY
     auto cryptoKey = AES_KEY();
@@ -110,9 +110,9 @@ void CryptoOpenSSL::aesCTRXcrypt(const std::vector<uint8_t>& key, std::vector<ui
     unsigned int offsetInBlock = 0;
 
     CRYPTO_ctr128_encrypt(
-        data.data(),
-        data.data(),
-        data.size(),
+            buffer,
+            buffer,
+        nbytes,
         &cryptoKey,
         iv.data(),
         ecountBuf,

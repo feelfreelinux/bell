@@ -63,7 +63,7 @@ public:
     std::vector<uint8_t> sha1HMAC(const std::vector<uint8_t>& inputKey, const std::vector<uint8_t>& message);
 
     // AES CTR
-    void aesCTRXcrypt(const std::vector<uint8_t>& key, std::vector<uint8_t>& iv, std::vector<uint8_t>& data);
+    void aesCTRXcrypt(const std::vector<uint8_t>& key, std::vector<uint8_t>& iv, uint8_t* buffer, size_t nbytes);
     
     // AES ECB
     void aesECBdecrypt(const std::vector<uint8_t>& key, std::vector<uint8_t>& data);

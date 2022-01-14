@@ -88,7 +88,7 @@ std::vector<uint8_t> CryptoMbedTLS::sha1HMAC(const std::vector<uint8_t> &inputKe
 }
 
 // AES CTR
-void CryptoMbedTLS::aesCTRXcrypt(const std::vector<uint8_t> &key, std::vector<uint8_t> &iv, std::vector<uint8_t> &data)
+void CryptoMbedTLS::aesCTRXcrypt(const std::vector<uint8_t> &key, std::vector<uint8_t> &iv, uint8_t* buffer, size_t nbytes)
 {
     // needed for internal cache
     size_t off = 0;
@@ -99,12 +99,12 @@ void CryptoMbedTLS::aesCTRXcrypt(const std::vector<uint8_t> &key, std::vector<ui
 
     // Perform decrypt
     mbedtls_aes_crypt_ctr(&aesCtx,
-                          data.size(),
+                          nbytes,
                           &off,
                           iv.data(),
                           streamBlock,
-                          data.data(),
-                          data.data());
+                          buffer,
+                          buffer);
 }
 
 void CryptoMbedTLS::aesECBdecrypt(const std::vector<uint8_t> &key, std::vector<uint8_t> &data)
@@ -115,7 +115,7 @@ void CryptoMbedTLS::aesECBdecrypt(const std::vector<uint8_t> &key, std::vector<u
     // Mbedtls's decrypt only works on 16 byte blocks
     for (unsigned int x = 0; x < data.size() / 16; x++)
     {
-        // Perform decrypt
+        // Perform finalize
         mbedtls_aes_crypt_ecb(&aesCtx,
                               MBEDTLS_AES_DECRYPT,
                               data.data() + (x * 16),
