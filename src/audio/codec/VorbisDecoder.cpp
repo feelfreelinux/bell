@@ -87,7 +87,7 @@ bool VorbisDecoder::setup(BaseContainer *container) {
 	return !lastErrno;
 }
 
-bool VorbisDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitWidth) {
+bool VorbisDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) {
 	// manual setup is not allowed
 	return false;
 }

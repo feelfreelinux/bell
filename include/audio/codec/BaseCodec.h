@@ -13,7 +13,7 @@ class BaseCodec {
 	/**
 	 * Setup the codec manually, using the provided values.
 	 */
-	virtual bool setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitWidth) = 0;
+	virtual bool setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) = 0;
 	/**
 	 * Decode the given sample.
 	 *

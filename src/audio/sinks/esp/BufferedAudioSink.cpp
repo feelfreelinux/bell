@@ -40,7 +40,8 @@ void BufferedAudioSink::feedPCMFramesInternal(const void *pvItem, size_t xItemSi
     xRingbufferSend(dataBuffer, pvItem, xItemSize, portMAX_DELAY);
 }
 
-bool BufferedAudioSink::setRate(uint16_t sampleRate) {
-	i2s_set_sample_rates((i2s_port_t)0, sampleRate);
+bool BufferedAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth)  {
+	// TODO override this for sinks with custom mclk
+	i2s_set_clk((i2s_port_t)0, sampleRate, (i2s_bits_per_sample_t)bitDepth, (i2s_channel_t)channelCount);
 	return true;
 }

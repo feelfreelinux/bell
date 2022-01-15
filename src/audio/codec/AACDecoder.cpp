@@ -12,10 +12,10 @@ AACDecoder::~AACDecoder() {
 	free(pcmData);
 }
 
-bool AACDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitWidth) {
+bool AACDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) {
 	frame.sampRateCore = (int)sampleRate;
 	frame.nChans = channelCount;
-	frame.bitsPerSample = bitWidth;
+	frame.bitsPerSample = bitDepth;
 	return AACSetRawBlockParams(aac, 0, &frame) == 0;
 }
 

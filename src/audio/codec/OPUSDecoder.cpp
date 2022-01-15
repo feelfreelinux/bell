@@ -24,7 +24,7 @@ OPUSDecoder::~OPUSDecoder() {
 	free(pcmData);
 }
 
-bool OPUSDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitWidth) {
+bool OPUSDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) {
 	if (opus)
 		opus_decoder_destroy(opus);
 	opus = opus_decoder_create((int32_t)sampleRate, channelCount, &lastErrno);

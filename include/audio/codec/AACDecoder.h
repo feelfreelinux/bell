@@ -14,6 +14,6 @@ class AACDecoder : public BaseCodec {
   public:
 	AACDecoder();
 	~AACDecoder();
-	bool setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitWidth) override;
+	bool setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) override;
 	uint8_t *decode(char *inData, size_t inLen, size_t &outLen) override;
 };

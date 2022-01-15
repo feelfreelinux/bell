@@ -142,6 +142,8 @@ if(NOT BELL_DISABLE_CODECS)
     endif()
     # Opus codec
     if(BELL_CODEC_OPUS)
+        set(OPUS_INSTALL_CMAKE_CONFIG_MODULE OFF)
+        set(OPUS_INSTALL_PKG_CONFIG_MODULE OFF)
         set(MESSAGE_QUIET ON)
         add_subdirectory("opus")
         unset(MESSAGE_QUIET)

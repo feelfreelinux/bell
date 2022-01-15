@@ -12,7 +12,7 @@ MP3Decoder::~MP3Decoder() {
 	free(pcmData);
 }
 
-bool MP3Decoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitWidth) {
+bool MP3Decoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) {
 	return true;
 }
 
