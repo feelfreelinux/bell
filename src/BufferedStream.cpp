@@ -11,7 +11,7 @@ BufferedStream::BufferedStream(
 	size_t readyThreshold,
 	size_t notReadyThreshold,
 	bool waitForReady)
-	: bell::Task(taskName, 1024, 5, 0) {
+	: bell::Task(taskName, 4096, 5, 0) {
 	this->bufferSize = bufferSize;
 	this->readAt = bufferSize - readThreshold;
 	this->readSize = readSize;

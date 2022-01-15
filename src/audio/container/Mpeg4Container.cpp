@@ -72,7 +72,7 @@ bool Mpeg4Container::parse() {
 				timescale = readUint32();
 				totalDuration = readUint32();
 				totalDurationPresent = true;
-				durationMs = totalDuration * 1000L / timescale;
+				durationMs = totalDuration * 1000LL / timescale;
 				if (!sampleRate)
 					sampleRate = timescale;
 				hasHdlr = false;
@@ -159,7 +159,7 @@ bool Mpeg4Container::parseMoof(uint32_t moofSize) {
 	uint32_t trafEnd = 0;
 
 	bool hasFragment = false;
-	Mpeg4Fragment *fragment = nullptr;
+	Mpeg4Fragment *fragment;
 	for (fragment = fragments; fragment < fragments + fragmentsLen; fragment++) {
 		if (isInFragment(fragment, pos)) {
 			hasFragment = true;
@@ -196,7 +196,7 @@ bool Mpeg4Container::parseMoof(uint32_t moofSize) {
 		}
 		fragment->duration = duration;
 		totalDuration += duration;
-		durationMs = totalDuration * 1000L / timescale;
+		durationMs = totalDuration * 1000LL / timescale;
 	}
 	isFragmented = true;
 	return true;
@@ -208,7 +208,7 @@ int32_t Mpeg4Container::getLoadingOffset(uint64_t timeMs) {
 	if (!isSeekable)
 		return SAMPLE_NOT_SEEKABLE;
 	// timeScaled - specified time in the media time coordinate system
-	uint64_t timeScaled = timeMs * timescale / 1000L;
+	uint64_t timeScaled = timeMs * timescale / 1000LL;
 	uint64_t timeAbs = 0;
 
 	Mpeg4Fragment *fragment = fragments;
@@ -224,7 +224,7 @@ int32_t Mpeg4Container::getLoadingOffset(uint64_t timeMs) {
 	if (fragment != curFragment)
 		return (int32_t)fragment->start;
 	// get the position in bytes
-	return (int32_t)findSample(timeScaled, 0, timeAbs);
+	return (int32_t)findSample((int64_t)timeScaled, -1, timeAbs);
 }
 
 bool Mpeg4Container::goToData() {
@@ -322,7 +322,7 @@ uint64_t Mpeg4Container::getCurrentTimeMs() {
 	while (f != curFragment) {
 		time += (f++)->duration;
 	}
-	time = findSample(0, pos, time);
+	time = findSample(-1, (int32_t)pos, time);
 	return time * 1000L / timescale;
 }
 

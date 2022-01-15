@@ -88,7 +88,7 @@ class Mpeg4Container : public BaseContainer {
 	static bool isInFragment(Mpeg4Fragment *f, uint32_t offset);
 	static AudioCodec getCodec(SampleDescription *desc);
 	Mpeg4Fragment *createFragment();
-	int64_t findSample(uint64_t byTime, uint32_t byPos, uint64_t startTime);
+	int64_t findSample(int64_t byTime, int32_t byPos, uint64_t startTime);
 
   private: // Mpeg4Parser.cpp
 	/** Populate [chunks] using the Sample-to-chunk Table */

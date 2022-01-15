@@ -167,7 +167,7 @@ AudioCodec Mpeg4Container::getCodec(SampleDescription *desc) {
 	}
 }
 
-int64_t Mpeg4Container::findSample(uint64_t byTime, uint32_t byPos, uint64_t startTime) {
+int64_t Mpeg4Container::findSample(int64_t byTime, int32_t byPos, uint64_t startTime) {
 	Mpeg4ChunkRange *chunk = chunks;
 	Mpeg4SampleRange *sample = samples;
 	Mpeg4ChunkOffset *chunkOffset = chunkOffsets;
@@ -179,10 +179,10 @@ int64_t Mpeg4Container::findSample(uint64_t byTime, uint32_t byPos, uint64_t sta
 	uint64_t timeAbs = startTime;
 	uint32_t offsetAbs = *chunkOffset;
 	while (sampleSize < sampleSizes + sampleSizesLen) {
-		if (byTime && byTime <= timeAbs) {
+		if (byTime >= 0 && byTime <= timeAbs) {
 			return offsetAbs;
 		}
-		if (byPos && byPos <= offsetAbs) {
+		if (byPos >= 0 && byPos <= offsetAbs) {
 			return (int64_t)timeAbs;
 		}
 		timeAbs += sample->duration;
