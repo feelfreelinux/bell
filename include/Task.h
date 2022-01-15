@@ -29,7 +29,7 @@ namespace bell
 #ifdef ESP_PLATFORM
 			this->xStack = NULL;
 			this->priority = CONFIG_ESP32_PTHREAD_TASK_PRIO_DEFAULT + priority;
-			if (this->priority < 0) this->priority = ESP_TASK_PRIO_MIN;
+			if (this->priority <= ESP_TASK_PRIO_MIN) this->priority = ESP_TASK_PRIO_MIN + 1;
 			if (runOnPSRAM) {
 				this->xStack = (StackType_t*) heap_caps_malloc(this->stackSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
 			}
