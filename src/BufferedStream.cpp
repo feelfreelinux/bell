@@ -60,7 +60,6 @@ bool BufferedStream::open(const StreamReader &newReader, size_t initialOffset) {
 		this->close();
 	reset();
 	this->reader = newReader;
-	this->source = newReader(initialOffset);
 	this->bufferTotal = initialOffset;
 	startTask();
 	return source.get();
@@ -100,7 +99,7 @@ size_t BufferedStream::lengthBetween(uint8_t *me, uint8_t *other) {
 
 size_t BufferedStream::read(uint8_t *dst, size_t len) {
 	if (waitForReady && isNotReady()) {
-		while (source && !isReady()) {} // end waiting after termination
+		while ((source || reader) && !isReady()) {} // end waiting after termination
 	}
 	if (!running && !readAvailable) {
 		reset();
@@ -129,6 +128,10 @@ size_t BufferedStream::read(uint8_t *dst, size_t len) {
 void BufferedStream::runTask() {
 	const std::lock_guard lock(runningMutex);
 	running = true;
+	if (!source && reader) {
+		// get the initial request on the task's thread
+		source = reader(this->bufferTotal);
+	}
 	while (!terminate) {
 		if (!source)
 			break;
@@ -166,5 +169,6 @@ void BufferedStream::runTask() {
 		}
 	}
 	source = nullptr;
+	reader = nullptr;
 	running = false;
 }
