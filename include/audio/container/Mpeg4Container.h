@@ -14,9 +14,9 @@ class Mpeg4Container : public BaseContainer {
 	 * This method leaves pos at first mdat data byte, or mdat header for fMP4 files.
 	 */
 	bool parse() override;
-	int32_t getLoadingOffset(uint64_t timeMs) override;
-	bool seekTo(uint64_t timeMs) override;
-	uint64_t getCurrentTimeMs() override;
+	int32_t getLoadingOffset(uint32_t timeMs) override;
+	bool seekTo(uint32_t timeMs) override;
+	int32_t getCurrentTimeMs() override;
 	char *readSample(size_t &len) override;
 	char *getSetupData(size_t &len, AudioCodec matchCodec) override;
 	void feed(const std::shared_ptr<bell::ByteStream> &stream, size_t position) override;

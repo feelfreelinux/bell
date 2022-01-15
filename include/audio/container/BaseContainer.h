@@ -47,7 +47,7 @@ class BaseContainer {
 	 * @return byte offset within the source media that should be loaded
 	 * in order to seek to the requested position; negative value on error
 	 */
-	virtual int32_t getLoadingOffset(uint64_t timeMs) = 0;
+	virtual int32_t getLoadingOffset(uint32_t timeMs) = 0;
 	/**
 	 * Try to seek to the specified position (in milliseconds), using the currently
 	 * loaded source stream. This method will fail if the source stream does not yield
@@ -55,11 +55,12 @@ class BaseContainer {
 	 *
 	 * @param timeMs requested timestamp, in milliseconds
 	 */
-	virtual bool seekTo(uint64_t timeMs) = 0;
+	virtual bool seekTo(uint32_t timeMs) = 0;
 	/**
-	 * Get the current playback position, in milliseconds.
+	 * Get the current playback position, in milliseconds. May return -1 if the track
+	 * is not playing (has ended or not started yet).
 	 */
-	virtual uint64_t getCurrentTimeMs() = 0;
+	virtual int32_t getCurrentTimeMs() = 0;
 	/**
 	 * Read an encoded audio sample from the container, starting at the current position.
 	 *

@@ -202,13 +202,13 @@ bool Mpeg4Container::parseMoof(uint32_t moofSize) {
 	return true;
 }
 
-int32_t Mpeg4Container::getLoadingOffset(uint64_t timeMs) {
+int32_t Mpeg4Container::getLoadingOffset(uint32_t timeMs) {
 	if (!isParsed)
 		return SAMPLE_NOT_LOADED;
 	if (!isSeekable)
 		return SAMPLE_NOT_SEEKABLE;
 	// timeScaled - specified time in the media time coordinate system
-	uint64_t timeScaled = timeMs * timescale / 1000LL;
+	uint64_t timeScaled = (uint64_t)timeMs * timescale / 1000LL;
 	uint64_t timeAbs = 0;
 
 	Mpeg4Fragment *fragment = fragments;
@@ -277,7 +277,7 @@ bool Mpeg4Container::goToData() {
 	return true;
 }
 
-bool Mpeg4Container::seekTo(uint64_t timeMs) {
+bool Mpeg4Container::seekTo(uint32_t timeMs) {
 	if (!isParsed || !isSeekable)
 		return false;
 	// try to go to nearest mdat data
@@ -313,17 +313,19 @@ bool Mpeg4Container::seekTo(uint64_t timeMs) {
 	return true;
 }
 
-uint64_t Mpeg4Container::getCurrentTimeMs() {
+int32_t Mpeg4Container::getCurrentTimeMs() {
 	if (!curFragment || !isParsed)
 		return 0;
-	uint64_t time = 0;
+	int64_t time = 0;
 	// get time offset of the current fragment
 	Mpeg4Fragment *f = fragments;
 	while (f != curFragment) {
 		time += (f++)->duration;
 	}
 	time = findSample(-1, (int32_t)pos, time);
-	return time * 1000L / timescale;
+	if (time < 0)
+		return (int32_t)time;
+	return (int32_t)(time * 1000LL / timescale);
 }
 
 char *Mpeg4Container::readSample(size_t &len) {
