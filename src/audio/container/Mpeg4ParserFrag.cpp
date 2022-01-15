@@ -51,17 +51,17 @@ void Mpeg4Container::readTrex() {
 }
 
 /** Populate [sampleDefs] using Track Fragment Header */
-void Mpeg4Container::readTfhd(uint32_t trafSize, uint32_t trafOffset, uint32_t moofOffset) {
+void Mpeg4Container::readTfhd(uint32_t trafEnd, uint32_t moofOffset) {
 	skipBytes(1); // skip version
 	TfFlags tfhdFlags = {};
 	readBytes((char *)&tfhdFlags, 3);
 	if (audioTrackId != readUint32()) {
-		skipBytes(trafSize - (pos - trafOffset)); // skip the rest of traf
+		skipTo(trafEnd); // skip the rest of traf
 		return;
 	}
 	auto *def = getSampleDef(audioTrackId);
 	if (!def) {
-		skipBytes(trafSize - (pos - trafOffset)); // error?
+		skipTo(trafEnd); // error?
 		return;
 	}
 	def->offset = 0;

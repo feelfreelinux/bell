@@ -29,9 +29,8 @@ bool Mpeg4Container::parse() {
 	}
 	uint32_t size;
 	AtomType type;
-	uint32_t moovSize = 0, moovOffset = 0;
-	uint32_t mdiaSize = 0, mdiaOffset = 0;
-	bool parsed = false, error = false, hasMoov = false;
+	uint32_t moovEnd = 0, mdiaEnd = 0;
+	bool parsed = false, error = false, hasMoov = false, hasHdlr = false;
 	while (!parsed && !error && !closed) {
 		readAtomHeader(size, (uint32_t &)type);
 		switch (type) {
@@ -48,13 +47,11 @@ bool Mpeg4Container::parse() {
 				// this causes the next iteration to read the next direct child atom
 				continue;
 			case AtomType::ATOM_MOOV:
-				moovSize = size;
-				moovOffset = pos;
+				moovEnd = pos + size;
 				hasMoov = true;
 				continue;
 			case AtomType::ATOM_MDIA:
-				mdiaSize = size;
-				mdiaOffset = pos;
+				mdiaEnd = pos + size;
 				continue;
 
 			case AtomType::ATOM_TREX:
@@ -67,7 +64,7 @@ bool Mpeg4Container::parse() {
 					skipBytes(size - 16);
 				} else {
 					// new track header, but audio track already found
-					skipBytes(moovSize - (pos - moovOffset));
+					skipTo(moovEnd);
 				}
 				break;
 			case AtomType::ATOM_MDHD:
@@ -78,13 +75,19 @@ bool Mpeg4Container::parse() {
 				durationMs = totalDuration * 1000L / timescale;
 				if (!sampleRate)
 					sampleRate = timescale;
+				hasHdlr = false;
 				skipBytes(size - 20);
 				break;
 			case AtomType::ATOM_HDLR:
+				if (hasHdlr) {
+					skipBytes(size);
+					continue;
+				}
+				hasHdlr = true;
 				skipBytes(8);
 				if (readUint32() != (uint32_t)AtomType::ATOM_SOUN) {
-					skipBytes(mdiaSize - (pos - mdiaOffset)); // skip the rest of mdia atom
-					audioTrackId = -1;						  // unset the track ID, so the next tkhd can set it
+					skipTo(mdiaEnd);   // skip the rest of mdia atom
+					audioTrackId = -1; // unset the track ID, so the next tkhd can set it
 				} else {
 					skipBytes(size - 12);
 				}
@@ -153,7 +156,7 @@ bool Mpeg4Container::parseMoof(uint32_t moofSize) {
 	AtomType type;
 	uint32_t moofOffset = pos - 8;
 	uint32_t moofEnd = pos + moofSize;
-	uint32_t trafSize, trafOffset; // offset of data
+	uint32_t trafEnd = 0;
 
 	bool hasFragment = false;
 	Mpeg4Fragment *fragment = nullptr;
@@ -168,11 +171,10 @@ bool Mpeg4Container::parseMoof(uint32_t moofSize) {
 		readAtomHeader(size, (uint32_t &)type);
 		switch (type) {
 			case AtomType::ATOM_TRAF:
-				trafOffset = pos;
-				trafSize = size;
+				trafEnd = pos + size;
 				continue;
 			case AtomType::ATOM_TFHD:
-				readTfhd(trafSize, trafOffset, moofOffset);
+				readTfhd(trafEnd, moofOffset);
 				break;
 			case AtomType::ATOM_TRUN:
 				readTrun(size, moofOffset);

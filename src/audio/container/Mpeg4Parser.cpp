@@ -75,27 +75,52 @@ void Mpeg4Container::readStsz() {
 
 /** Populate [sampleDesc] using the Sample Description Table */
 void Mpeg4Container::readStsd() {
+	// Helpful resources:
+	// - STSD atom structure - ISO/IEC 14496-1 (page 277) - seems to cover QT desc ver.0
+	// - ESDS atom structure - ISO/IEC 14496-1 (page 28)
 	freeAndNull((void *&)sampleDesc);
 	skipBytes(4); // skip version and flags
 	sampleDescLen = readUint32();
 	sampleDesc = (SampleDescription *)malloc(sampleDescLen * sizeof(SampleDescription));
 	for (SampleDescription *desc = sampleDesc; desc < sampleDesc + sampleDescLen; desc++) {
 		uint32_t entryEnd = readUint32() - 4 + pos;
+		uint32_t esdsEnd = entryEnd;
+		// https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-BBCHHGBH
+		// General Structure of a Sample Description
 		desc->format = (AudioSampleFormat)readUint32();
 		desc->mp4aObjectType = MP4AObjectType::UNDEFINED;
 		desc->mp4aProfile = MP4AProfile::UNDEFINED;
 		skipBytes(6); // reserved
 		desc->dataReferenceIndex = readUint16();
-		skipBytes(8); // reserved
+		// https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-75770
+		// Sound Sample Description (Version 0)
+		uint16_t version = readUint16();
+		skipBytes(6); // skip Revision level(2), Vendor(4)
 		channelCount = readUint16();
 		bitDepth = readUint16();
-		skipBytes(4); // reserved
+		skipBytes(4); // skip Compression ID(2), Packet size(2)
 		sampleRate = readUint16();
 		skipBytes(2); // decimal part of sample rate
+		if (version >= 1) {
+			// Sound Sample Description (Version 1)
+			skipBytes(16); // skip Samples per packet(4), Bytes per packet(4), Bytes per frame(4), Bytes per sample(4)
+		}
 		// read the child atom
 		uint32_t atomSize;
 		AtomType atomType;
 		readAtomHeader(atomSize, (uint32_t &)atomType);
+		if (atomType == AtomType::ATOM_WAVE) {
+			do {
+				readAtomHeader(atomSize, (uint32_t &)atomType);
+				if (atomType == AtomType::ATOM_ESDS) {
+					esdsEnd = pos + atomSize;
+					break;
+				}
+				skipBytes(atomSize);
+			} while (pos < entryEnd);
+			if (pos >= entryEnd) // something went wrong
+				continue;
+		}
 		if (atomType != AtomType::ATOM_ESDS) {
 			desc->dataType = (uint32_t)atomType;
 			desc->dataLength = atomSize;
@@ -105,7 +130,7 @@ void Mpeg4Container::readStsd() {
 		}
 		// read ESDS
 		skipBytes(4); // skip esds flags
-		while (pos < entryEnd) {
+		while (pos < esdsEnd) {
 			uint8_t tag = readUint8();
 			uint32_t size = readVarint32();
 			uint8_t flags;
@@ -140,5 +165,7 @@ void Mpeg4Container::readStsd() {
 					break;
 			}
 		}
+		// skip leftover atoms for version 1 QuickTime descriptors
+		skipTo(entryEnd);
 	}
 }

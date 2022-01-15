@@ -45,10 +45,18 @@ enum class AtomType {
 	ATOM_URL = 0x75726C20,
 	/** Sample Table */
 	ATOM_STBL = 0x7374626C,
-	/** MPEG-4 Elementary Stream Descriptor */
-	ATOM_ESDS = 0x65736473,
 	/** Sample Description */
 	ATOM_STSD = 0x73747364,
+	/** siDecompressionParam */
+	ATOM_WAVE = 0x77617665,
+	/** Format Atom */
+	ATOM_FRMA = 0x66726D61,
+	/** Audio Channel Layout Atom */
+	ATOM_CHAN = 0x6368616E,
+	/** Terminator Atom */
+	ATOM_TERM = 0x00000000,
+	/** MPEG-4 Elementary Stream Descriptor */
+	ATOM_ESDS = 0x65736473,
 	/** Time-to-sample Table */
 	ATOM_STTS = 0x73747473,
 	/** Sync Sample Table */

@@ -108,7 +108,7 @@ class Mpeg4Container : public BaseContainer {
 	/** Populate [sampleDefs] using Track Extends */
 	void readTrex();
 	/** Populate [sampleDefs] using Track Fragment Header */
-	void readTfhd(uint32_t trafSize, uint32_t trafOffset, uint32_t moofOffset);
+	void readTfhd(uint32_t trafEnd, uint32_t moofOffset);
 	/** Populate [chunks, chunkOffsets, samples, sampleSizes] using Track Fragment Run Table */
 	void readTrun(uint32_t atomSize, uint32_t moofOffset);
 	void allocSampleData();
