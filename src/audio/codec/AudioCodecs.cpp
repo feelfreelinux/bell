@@ -1,6 +1,7 @@
 // Copyright (c) Kuba Szczodrzyński 2022-1-12.
 
 #include "AudioCodecs.h"
+#include <map>
 
 #ifdef BELL_CODEC_AAC
 #include "AACDecoder.h"
@@ -22,7 +23,11 @@ static std::shared_ptr<VorbisDecoder> codecVorbis;
 static std::shared_ptr<OPUSDecoder> codecOpus;
 #endif
 
+std::map<AudioCodec, std::shared_ptr<BaseCodec>> customCodecs;
+
 std::shared_ptr<BaseCodec> AudioCodecs::getCodec(AudioCodec type) {
+	if (customCodecs.find(type) != customCodecs.end())
+		return customCodecs[type];
 	switch (type) {
 #ifdef BELL_CODEC_AAC
 		case AudioCodec::AAC:
@@ -59,4 +64,8 @@ std::shared_ptr<BaseCodec> AudioCodecs::getCodec(AudioCodec type) {
 
 std::shared_ptr<BaseCodec> AudioCodecs::getCodec(BaseContainer *container) {
 	return getCodec(container->codec);
+}
+
+void AudioCodecs::addCodec(AudioCodec type, const std::shared_ptr<BaseCodec> &codec) {
+	customCodecs[type] = codec;
 }

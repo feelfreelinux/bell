@@ -19,4 +19,5 @@ class AudioCodecs {
   public:
 	static std::shared_ptr<BaseCodec> getCodec(AudioCodec type);
 	static std::shared_ptr<BaseCodec> getCodec(BaseContainer *container);
+	static void addCodec(AudioCodec type, const std::shared_ptr<BaseCodec> &codec);
 };
