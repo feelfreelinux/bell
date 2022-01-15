@@ -4,7 +4,7 @@
 #include "Mpeg4Container.h"
 
 std::unique_ptr<BaseContainer> AudioContainers::create(const char *mimeType) {
-	char *type = strchr(mimeType, '/');
+	char *type = strchr((char *)mimeType, '/');
 	if (!type || *(++type) == '\0')
 		return nullptr;
 
