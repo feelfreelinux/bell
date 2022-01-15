@@ -113,7 +113,7 @@ bool Mpeg4Container::parse() {
 			case AtomType::ATOM_MOOF:
 			case AtomType::ATOM_MDAT:
 				// the track can be accessed randomly if all the tables are set before parsing the first fragment
-				isSeekable = fragmentsLen || chunksLen && chunkOffsetsLen && samplesLen && sampleSizesLen;
+				isSeekable = fragmentsLen || (chunksLen && chunkOffsetsLen && samplesLen && sampleSizesLen);
 				if (type == AtomType::ATOM_MOOF) {
 					// this will seek to the start of mdat header
 					error = !parseMoof(size);
