@@ -30,7 +30,7 @@ class BaseContainer {
 	 * @param stream ByteStream reading source data
 	 * @param position absolute position of the current ByteStream within the source media
 	 */
-	virtual void feed(const std::shared_ptr<bell::ByteStream> &stream, size_t position);
+	virtual void feed(const std::shared_ptr<bell::ByteStream> &stream, uint32_t position);
 	/**
 	 * Try to parse the media provided by the source stream.
 	 * @return whether parsing was successful
@@ -68,7 +68,7 @@ class BaseContainer {
 	 * @return pointer to data allocated inside the container object; should not be freed or changed.
 	 * On failure, nullptr is returned, and len is left unchanged.
 	 */
-	virtual char *readSample(size_t &len) = 0;
+	virtual uint8_t *readSample(uint32_t &len) = 0;
 	/**
 	 * Get optional initialization data for the specified codec. This may be used by a codec,
 	 * for containers that contain the setup data.
@@ -76,7 +76,7 @@ class BaseContainer {
 	 * @param [out] len length of the setup data
 	 * @return ptr to [len] setup data bytes, or nullptr if not available/not supported
 	 */
-	virtual char *getSetupData(size_t &len, AudioCodec matchCodec) = 0;
+	virtual uint8_t *getSetupData(uint32_t &len, AudioCodec matchCodec) = 0;
 
   public:
 	bool closed = false;
@@ -91,14 +91,14 @@ class BaseContainer {
   protected:
 	std::unique_ptr<bell::BinaryReader> reader;
 	std::shared_ptr<bell::ByteStream> source;
-	size_t pos = 0;
+	uint32_t pos = 0;
 	uint8_t readUint8();
 	uint16_t readUint16();
 	uint32_t readUint24();
 	uint32_t readUint32();
 	uint64_t readUint64();
 	uint32_t readVarint32();
-	size_t readBytes(char *dst, size_t num);
-	size_t skipBytes(size_t num);
-	size_t skipTo(size_t offset);
+	uint32_t readBytes(uint8_t *dst, uint32_t num);
+	uint32_t skipBytes(uint32_t num);
+	uint32_t skipTo(uint32_t offset);
 };

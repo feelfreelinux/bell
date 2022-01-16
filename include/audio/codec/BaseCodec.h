@@ -22,7 +22,7 @@ class BaseCodec {
 	 * @param [out] outLen size of output PCM data, in bytes
 	 * @return pointer to decoded raw PCM audio data, allocated inside the codec object; nullptr on failure
 	 */
-	virtual uint8_t *decode(char *inData, size_t inLen, size_t &outLen) = 0;
+	virtual uint8_t *decode(uint8_t *inData, uint32_t inLen, uint32_t &outLen) = 0;
 	/**
 	 * Read a single sample from the container, decode it, and return the result.
 	 *
@@ -30,7 +30,7 @@ class BaseCodec {
 	 * @param [out] outLen size of output PCM data, in bytes
 	 * @return pointer to decoded raw PCM audio data, allocated inside the codec object; nullptr on failure
 	 */
-	uint8_t *decode(BaseContainer *container, size_t &outLen);
+	uint8_t *decode(BaseContainer *container, uint32_t &outLen);
 	/**
 	 * Last error that occurred, this is a codec-specific value.
 	 * This may be set by a codec upon decoding failure.

@@ -30,7 +30,7 @@
 class BufferedStream : public bell::ByteStream, bell::Task {
   public:
 	typedef std::shared_ptr<bell::ByteStream> StreamPtr;
-	typedef std::function<StreamPtr(size_t rangeStart)> StreamReader;
+	typedef std::function<StreamPtr(uint32_t rangeStart)> StreamReader;
 
   public:
 	/**
@@ -45,15 +45,15 @@ class BufferedStream : public bell::ByteStream, bell::Task {
 	 */
 	BufferedStream(
 		const std::string &taskName,
-		size_t bufferSize,
-		size_t readThreshold,
-		size_t readSize,
-		size_t readyThreshold,
-		size_t notReadyThreshold,
+		uint32_t bufferSize,
+		uint32_t readThreshold,
+		uint32_t readSize,
+		uint32_t readyThreshold,
+		uint32_t notReadyThreshold,
 		bool waitForReady = false);
 	~BufferedStream() override;
 	bool open(const StreamPtr &stream);
-	bool open(const StreamReader &newReader, size_t initialOffset = 0);
+	bool open(const StreamReader &newReader, uint32_t initialOffset = 0);
 	void close() override;
 
 	// inherited methods
@@ -77,15 +77,15 @@ class BufferedStream : public bell::ByteStream, bell::Task {
 	/**
 	 * Total amount of bytes served to read().
 	 */
-	size_t readTotal;
+	uint32_t readTotal;
 	/**
 	 * Total amount of bytes read from source.
 	 */
-	size_t bufferTotal;
+	uint32_t bufferTotal;
 	/**
 	 * Amount of bytes available to read from the buffer.
 	 */
-	std::atomic<size_t> readAvailable;
+	std::atomic<uint32_t> readAvailable;
 	/**
 	 * Whether the caller should start reading the data. This indicates that a safe
 	 * amount (determined by readyThreshold) of data is available in the buffer.
@@ -109,11 +109,11 @@ class BufferedStream : public bell::ByteStream, bell::Task {
 	bool terminate = false;
 	WrappedSemaphore readSem; // signal to start writing to buffer after reading from it
 	std::mutex readMutex;	  // mutex for locking read operations during writing, and vice versa
-	size_t bufferSize;
-	size_t readAt;
-	size_t readSize;
-	size_t readyThreshold;
-	size_t notReadyThreshold;
+	uint32_t bufferSize;
+	uint32_t readAt;
+	uint32_t readSize;
+	uint32_t readyThreshold;
+	uint32_t notReadyThreshold;
 	bool waitForReady;
 	uint8_t *buf;
 	uint8_t *bufEnd;
@@ -123,5 +123,5 @@ class BufferedStream : public bell::ByteStream, bell::Task {
 	StreamReader reader;
 	void runTask() override;
 	void reset();
-	size_t lengthBetween(uint8_t *me, uint8_t *other);
+	uint32_t lengthBetween(uint8_t *me, uint8_t *other);
 };

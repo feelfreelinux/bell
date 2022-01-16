@@ -5,11 +5,11 @@
 
 BufferedStream::BufferedStream(
 	const std::string &taskName,
-	size_t bufferSize,
-	size_t readThreshold,
-	size_t readSize,
-	size_t readyThreshold,
-	size_t notReadyThreshold,
+	uint32_t bufferSize,
+	uint32_t readThreshold,
+	uint32_t readSize,
+	uint32_t readyThreshold,
+	uint32_t notReadyThreshold,
 	bool waitForReady)
 	: bell::Task(taskName, 4096, 5, 0) {
 	this->bufferSize = bufferSize;
@@ -55,7 +55,7 @@ bool BufferedStream::open(const std::shared_ptr<bell::ByteStream> &stream) {
 	return source.get();
 }
 
-bool BufferedStream::open(const StreamReader &newReader, size_t initialOffset) {
+bool BufferedStream::open(const StreamReader &newReader, uint32_t initialOffset) {
 	if (this->running)
 		this->close();
 	reset();
@@ -85,7 +85,7 @@ size_t BufferedStream::size() {
 	return source->size();
 }
 
-size_t BufferedStream::lengthBetween(uint8_t *me, uint8_t *other) {
+uint32_t BufferedStream::lengthBetween(uint8_t *me, uint8_t *other) {
 	const std::lock_guard lock(readMutex);
 	if (other <= me) {
 		// buf .... other ...... me ........ bufEnd
@@ -105,10 +105,10 @@ size_t BufferedStream::read(uint8_t *dst, size_t len) {
 		reset();
 		return 0;
 	}
-	size_t read = 0;
-	size_t toReadTotal = std::min(readAvailable.load(), len);
+	uint32_t read = 0;
+	uint32_t toReadTotal = std::min(readAvailable.load(), static_cast<uint32_t>(len));
 	while (toReadTotal > 0) {
-		size_t toRead = std::min(toReadTotal, lengthBetween(bufReadPtr, bufWritePtr));
+		uint32_t toRead = std::min(toReadTotal, lengthBetween(bufReadPtr, bufWritePtr));
 		if (dst) {
 			memcpy(dst, bufReadPtr, toRead);
 			dst += toRead;
@@ -144,10 +144,10 @@ void BufferedStream::runTask() {
 		if (readAvailable > readAt)
 			continue;
 		// here, the buffer needs re-filling
-		size_t len;
+		uint32_t len;
 		bool wasReady = isReady();
 		do {
-			size_t toRead = std::min(readSize, lengthBetween(bufWritePtr, bufReadPtr));
+			uint32_t toRead = std::min(readSize, lengthBetween(bufWritePtr, bufReadPtr));
 			if (!source) {
 				len = 0;
 				break;

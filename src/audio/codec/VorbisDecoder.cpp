@@ -45,13 +45,13 @@ VorbisDecoder::~VorbisDecoder() {
 }
 
 bool VorbisDecoder::setup(BaseContainer *container) {
-	size_t setupLen;
-	char *setup = container->getSetupData(setupLen, AudioCodec::VORBIS);
+	uint32_t setupLen;
+	uint8_t *setup = container->getSetupData(setupLen, AudioCodec::VORBIS);
 	if (!setup)
 		return false;
-	op.b_o_s = true;				 // mark this page as beginning of stream
-	size_t bytesLeft = setupLen - 1; // minus header count length (8 bit)
-	size_t headers[setup[0]];		 // array for header sizes
+	op.b_o_s = true;				   // mark this page as beginning of stream
+	uint32_t bytesLeft = setupLen - 1; // minus header count length (8 bit)
+	uint32_t headers[setup[0]];		   // array for header sizes
 	for (uint8_t i = 0; i < setup[0]; i++) {
 		uint8_t *sizeByte = (uint8_t *)setup + 1 + i;
 		headers[i] = 0;
@@ -92,7 +92,7 @@ bool VorbisDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bit
 	return false;
 }
 
-uint8_t *VorbisDecoder::decode(char *inData, size_t inLen, size_t &outLen) {
+uint8_t *VorbisDecoder::decode(uint8_t *inData, uint32_t inLen, uint32_t &outLen) {
 	if (!inData || !vi)
 		return nullptr;
 	setPacket(inData, inLen);
@@ -113,8 +113,8 @@ uint8_t *VorbisDecoder::decode(char *inData, size_t inLen, size_t &outLen) {
 	return (uint8_t *)pcmData;
 }
 
-void VorbisDecoder::setPacket(const char *inData, size_t inLen) const {
-	op.packet->buffer->data = (unsigned char *)inData;
-	op.packet->buffer->size = (long)inLen;
-	op.packet->length = (long)inLen;
+void VorbisDecoder::setPacket(uint8_t *inData, uint32_t inLen) const {
+	op.packet->buffer->data = static_cast<unsigned char *>(inData);
+	op.packet->buffer->size = static_cast<long>(inLen);
+	op.packet->length = static_cast<long>(inLen);
 }

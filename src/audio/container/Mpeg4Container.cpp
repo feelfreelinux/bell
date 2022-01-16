@@ -10,7 +10,7 @@ Mpeg4Container::~Mpeg4Container() {
 	this->source->close();
 }
 
-void Mpeg4Container::feed(const std::shared_ptr<bell::ByteStream> &stream, size_t position) {
+void Mpeg4Container::feed(const std::shared_ptr<bell::ByteStream> &stream, uint32_t position) {
 	BaseContainer::feed(stream, position);
 	pos = position;
 	if (isParsed) {
@@ -328,7 +328,7 @@ int32_t Mpeg4Container::getCurrentTimeMs() {
 	return (int32_t)(time * 1000LL / timescale);
 }
 
-char *Mpeg4Container::readSample(size_t &len) {
+uint8_t *Mpeg4Container::readSample(uint32_t &len) {
 	if (!curFragment || !isParsed)
 		return nullptr;
 	if (!sampleData) {
@@ -349,7 +349,7 @@ char *Mpeg4Container::readSample(size_t &len) {
 	return sampleData;
 }
 
-char *Mpeg4Container::getSetupData(size_t &len, AudioCodec matchCodec) {
+uint8_t *Mpeg4Container::getSetupData(uint32_t &len, AudioCodec matchCodec) {
 	for (SampleDescription *desc = sampleDesc; desc < sampleDesc + sampleDescLen; desc++) {
 		if (matchCodec != getCodec(desc))
 			continue;

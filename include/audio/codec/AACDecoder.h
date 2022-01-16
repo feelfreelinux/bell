@@ -8,12 +8,12 @@
 class AACDecoder : public BaseCodec {
   private:
 	HAACDecoder aac;
-	short *pcmData;
+	int16_t *pcmData;
 	AACFrameInfo frame = {};
 
   public:
 	AACDecoder();
 	~AACDecoder();
 	bool setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) override;
-	uint8_t *decode(char *inData, size_t inLen, size_t &outLen) override;
+	uint8_t *decode(uint8_t *inData, uint32_t inLen, uint32_t &outLen) override;
 };

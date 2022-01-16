@@ -4,7 +4,7 @@
 
 AACDecoder::AACDecoder() {
 	aac = AACInitDecoder();
-	pcmData = (short *)malloc(AAC_MAX_NSAMPS * AAC_MAX_NCHANS * sizeof(short));
+	pcmData = (int16_t *)malloc(AAC_MAX_NSAMPS * AAC_MAX_NCHANS * sizeof(int16_t));
 }
 
 AACDecoder::~AACDecoder() {
@@ -19,15 +19,19 @@ bool AACDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDep
 	return AACSetRawBlockParams(aac, 0, &frame) == 0;
 }
 
-uint8_t *AACDecoder::decode(char *inData, size_t inLen, size_t &outLen) {
+uint8_t *AACDecoder::decode(uint8_t *inData, uint32_t inLen, uint32_t &outLen) {
 	if (!inData)
 		return nullptr;
-	int status = AACDecode(aac, (unsigned char **)&inData, (int *)&inLen, this->pcmData);
+	int status = AACDecode(
+		aac,
+		static_cast<unsigned char **>(&inData),
+		reinterpret_cast<int *>(&inLen),
+		static_cast<short *>(this->pcmData));
 	AACGetLastFrameInfo(aac, &frame);
 	if (status != ERR_AAC_NONE) {
 		lastErrno = status;
 		return nullptr;
 	}
-	outLen = frame.outputSamps * sizeof(short);
+	outLen = frame.outputSamps * sizeof(int16_t);
 	return (uint8_t *)pcmData;
 }

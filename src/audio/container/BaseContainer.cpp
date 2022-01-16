@@ -2,7 +2,7 @@
 
 #include "BaseContainer.h"
 
-void BaseContainer::feed(const std::shared_ptr<bell::ByteStream> &stream, size_t position) {
+void BaseContainer::feed(const std::shared_ptr<bell::ByteStream> &stream, uint32_t position) {
 	this->reader = std::make_unique<bell::BinaryReader>(stream);
 	this->source = stream;
 	this->pos = position;
@@ -19,7 +19,7 @@ uint16_t BaseContainer::readUint16() {
 }
 
 uint32_t BaseContainer::readUint24() {
-	char b[3];
+	uint8_t b[3];
 	readBytes(b, 3);
 	return static_cast<int32_t>((b[2]) | (b[1] << 8) | (b[0] << 16));
 }
@@ -45,13 +45,13 @@ uint32_t BaseContainer::readVarint32() {
 	return result;
 }
 
-size_t BaseContainer::readBytes(char *dst, size_t num) {
+uint32_t BaseContainer::readBytes(uint8_t *dst, uint32_t num) {
 	if (!num)
 		return 0;
-	size_t len, total;
+	uint32_t len, total;
 	do {
 		if (dst) {
-			len = source->read(reinterpret_cast<uint8_t *>(dst), num);
+			len = source->read(dst, num);
 			dst += len; // increment destination pointer
 		} else {
 			len = source->skip(num);
@@ -65,11 +65,11 @@ size_t BaseContainer::readBytes(char *dst, size_t num) {
 	return len;
 }
 
-size_t BaseContainer::skipBytes(size_t num) {
+uint32_t BaseContainer::skipBytes(uint32_t num) {
 	return readBytes(nullptr, num);
 }
 
-size_t BaseContainer::skipTo(size_t offset) {
+uint32_t BaseContainer::skipTo(uint32_t offset) {
 	if (offset <= pos)
 		return 0;
 	return readBytes(nullptr, offset - pos);

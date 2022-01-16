@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 enum class AudioSampleFormat;
 enum class MP4AObjectType;
 enum class MP4AProfile;
@@ -69,7 +71,7 @@ typedef struct {
 	uint32_t dataType;
 	// codec-specific data (either DecoderSpecificInfo or the entire descriptor)
 	uint32_t dataLength;
-	char *data;
+	uint8_t *data;
 } SampleDescription;
 
 typedef struct {

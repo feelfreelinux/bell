@@ -31,10 +31,16 @@ bool OPUSDecoder::setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDe
 	return !lastErrno;
 }
 
-uint8_t *OPUSDecoder::decode(char *inData, size_t inLen, size_t &outLen) {
+uint8_t *OPUSDecoder::decode(uint8_t *inData, uint32_t inLen, uint32_t &outLen) {
 	if (!inData)
 		return nullptr;
-	outLen = opus_decode(opus, (unsigned char *)inData, (int32_t)inLen, pcmData, MAX_FRAME_SIZE, false);
+	outLen = opus_decode(
+		opus,
+		static_cast<unsigned char *>(inData),
+		static_cast<int32_t>(inLen),
+		pcmData,
+		MAX_FRAME_SIZE,
+		false);
 	outLen *= opus->channels * sizeof(int16_t);
 	return (uint8_t *)pcmData;
 }

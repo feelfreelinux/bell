@@ -71,7 +71,7 @@ HTTPResponse_t HTTPClient::executeImpl(const struct HTTPRequest &request, HTTPRe
 	stream << request.body;
 	std::string data = stream.str();
 
-	size_t len = response->socket->write((uint8_t *)data.c_str(), data.size());
+	uint32_t len = response->socket->write((uint8_t *)data.c_str(), data.size());
 	if (len != data.size()) {
 		response->close();
 		BELL_LOG(error, "http", "Writing failed: wrote %d of %d bytes", len, data.size());
@@ -89,7 +89,7 @@ HTTPResponse_t HTTPClient::executeImpl(const struct HTTPRequest &request, HTTPRe
 }
 
 bool HTTPClient::readHeader(const char *&header, const char *name) {
-	size_t len = strlen(name);
+	uint32_t len = strlen(name);
 	if (strncasecmp(header, name, len) == 0) {
 		header += len;
 		while (*header == ' ')
@@ -99,10 +99,10 @@ bool HTTPClient::readHeader(const char *&header, const char *name) {
 	return false;
 }
 
-size_t HTTPClient::HTTPResponse::readRaw(char *dst) {
+uint32_t HTTPClient::HTTPResponse::readRaw(char *dst) {
 	if (!this->socket)
 		return 0; // socket is already closed, I guess
-	size_t len = this->socket->read((uint8_t *)dst, BUF_SIZE);
+	uint32_t len = this->socket->read((uint8_t *)dst, BUF_SIZE);
 	if (len == 0 || len == -1) {
 		isComplete = true;
 	}
@@ -114,7 +114,7 @@ size_t HTTPClient::HTTPResponse::readRaw(char *dst) {
 }
 
 void HTTPClient::HTTPResponse::readHeaders() {
-	size_t len;
+	uint32_t len;
 	char *line, *lineEnd;
 	bool complete = false;
 	std::string lineBuf;
@@ -188,8 +188,8 @@ void HTTPClient::HTTPResponse::readHeaders() {
 	} while (!complete && len); // if len == 0, the connection is closed
 }
 
-bool HTTPClient::HTTPResponse::skipRaw(size_t len, bool dontRead) {
-	size_t skip = 0;
+bool HTTPClient::HTTPResponse::skipRaw(uint32_t len, bool dontRead) {
+	uint32_t skip = 0;
 	if (len > bufRemaining) {
 		skip = len - bufRemaining;
 		len = bufRemaining;
@@ -214,13 +214,13 @@ bool HTTPClient::HTTPResponse::skipRaw(size_t len, bool dontRead) {
 	return true;
 }
 
-size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead, bool wait) {
+uint32_t HTTPClient::HTTPResponse::read(char *dst, uint32_t toRead, bool wait) {
 	if (isComplete) {
 		// end of chunked stream was found OR complete body was read
 		return 0;
 	}
 	auto *dstStart = dst ? dst : nullptr;
-	size_t read = 0;
+	uint32_t read = 0;
 	while (toRead) { // this loop ends after original toRead
 		skipRaw(0);	 // ensure the buffer contains data, wait if necessary
 		if (isChunked && !chunkRemaining) {
@@ -248,7 +248,7 @@ size_t HTTPClient::HTTPResponse::read(char *dst, size_t toRead, bool wait) {
 		}
 
 		while (chunkRemaining && toRead) {
-			size_t count = std::min(toRead, std::min(bufRemaining, chunkRemaining));
+			uint32_t count = std::min(toRead, std::min(bufRemaining, chunkRemaining));
 			if (dst) {
 				memcpy(dst, bufPtr, count);
 				dst += count; // move the dst pointer
@@ -291,7 +291,7 @@ std::string HTTPClient::HTTPResponse::readToString() {
 	}
 	std::string result;
 	char buffer[BUF_SIZE + 1]; // make space for null-terminator
-	size_t len;
+	uint32_t len;
 	do {
 		len = this->read(buffer, BUF_SIZE);
 		buffer[len] = '\0';

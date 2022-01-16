@@ -17,9 +17,9 @@ class Mpeg4Container : public BaseContainer {
 	int32_t getLoadingOffset(uint32_t timeMs) override;
 	bool seekTo(uint32_t timeMs) override;
 	int32_t getCurrentTimeMs() override;
-	char *readSample(size_t &len) override;
-	char *getSetupData(size_t &len, AudioCodec matchCodec) override;
-	void feed(const std::shared_ptr<bell::ByteStream> &stream, size_t position) override;
+	uint8_t *readSample(uint32_t &len) override;
+	uint8_t *getSetupData(uint32_t &len, AudioCodec matchCodec) override;
+	void feed(const std::shared_ptr<bell::ByteStream> &stream, uint32_t position) override;
 
   private:
 	/**
@@ -35,7 +35,7 @@ class Mpeg4Container : public BaseContainer {
 	int8_t audioTrackId = -1;
 	uint32_t timescale = 0;
 	uint32_t sampleSizeMax = 0;
-	char *sampleData = nullptr;
+	uint8_t *sampleData = nullptr;
 	uint32_t sampleDataLen = 0;
 	bool isParsed = false;
 	bool isSeekable = false;

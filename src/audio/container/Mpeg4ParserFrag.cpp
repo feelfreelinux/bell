@@ -54,7 +54,7 @@ void Mpeg4Container::readTrex() {
 void Mpeg4Container::readTfhd(uint32_t trafEnd, uint32_t moofOffset) {
 	skipBytes(1); // skip version
 	TfFlags tfhdFlags = {};
-	readBytes((char *)&tfhdFlags, 3);
+	readBytes((uint8_t *)&tfhdFlags, 3);
 	if (audioTrackId != readUint32()) {
 		skipTo(trafEnd); // skip the rest of traf
 		return;
@@ -83,7 +83,7 @@ void Mpeg4Container::readTfhd(uint32_t trafEnd, uint32_t moofOffset) {
 void Mpeg4Container::readTrun(uint32_t atomSize, uint32_t moofOffset) {
 	skipBytes(1); // skip version
 	TrFlags trunFlags = {};
-	readBytes((char *)&trunFlags, 3);
+	readBytes((uint8_t *)&trunFlags, 3);
 	// audioTrackId is guaranteed to match this trun's track ID
 	auto *def = getSampleDef(audioTrackId);
 	if (!def) {

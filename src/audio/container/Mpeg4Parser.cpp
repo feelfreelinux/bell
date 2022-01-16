@@ -124,7 +124,7 @@ void Mpeg4Container::readStsd() {
 		if (atomType != AtomType::ATOM_ESDS) {
 			desc->dataType = (uint32_t)atomType;
 			desc->dataLength = atomSize;
-			desc->data = (char *)malloc(desc->dataLength);
+			desc->data = (uint8_t *)malloc(desc->dataLength);
 			readBytes(desc->data, desc->dataLength);
 			continue;
 		}
@@ -156,7 +156,7 @@ void Mpeg4Container::readStsd() {
 					} else {
 						desc->dataType = 0;
 						desc->dataLength = size;
-						desc->data = (char *)malloc(desc->dataLength);
+						desc->data = (uint8_t *)malloc(desc->dataLength);
 						readBytes(desc->data, desc->dataLength);
 					}
 					break;

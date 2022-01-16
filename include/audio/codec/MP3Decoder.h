@@ -8,12 +8,12 @@
 class MP3Decoder : public BaseCodec {
   private:
 	HMP3Decoder mp3;
-	short *pcmData;
+	int16_t *pcmData;
 	MP3FrameInfo frame = {};
 
   public:
 	MP3Decoder();
 	~MP3Decoder();
 	bool setup(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) override;
-	uint8_t *decode(char *inData, size_t inLen, size_t &outLen) override;
+	uint8_t *decode(uint8_t *inData, uint32_t inLen, uint32_t &outLen) override;
 };

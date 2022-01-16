@@ -15,7 +15,7 @@ void Mpeg4Container::readAtomHeader(uint32_t &size, uint32_t &type) {
 void Mpeg4Container::allocSampleData() {
 	if (sampleSizeMax != sampleDataLen) {
 		freeAndNull((void *&)sampleData);
-		sampleData = (char *)realloc(sampleData, sampleSizeMax);
+		sampleData = (uint8_t *)realloc(sampleData, sampleSizeMax);
 		sampleDataLen = sampleSizeMax;
 	}
 }
