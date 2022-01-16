@@ -18,3 +18,8 @@ std::string bell::generateRandomUUID() {
     }
     return res;
 }
+
+void bell::freeAndNull(void *&ptr) {
+	free(ptr);
+	ptr = nullptr;
+}

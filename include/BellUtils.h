@@ -8,6 +8,7 @@
 namespace bell {
 
 std::string generateRandomUUID();
+void freeAndNull(void *&ptr);
 
 } // namespace bell
 

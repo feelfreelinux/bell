@@ -72,19 +72,21 @@ SPDIFAudioSink::SPDIFAudioSink(uint8_t spdifPin)
     spdif_buf_init();
     spdif_ptr = spdif_buf;
 	this->spdifPin = spdifPin;
-	this->initialize(44100);
+	this->setParams(44100, 16, 2);
 	startI2sFeed(SPDIF_BUF_SIZE * 16);
 }
 
-void SPDIFAudioSink::initialize(uint16_t sampleRate) {
-    int sample_rate = sampleRate * 2;
+bool SPDIFAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) {
+	if (bitDepth != 16 || channelCount != 2) // TODO support mono playback and different bit widths
+		return false;
+    int sample_rate = (int)sampleRate * 2;
     int bclk = sample_rate * 64 * 2;
     int mclk = (I2S_BUG_MAGIC / bclk) * bclk;
 
     i2s_config_t i2s_config = {
         .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-    	.sample_rate = (uint32_t) sample_rate,
-        .bits_per_sample = (i2s_bits_per_sample_t)32,
+    	.sample_rate = (int)sample_rate,
+        .bits_per_sample = (i2s_bits_per_sample_t)(bitDepth * 2),
         .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
         .communication_format = I2S_COMM_FORMAT_STAND_I2S,
         .intr_alloc_flags = 0,
@@ -100,18 +102,14 @@ void SPDIFAudioSink::initialize(uint16_t sampleRate) {
         .data_out_num = spdifPin,
         .data_in_num = -1,
     };
-    i2s_driver_install((i2s_port_t)0, &i2s_config, 0, NULL);
-    i2s_set_pin((i2s_port_t)0, &pin_config);
-}
-
-SPDIFAudioSink::~SPDIFAudioSink()
-{
-}
-
-bool SPDIFAudioSink::setRate(uint16_t sampleRate) {
 	i2s_driver_uninstall((i2s_port_t)0);
-	this->initialize(sampleRate);
-	return true;
+    int err = i2s_driver_install((i2s_port_t)0, &i2s_config, 0, nullptr);
+    i2s_set_pin((i2s_port_t)0, &pin_config);
+	return !err;
+}
+
+SPDIFAudioSink::~SPDIFAudioSink() {
+	i2s_driver_uninstall((i2s_port_t)0);
 }
 
 int num_frames = 0;

@@ -36,14 +36,14 @@ class HTTPClient {
 		std::map<std::string, std::string> headers;
 
 		uint16_t statusCode;
-		size_t contentLength;
+		uint32_t contentLength;
 		std::string contentType;
 		std::string location;
 		bool isChunked = false;
 		bool isGzip = false;
 		bool isComplete = false;
 		bool isRedirect = false;
-		size_t redirectCount = 0;
+		uint8_t redirectCount = 0;
 		std::ostream *dumpFs = nullptr;
 		std::ostream *dumpRawFs = nullptr;
 
@@ -51,34 +51,34 @@ class HTTPClient {
 		void close() override;
 
 		void readHeaders();
-		size_t read(char *dst, size_t len, bool wait = false);
+		uint32_t read(char *dst, uint32_t len, bool wait = false);
 		std::string readToString();
 
 		inline size_t skip(size_t len) override {
-			return read((char *)nullptr, len);
+			return (size_t)read((char *)nullptr, len);
 		}
 		inline size_t read(uint8_t *dst, size_t len) override {
-			return read((char *)dst, len);
+			return (size_t)read((char *)dst, len, false);
 		}
-		inline size_t read(uint8_t *dst, size_t len, bool wait) {
+		inline uint32_t read(uint8_t *dst, uint32_t len, bool wait) {
 			return read((char *)dst, len, wait);
 		}
 		inline size_t size() override {
-			return contentLength;
+			return (size_t)contentLength;
 		}
 		inline size_t position() override {
-			return bodyRead;
+			return (size_t)bodyRead;
 		}
 
 	  private:
 		char *buf = nullptr;	// allocated buffer
 		char *bufPtr = nullptr; // reading pointer within buf
-		size_t bodyRead = 0;
-		size_t bufRemaining = 0;
-		size_t chunkRemaining = 0;
+		uint32_t bodyRead = 0;
+		uint32_t bufRemaining = 0;
+		uint32_t chunkRemaining = 0;
 		bool isStreaming = false;
-		size_t readRaw(char *dst);
-		bool skipRaw(size_t len, bool dontRead = false);
+		uint32_t readRaw(char *dst);
+		bool skipRaw(uint32_t len, bool dontRead = false);
 	};
 
 	typedef std::unique_ptr<struct HTTPClient::HTTPResponse> HTTPResponse_t;
