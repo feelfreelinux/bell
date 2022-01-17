@@ -224,6 +224,7 @@ uint32_t HTTPClient::HTTPResponse::read(char *dst, uint32_t toRead, bool wait) {
 	while (toRead) { // this loop ends after original toRead
 		skipRaw(0);	 // ensure the buffer contains data, wait if necessary
 		if (isChunked && !chunkRemaining) {
+			// chunked responses (either streaming or not)
 			if (*bufPtr == '0') { // all chunks were read *and emitted*
 				isComplete = true;
 				break;
@@ -244,7 +245,11 @@ uint32_t HTTPClient::HTTPResponse::read(char *dst, uint32_t toRead, bool wait) {
 			if (!skipRaw(endPtr - bufPtr + 2)) // skip the size and \r\n
 				break;						   // -> no more data, break out of main loop
 		} else if (contentLength && !chunkRemaining) {
+			// normal responses (having content-length)
 			chunkRemaining = contentLength;
+		} else if (!chunkRemaining) {
+			// fallback for non-chunked streams (without content-length)
+			chunkRemaining = toRead;
 		}
 
 		while (chunkRemaining && toRead) {

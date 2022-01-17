@@ -15,5 +15,5 @@ public:
 	bool setParams(uint32_t sampleRate, uint8_t channelCount, uint8_t bitDepth) override;
     
 private:
-    PaStream *stream;
+    PaStream *stream = nullptr;
 };
