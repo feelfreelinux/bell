@@ -68,7 +68,9 @@ HTTPResponse_t HTTPClient::executeImpl(const struct HTTPRequest &request, HTTPRe
 		stream << header.first << ": " << header.second << endl;
 	}
 	stream << endl;
-	stream << request.body;
+        if (request.body != nullptr) {
+            stream << request.body;
+        }
 	std::string data = stream.str();
 
 	uint32_t len = response->socket->write((uint8_t *)data.c_str(), data.size());
