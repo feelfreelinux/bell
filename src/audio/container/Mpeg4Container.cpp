@@ -12,7 +12,6 @@ Mpeg4Container::~Mpeg4Container() {
 
 void Mpeg4Container::feed(const std::shared_ptr<bell::ByteStream> &stream, uint32_t position) {
 	BaseContainer::feed(stream, position);
-	pos = position;
 	if (isParsed) {
 		// this is needed to support seeking backwards, as goToData() always moves forward only
 		setCurrentFragment();

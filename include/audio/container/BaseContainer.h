@@ -80,7 +80,7 @@ class BaseContainer {
 
   public:
 	bool closed = false;
-	bool hasFrameHeaders = false;
+	bool isSeekable = false;
 	// audio parameters
 	AudioCodec codec = (AudioCodec)0;
 	uint32_t sampleRate = 0;
