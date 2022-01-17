@@ -15,7 +15,7 @@ void WebmContainer::parseSegment(uint32_t start) {
 				timescale = (float)readUint(esize);
 				break;
 			case ElementId::Duration:
-				durationMs = (uint32_t)(readFloat32() * timescale / 1000000.0f);
+				durationMs = (uint32_t)(readFloat(esize) * timescale / 1000000.0f);
 				break;
 			case ElementId::TrackEntry:
 				if (audioTrackId == 255)
@@ -84,7 +84,7 @@ void WebmContainer::parseTrack(uint32_t end) {
 			case ElementId::Audio:
 				continue;
 			case ElementId::SamplingFrequency:
-				trackRate = (uint32_t)readFloat32();
+				trackRate = (uint32_t)readFloat(esize);
 				break;
 			case ElementId::Channels:
 				trackChannels = readUint(esize);

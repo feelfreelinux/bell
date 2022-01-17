@@ -56,7 +56,7 @@ class WebmContainer : public BaseContainer {
 	uint64_t readVarNum64();
 	uint32_t readUint(uint8_t len);
 	uint64_t readUlong(uint8_t len);
-	float readFloat32();
+	float readFloat(uint8_t len);
 	void readElem();
 	void parseSegment(uint32_t start);
 	void parseTrack(uint32_t end);

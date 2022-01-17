@@ -53,14 +53,12 @@ uint64_t WebmContainer::readUlong(uint8_t len) {
 	return readUint(len);
 }
 
-float WebmContainer::readFloat32() {
-	float result = 0;
+float WebmContainer::readFloat(uint8_t len) {
+	double result = 0;
 	auto *b = (uint8_t *)&result;
-	b[3] = readUint8();
-	b[2] = readUint8();
-	b[1] = readUint8();
-	b[0] = readUint8();
-	return result;
+	for (uint8_t i = 0; i < len; i++)
+		b[len - i - 1] = readUint8();
+	return (float)result;
 }
 
 void WebmContainer::readElem() {
