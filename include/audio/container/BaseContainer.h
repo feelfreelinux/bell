@@ -76,16 +76,17 @@ class BaseContainer {
 	 * @param [out] len length of the setup data
 	 * @return ptr to [len] setup data bytes, or nullptr if not available/not supported
 	 */
-	virtual uint8_t *getSetupData(uint32_t &len, AudioCodec matchCodec) = 0;
+	virtual uint8_t *getSetupData(uint32_t &len, AudioCodec matchCodec);
 
   public:
 	bool closed = false;
+	bool isParsed = false;
 	bool isSeekable = false;
 	// audio parameters
 	AudioCodec codec = (AudioCodec)0;
-	uint32_t sampleRate = 0;
-	uint8_t channelCount = 0;
-	uint8_t bitDepth = 0;
+	uint32_t sampleRate = 44100;
+	uint8_t channelCount = 2;
+	uint8_t bitDepth = 16;
 	uint32_t durationMs = 0;
 
   protected:

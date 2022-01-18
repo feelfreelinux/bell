@@ -76,3 +76,7 @@ uint32_t BaseContainer::skipTo(uint32_t offset) {
 		return 0;
 	return readBytes(nullptr, offset - pos);
 }
+
+uint8_t *BaseContainer::getSetupData(uint32_t &len, AudioCodec matchCodec) {
+	return nullptr;
+}

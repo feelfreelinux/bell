@@ -40,7 +40,6 @@ class WebmContainer : public BaseContainer {
 	uint32_t clusterEnd = 0;
 	uint32_t clusterTime = 0;
 	uint32_t currentTime = 0;
-	bool isParsed = false;
 	// buffer
 	uint8_t *sampleData = nullptr;
 	uint32_t sampleLen = 0;
