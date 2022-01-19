@@ -44,6 +44,7 @@ typedef struct Frame {
 	uint16_t sampleRate;
 	bool hasPadding;
 	MpegChannelMode channels;
+	uint16_t sampleCount;
 	uint16_t size;
 	uint16_t maxSize;
 	uint8_t *data;
