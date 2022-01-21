@@ -38,7 +38,6 @@ class Mpeg4Container : public BaseContainer {
 	uint8_t *sampleData = nullptr;
 	uint32_t sampleDataLen = 0;
 	bool isParsed = false;
-	bool isSeekable = false;
 	bool isFragmented = false;
 	/** True if source reads **audio** mdat data bytes, false if source reads atom headers */
 	bool isInData = false;

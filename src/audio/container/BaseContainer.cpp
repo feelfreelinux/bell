@@ -8,6 +8,8 @@ void BaseContainer::feed(const std::shared_ptr<bell::ByteStream> &stream, uint32
 	this->pos = position;
 }
 
+// TODO move source stream reading here, and set closed = true when stream ends
+
 uint8_t BaseContainer::readUint8() {
 	pos += 1;
 	return reader->readByte();

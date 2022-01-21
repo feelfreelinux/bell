@@ -24,7 +24,8 @@ void bell::BinaryReader::skip(size_t pos) {
 
 int32_t bell::BinaryReader::readInt() {
     uint8_t b[4];
-    stream->read((uint8_t *) b,4);
+    if (stream->read((uint8_t *) b,4) != 4)
+		return 0;
     
     return static_cast<int32_t>(
         (b[3])      |
@@ -35,7 +36,8 @@ int32_t bell::BinaryReader::readInt() {
 
 int16_t bell::BinaryReader::readShort() {
     uint8_t b[2];
-    stream->read((uint8_t *) b,2);
+    if (stream->read((uint8_t *) b,2) != 2)
+		return 0;
     
     return static_cast<int16_t>(
         (b[1])      |
@@ -49,7 +51,8 @@ uint32_t bell::BinaryReader::readUInt() {
 
 uint8_t bell::BinaryReader::readByte() {
     uint8_t b[1];
-    stream->read((uint8_t *) b,1);
+    if (stream->read((uint8_t *) b,1) != 1)
+		return 0;
     return b[0];
 }
 
