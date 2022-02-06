@@ -4,6 +4,7 @@
 #include <map>
 
 class MDNSService {
+public:
     static void registerService(
         const std::string &serviceName,
         const std::string &serviceType,
