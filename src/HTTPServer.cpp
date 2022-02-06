@@ -407,6 +407,11 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body,
             if (routeSplit.back().find('*') != std::string::npos &&
                 urlSplit[1] == routeSplit[1]) {
                 matches = true;
+                for (int x = 1; x <= routeSplit.size() - 2; x++) {
+                    if (urlSplit[x] != routeSplit[x]) {
+                        matches = false;
+                    }
+                }
             }
 
             if (matches) {
