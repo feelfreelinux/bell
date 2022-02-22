@@ -12,7 +12,7 @@ class BiquadFilter
 private:
     std::mutex processMutex;
     float coeffs[5];
-    float w[2];
+    float w[2] = {0, 0};
 
 public:
     BiquadFilter(){};
