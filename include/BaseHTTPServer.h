@@ -78,6 +78,7 @@ struct HTTPConnection {
     std::string httpMethod;
     bool toBeClosed = false;
     bool isEventConnection = false;
+    bool isCaptivePortal = false;
 };
 
 class BaseHTTPServer {

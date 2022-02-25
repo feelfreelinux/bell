@@ -51,7 +51,7 @@ namespace bell
         std::vector<std::string> splitUrl(const std::string &url, char delimiter);
         std::mutex responseMutex;
         std::vector<char> responseBuffer = std::vector<char>(128);
-
+        void redirectCaptivePortal(int connectionFd);
         void readFromClient(int clientFd);
         std::map<std::string, std::string> parseQueryString(const std::string &queryString);
         unsigned char h2int(char c);

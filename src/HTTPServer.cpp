@@ -170,16 +170,23 @@ void bell::HTTPServer::readFromClient(int clientFd) {
                 if (line.find("Content-Length: ") != std::string::npos) {
                     conn.contentLength =
                         std::stoi(line.substr(16, line.size() - 1));
-                    //BELL_LOG(info, "http", "Content-Length: %d",
-                    //         conn.contentLength);
+                }
+                // detect hostname for captive portal
+                if (line.find("Host: connectivitycheck.gstatic.com") != std::string::npos) {
+                    conn.isCaptivePortal = true;
+                    BELL_LOG(info, "http", "Captive portal request detected");
                 }
                 if (line.size() == 0) {
                     if (conn.contentLength != 0) {
                         conn.isReadingBody = true;
                         goto READBODY;
                     } else {
-                        findAndHandleRoute(conn.httpMethod, conn.currentLine,
-                                           clientFd);
+                        if (!conn.isCaptivePortal) {
+                            findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);                        
+                        } else {
+                            this->redirectCaptivePortal(clientFd);
+                        }
+
                     }
                 }
             }
@@ -275,6 +282,21 @@ void bell::HTTPServer::writeResponse(const HTTPResponse &response) {
 
 void bell::HTTPServer::respond(const HTTPResponse &response) {
     writeResponse(response);
+}
+
+void bell::HTTPServer::redirectCaptivePortal(int connectionFd) {
+    std::lock_guard lock(this->responseMutex);
+    std::stringstream stream;
+    stream << "HTTP/1.1 302 Found\r\n";
+    stream << "Server: bell-http\r\n";
+    stream << "Connection: close\r\n";
+    stream << "Location: http://euphonium.audio\r\n\r\n";
+    stream << "Content-Length: 9\r\n";
+    stream << "302 Found";
+    auto responseStr = stream.str();
+
+    write(connectionFd, responseStr.c_str(), responseStr.size());
+    this->closeConnection(connectionFd);
 }
 
 void bell::HTTPServer::redirectTo(const std::string & url, int connectionFd) {
