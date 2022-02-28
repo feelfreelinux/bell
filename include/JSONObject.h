@@ -2,6 +2,7 @@
 #define JSONOBJECT_H
 #include <cJSON.h>
 #include <string>
+#include <cstring>
 #include <vector>
 
 namespace bell {
