@@ -73,6 +73,7 @@ namespace bell
                        sizeof(int));  /* length of option value */
 
             freeaddrinfo(addr);
+            std::cout << "Socket opened" << std::endl;
         }
 
         size_t read(uint8_t *buf, size_t len) {
@@ -83,11 +84,11 @@ namespace bell
             return send(sockFd, buf, len, 0);
         }
 
-		size_t poll() {
-			int value;
-			ioctl(sockFd, FIONREAD, &value);
-			return value;
-		}
+        size_t poll() {
+            int value;
+            ioctl(sockFd, FIONREAD, &value);
+            return value;
+        }
 
         void close() {
             if (!isClosed) {

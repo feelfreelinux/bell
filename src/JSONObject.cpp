@@ -43,3 +43,10 @@ std::string bell::JSONObject::toString()
     return retVal;
     
 }
+
+std::vector<uint8_t> bell::JSONObject::toVector() {
+    char *body = cJSON_Print(this->body);
+    std::vector<uint8_t> res(body, body + strlen(body));
+    free(body);
+    return res;
+}
