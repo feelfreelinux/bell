@@ -67,6 +67,6 @@ long long bell::BinaryReader::readLong() {
     long low = readInt();
 
     return static_cast<long long>(
-        (high << 32) | low );
+        ((long long) high << 32) | low );
 }
 
