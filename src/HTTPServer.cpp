@@ -1,4 +1,5 @@
 #include "HTTPServer.h"
+#include <cstring>
 
 bell::HTTPServer::HTTPServer(int serverPort) { this->serverPort = serverPort; }
 
@@ -65,8 +66,7 @@ void bell::HTTPServer::registerHandler(RequestType requestType,
 }
 
 void bell::HTTPServer::listen() {
-    BELL_LOG(info, "http", "Starting server at port %d",
-             this->serverPort);
+    BELL_LOG(info, "http", "Starting server at port %d", this->serverPort);
 
     // setup address
     struct addrinfo hints, *server;
@@ -82,9 +82,20 @@ void bell::HTTPServer::listen() {
     socklen_t incomingSockSize;
     int i;
     int yes = true;
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-    bind(sockfd, server->ai_addr, server->ai_addrlen);
-    ::listen(sockfd, 10);
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) < 0) {
+        throw std::runtime_error("setsockopt failed: " +
+                                 std::string(strerror(errno)));
+    }
+    if (bind(sockfd, server->ai_addr, server->ai_addrlen) < 0) {
+        throw std::runtime_error("bind failed on port " +
+                                 std::to_string(this->serverPort) + ": " +
+                                 std::string(strerror(errno)));
+    }
+    if (::listen(sockfd, 5) < 0) {
+        throw std::runtime_error("listen failed on port " +
+                                 std::to_string(this->serverPort) + ": " +
+                                 std::string(strerror(errno)));
+    }
 
     FD_ZERO(&activeFdSet);
     FD_SET(sockfd, &activeFdSet);
@@ -172,7 +183,8 @@ void bell::HTTPServer::readFromClient(int clientFd) {
                         std::stoi(line.substr(16, line.size() - 1));
                 }
                 // detect hostname for captive portal
-                if (line.find("Host: connectivitycheck.gstatic.com") != std::string::npos) {
+                if (line.find("Host: connectivitycheck.gstatic.com") !=
+                    std::string::npos) {
                     conn.isCaptivePortal = true;
                     BELL_LOG(info, "http", "Captive portal request detected");
                 }
@@ -182,11 +194,11 @@ void bell::HTTPServer::readFromClient(int clientFd) {
                         goto READBODY;
                     } else {
                         if (!conn.isCaptivePortal) {
-                            findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);                        
+                            findAndHandleRoute(conn.httpMethod,
+                                               conn.currentLine, clientFd);
                         } else {
                             this->redirectCaptivePortal(clientFd);
                         }
-
                     }
                 }
             }
@@ -299,7 +311,7 @@ void bell::HTTPServer::redirectCaptivePortal(int connectionFd) {
     this->closeConnection(connectionFd);
 }
 
-void bell::HTTPServer::redirectTo(const std::string & url, int connectionFd) {
+void bell::HTTPServer::redirectTo(const std::string &url, int connectionFd) {
     std::lock_guard lock(this->responseMutex);
     std::stringstream stream;
     stream << "HTTP/1.1 301 Moved Permanently\r\n";
