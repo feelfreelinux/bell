@@ -17,6 +17,59 @@ private:
 public:
     BiquadFilter(){};
 
+    // Generates coefficients for a high pass biquad filter
+    void generateHighPassCoEffs(float f, float q){
+        if (q <= 0.0001) {
+            q = 0.0001;
+        }
+        float Fs = 1;
+
+        float w0 = 2 * M_PI * f / Fs;
+        float c = cosf(w0);
+        float s = sinf(w0);
+        float alpha = s / (2 * q);
+
+        float b0 = (1 + c) / 2;
+        float b1 = -(1 + c);
+        float b2 = b0;
+        float a0 = 1 + alpha;
+        float a1 = -2 * c;
+        float a2 = 1 - alpha;
+
+        coeffs[0] = b0 / a0;
+        coeffs[1] = b1 / a0;
+        coeffs[2] = b2 / a0;
+        coeffs[3] = a1 / a0;
+        coeffs[4] = a2 / a0;
+    }   
+
+    // Generates coefficients for a low pass biquad filter
+    void generateLowPassCoEffs(float f, float q){
+        if (q <= 0.0001) {
+            q = 0.0001;
+        }
+        float Fs = 1;
+
+        float w0 = 2 * M_PI * f / Fs;
+        float c = cosf(w0);
+        float s = sinf(w0);
+        float alpha = s / (2 * q);
+
+        float b0 = (1 - c) / 2;
+        float b1 = 1 - c;
+        float b2 = b0;
+        float a0 = 1 + alpha;
+        float a1 = -2 * c;
+        float a2 = 1 - alpha;
+
+        coeffs[0] = b0 / a0;
+        coeffs[1] = b1 / a0;
+        coeffs[2] = b2 / a0;
+        coeffs[3] = a1 / a0;
+        coeffs[4] = a2 / a0;
+    }
+
+    // Generates coefficients for a high shelf biquad filter
     void generateHighShelfCoEffs(float f, float gain, float q)
     {
         if (q <= 0.0001)
@@ -99,6 +152,87 @@ public:
         float a2 = 1 - alpha;
 
         std::scoped_lock lock(processMutex);
+        coeffs[0] = b0 / a0;
+        coeffs[1] = b1 / a0;
+        coeffs[2] = b2 / a0;
+        coeffs[3] = a1 / a0;
+        coeffs[4] = a2 / a0;
+    }
+
+    // Generates coefficients for a peaking biquad filter
+    void generatePeakCoEffs(float f, float gain, float q)
+    {
+        if (q <= 0.0001) {
+            q = 0.0001;
+        }
+        float Fs = 1;
+
+        float w0 = 2 * M_PI * f / Fs;
+        float c = cosf(w0);
+        float s = sinf(w0);
+        float alpha = s / (2 * q);
+
+        float b0 = alpha;
+        float b1 = 0;
+        float b2 = -alpha;
+        float a0 = 1 + alpha;
+        float a1 = -2 * c;
+        float a2 = 1 - alpha;
+
+        coeffs[0] = b0 / a0;
+        coeffs[1] = b1 / a0;
+        coeffs[2] = b2 / a0;
+        coeffs[3] = a1 / a0;
+        coeffs[4] = a2 / a0;
+    }
+    
+    // Generates coefficients for an all pass 180° biquad filter
+    void generateAllPass180CoEffs(float f,  float q)
+    {
+        if (q <= 0.0001) {
+            q = 0.0001;
+        }
+        float Fs = 1;
+
+        float w0 = 2 * M_PI * f / Fs;
+        float c = cosf(w0);
+        float s = sinf(w0);
+        float alpha = s / (2 * q);
+
+        float b0 = 1 - alpha;
+        float b1 = -2 * c;
+        float b2 = 1 + alpha;
+        float a0 = 1 + alpha;
+        float a1 = -2 * c;
+        float a2 = 1 - alpha;
+
+        coeffs[0] = b0 / a0;
+        coeffs[1] = b1 / a0;
+        coeffs[2] = b2 / a0;
+        coeffs[3] = a1 / a0;
+        coeffs[4] = a2 / a0;
+    }
+
+    // Generates coefficients for an all pass 360° biquad filter
+    void generateAllPass360CoEffs(float f,  float q)
+    {
+        if (q <= 0.0001) {
+            q = 0.0001;
+        }
+        float Fs = 1;
+
+        float w0 = 2 * M_PI * f / Fs;
+        float c = cosf(w0);
+        float s = sinf(w0);
+        float alpha = s / (2 * q);
+
+        float b0 = 1 - alpha;
+        float b1 = -2 * c;
+        float b2 = 1 + alpha;
+        float a0 = 1 + alpha;
+        float a1 = -2 * c;
+        float a2 = 1 - alpha;
+
         coeffs[0] = b0 / a0;
         coeffs[1] = b1 / a0;
         coeffs[2] = b2 / a0;
