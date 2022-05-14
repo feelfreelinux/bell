@@ -23,10 +23,9 @@ public:
         q = safeMin(q);
 //        float Fs = 1;
 
-        float w0 = 2 * M_PI * f / Fs;
+        float w0 = calcW0(f);
         float c = cosf(w0);
-        float s = sinf(w0);
-        float alpha = s / (2 * q);
+        float alpha = calcAlpha(w0,q);
 
         float b0 = (1 + c) / 2;
         float b1 = -(1 + c);
@@ -44,10 +43,9 @@ public:
 
 //        float Fs = 1;
 
-        float w0 = 2 * M_PI * f / Fs;
+        float w0 = calcW0(f);
         float c = cosf(w0);
-        //float s = sinf(w0);
-        float alpha = calcAlpha(w0, q);
+        float alpha = calcAlpha(w0,q);
 
         float b0 = (1 - c) / 2;
         float b1 = 1 - c;
@@ -66,10 +64,9 @@ public:
 //        float Fs = 1;
 
         float A = sqrtf(pow(10, (double)gain / 20.0));
-        float w0 = 2 * M_PI * f / Fs;
+        float w0 = calcW0(f);
         float c = cosf(w0);
-        //float s = sinf(w0);
-        float alpha = calcAlpha(w0, q);
+        float alpha = calcAlpha(w0,q);
 
         float b0 = A * ((A + 1) + (A - 1) * c + 2 * sqrtf(A) * alpha);
         float b1 = -2 * A * ((A - 1) + (A + 1) * c);
@@ -88,10 +85,9 @@ public:
 //        float Fs = 1;
 
         float A = sqrtf(pow(10, (double)gain / 20.0));
-        float w0 = 2 * M_PI * f / Fs;
+        float w0 = calcW0(f);
         float c = cosf(w0);
-//        float s = sinf(w0);
-        float alpha = calcAlpha(w0, q);
+        float alpha = calcAlpha(w0,q);
 
         float b0 = A * ((A + 1) - (A - 1) * c + 2 * sqrtf(A) * alpha);
         float b1 = 2 * A * ((A - 1) - (A + 1) * c);
@@ -110,10 +106,9 @@ public:
 //        float Fs = 1;
 
         float A = sqrtf(pow(10, (double)gain / 20.0));
-        float w0 = 2 * M_PI * f / Fs;
+        float w0 = calcW0(f);
         float c = cosf(w0);
-        //float s = sinf(w0);
-        float alpha = calcAlpha(w0, q);
+        float alpha = calcAlpha(w0,q);
 
         float b0 = 1 + alpha * A;
         float b1 = -2 * c;
@@ -126,11 +121,6 @@ public:
 
     }
 
-    float calcAlpha(float w0, float q)
-    {
-      return sinf(w0) / (2 * q);
-    }
-
     void generateLowPassCoeffs(float f, float gain, float q)
     {
       // Formula from here: https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
@@ -138,10 +128,9 @@ public:
       q = safeMin(q);
 //      float Fs = 1;
 
-      float w0 = 2 * M_PI * f / Fs;
+      float w0 = calcW0(f);
       float c = cosf(w0);
-      //float s = sinf(w0);
-      float alpha = calcAlpha(w0, q);
+      float alpha = calcAlpha(w0,q);
 
       // coefficients
       float b0 = (1 - c) / 2;
@@ -162,10 +151,9 @@ public:
         q = safeMin(q);
 //        float Fs = 1;
 
-        float w0 = 2 * M_PI * f / Fs;
+        float w0 = calcW0(f);
         float c = cosf(w0);
-        float s = sinf(w0);
-        float alpha = s / (2 * q);
+        float alpha = calcAlpha(w0,q);
 
         float b0 = alpha;
         float b1 = 0;
@@ -183,10 +171,9 @@ public:
         q = safeMin(q);
 //        float Fs = 1;
 
-        float w0 = 2 * M_PI * f / Fs;
+        float w0 = calcW0(f);
         float c = cosf(w0);
-        float s = sinf(w0);
-        float alpha = s / (2 * q);
+        float alpha = calcAlpha(w0,q);
 
         float b0 = 1 - alpha;
         float b1 = -2 * c;
@@ -204,10 +191,9 @@ public:
         q = safeMin(q);
 //        float Fs = 1;
 
-        float w0 = 2 * M_PI * f / Fs;
+        float w0 = calcW0(f);
         float c = cosf(w0);
-        float s = sinf(w0);
-        float alpha = s / (2 * q);
+        float alpha = calcAlpha(w0,q);
 
         float b0 = 1 - alpha;
         float b1 = -2 * c;
@@ -226,6 +212,16 @@ public:
           return 0.0001;
       }
       return q;
+    }
+
+    float calcAlpha(float w0, float q)
+    {
+      return sinf(w0) / (2 * q);
+    }
+
+    float calcW0(float f)
+    {
+      return 2 * M_PI * f / Fs;
     }
 
 
