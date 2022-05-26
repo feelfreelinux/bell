@@ -256,7 +256,28 @@ public:
         float a1 = -2 * c;
         float a2 = 1 - alpha;
 
-        setCoefss(a0,a1, a2, b0, b1, b2);
+        setCoefss(a0, a1, a2, b0, b1, b2);
+    }
+
+    // Generates coefficients for a peaking EQ biquad filter
+    void generatePeakingEqCoEffs(float f, float gain, float q)
+    {
+        // formular taken from: https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
+        q = safeMin(q);
+
+        float A = calcA(gain);
+        float w0 = calcW0(f);
+        float c = cosf(w0);
+        float alpha = calcAlpha(w0,q);
+
+        float b0 = 1 + (alpha*A);
+        float b1 = (-2*c);
+        float b2 = 1 - (alpha*A);
+        float a0 = 1 + (alpha/A);
+        float a1 = b1;
+        float a2 = 1 - (alpha/A);
+
+        setCoefss(a0, a1, a2, b0, b1, b2);
     }
 
     // Generates coefficients for an all pass 180° biquad filter
