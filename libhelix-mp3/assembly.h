@@ -316,6 +316,89 @@ static __inline Word64 xSAR64(Word64 x, int n)
 }
 //mw
 
+#elif defined(__arm__)
+
+#if defined(ARM7DI)
+	
+typedef long long Word64;
+
+static __inline int MULSHIFT32(int x, int y) {
+	return x * y;
+}
+
+#else
+
+static __inline Word64 SAR64(Word64 x, int n) {
+	return x >>= n;
+}
+
+
+typedef union _U64 {
+	Word64 w64;
+	struct {
+		/* x86 = little endian */
+		unsigned int lo32;
+		signed int   hi32;
+	} r;
+} U64;
+
+static __inline Word64 MADD64(Word64 sum64, int x, int y)
+{
+	sum64 += (Word64)x * (Word64)y;
+
+	return sum64;
+}
+
+static __inline int MULSHIFT32(int x, int y)
+{
+	/* important rules for smull RdLo, RdHi, Rm, Rs:
+	 *     RdHi and Rm can't be the same register
+	 *     RdLo and Rm can't be the same register
+	 *     RdHi and RdLo can't be the same register
+	 * Note: Rs determines early termination (leading sign bits) so if you want to specify
+	 *   which operand is Rs, put it in the SECOND argument (y)
+	 * For inline assembly, x and y are not assumed to be R0, R1 so it shouldn't matter
+	 *   which one is returned. (If this were a function call, returning y (R1) would 
+	 *   require an extra "mov r0, r1")
+	 */
+	int zlow;
+	__asm__ volatile ("smull %0,%1,%2,%3" : "=&r" (zlow), "=r" (y) : "r" (x), "1" (y)) ;
+
+	return y;
+}
+
+#endif
+
+static __inline int FASTABS(int x) 
+{
+	int t=0; /*Really is not necessary to initialiaze only to avoid warning*/
+
+	__asm__ volatile (
+		"eor %0,%2,%2, asr #31;"
+		"sub %0,%1,%2, asr #31;"
+		: "=&r" (t) 
+		: "0" (t), "r" (x)
+	 );
+
+	return t;
+}
+
+static __inline int CLZ(int x)
+{
+	int numZeros;
+
+	if (!x)
+		return (sizeof(int) * 8);
+
+	numZeros = 0;
+	while (!(x & 0x80000000)) {
+		numZeros++;
+		x <<= 1;
+	} 
+
+	return numZeros;
+}
+
 #elif defined(__APPLE__) || defined(ESP_PLATFORM) || defined(__amd64__)
 
 static __inline int FASTABS(int x)
