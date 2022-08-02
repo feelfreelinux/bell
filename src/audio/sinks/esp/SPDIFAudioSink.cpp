@@ -85,7 +85,11 @@ bool SPDIFAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount, uint8_
 
     i2s_config_t i2s_config = {
         .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-    	.sample_rate = (uint32_t)sample_rate,
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 0)
+    	.sample_rate = (uint32_t) sample_rate,
+#else
+        .sample_rate = (int) sample_rate,
+#endif
         .bits_per_sample = (i2s_bits_per_sample_t)(bitDepth * 2),
         .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
         .communication_format = I2S_COMM_FORMAT_STAND_I2S,
