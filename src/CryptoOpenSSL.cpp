@@ -127,6 +127,7 @@ void CryptoOpenSSL::aesECBdecrypt(const std::vector<uint8_t>& key, std::vector<u
     int len = 0;
 
     EVP_DecryptInit_ex(ctx, EVP_aes_192_ecb(), NULL, key.data(), NULL);
+    EVP_CIPHER_CTX_set_padding(ctx, 0); // disable padding
     EVP_DecryptUpdate(ctx, data.data(), &len, data.data(), data.size());
     EVP_DecryptFinal_ex(ctx, data.data() + len, &len);
 
