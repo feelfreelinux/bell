@@ -41,7 +41,7 @@ public:
         coeffs[2] = b2 / a0;
         coeffs[3] = a1 / a0;
         coeffs[4] = a2 / a0;
-    }   
+    }
 
     // Generates coefficients for a low pass biquad filter
     void generateLowPassCoEffs(float f, float q){
@@ -185,7 +185,39 @@ public:
         coeffs[3] = a1 / a0;
         coeffs[4] = a2 / a0;
     }
-    
+
+
+    // Generates coefficients for a peaking EQ biquad filter
+    void generatePeakingEqCoEffs(float f, float gain, float q)
+    {
+        // formular taken from: https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
+        if (q <= 0.0001) {
+            q = 0.0001;
+        }
+        float Fs = 1;
+
+        float w0 = 2 * M_PI * f / Fs;
+        float c = cosf(w0);
+        float s = sinf(w0);
+        float alpha = s / (2 * q);
+        float A =  sqrtf(pow(10, (double)gain / 20.0));
+
+        float b0 = 1 + (alpha*A);
+        float b1 = (-2*c);
+        float b2 = 1 - (alpha*A);
+        float a0 = 1 + (alpha/A);
+        float a1 = b1;
+        float a2 = 1 - (alpha/A);
+
+        coeffs[0] = b0 / a0;
+        coeffs[1] = b1 / a0;
+        coeffs[2] = b2 / a0;
+        coeffs[3] = a1 / a0;
+        coeffs[4] = a2 / a0;
+    }
+
+
+
     // Generates coefficients for an all pass 180° biquad filter
     void generateAllPass180CoEffs(float f,  float q)
     {
