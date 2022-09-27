@@ -12,3 +12,6 @@
 	path = opus
 	url = https://github.com/xiph/opus
 
+[submodule "alac"]
+	path = alac
+	url = https://github.com/philippe44/alac
