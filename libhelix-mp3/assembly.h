@@ -399,7 +399,7 @@ static __inline int CLZ(int x)
 	return numZeros;
 }
 
-#elif defined(__APPLE__) || defined(ESP_PLATFORM) || defined(__amd64__)
+#elif defined(__APPLE__) || defined(ESP_PLATFORM) || defined(__amd64__) || defined(__vita__)
 
 static __inline int FASTABS(int x)
 {

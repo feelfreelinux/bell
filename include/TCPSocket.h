@@ -17,7 +17,9 @@
 #include <fstream>
 #include <netinet/tcp.h>
 #include <BellLogger.h>
+#if !defined(__vita__)
 #include <sys/ioctl.h>
+#endif
 
 namespace bell
 {
@@ -86,7 +88,11 @@ namespace bell
 
         size_t poll() {
             int value;
+#if !defined(__vita__)
             ioctl(sockFd, FIONREAD, &value);
+#else
+            value = 0;
+#endif
             return value;
         }
 

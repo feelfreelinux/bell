@@ -590,7 +590,7 @@ static __inline int CLZ(int x)
 	return numZeros;
 }
 
-#elif defined(ESP_PLATFORM) || defined(__GNUC__) && (defined(__powerpc__) || defined(__POWERPC__)) || (defined (_SOLARIS) && !defined (__GNUC__) && !defined (_SOLARISX86))
+#elif defined(ESP_PLATFORM) || defined(__GNUC__) && (defined(__powerpc__) || defined(__POWERPC__)) || (defined (_SOLARIS) && !defined (__GNUC__) && !defined (_SOLARISX86)) || defined(__vita__)
 
 typedef long long Word64;
 
