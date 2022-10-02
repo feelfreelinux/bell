@@ -19,39 +19,20 @@
 #include <unistd.h>
 #include <vector>
 
-#ifdef BELL_USE_MBEDTLS
-
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/debug.h"
-#else
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#endif
 
 namespace bell {
 class TLSSocket : public bell::Socket {
 private:
-#ifdef BELL_USE_MBEDTLS
     mbedtls_net_context server_fd;
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_ssl_context ssl;
     mbedtls_ssl_config conf;
-#else
-
-  BIO *sbio, *out;
-  int len;
-  char tmpbuf[1024];
-  SSL_CTX *ctx;
-  SSL *ssl;
-
-  int sockFd;
-  int sslFd;
-#endif
 
   bool isClosed = false;
 public:
