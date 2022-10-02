@@ -24,8 +24,8 @@ jobs:
       with:
         cmake-version: '3.18.x'
 
-    - name: Install avachi libraries (mDNS) and asound
-      run: sudo apt-get install libavahi-compat-libdnssd-dev libasound2-dev
+    - name: Install avachi libraries (mDNS), mbedtls and asound
+      run: sudo apt-get install libavahi-compat-libdnssd-dev libasound2-dev libmbedtls-dev
       if: ${{ matrix.os == 'ubuntu-latest' }}
       
     - name: Install openssl on macos
