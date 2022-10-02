@@ -55,14 +55,14 @@ std::vector<std::string> bell::HTTPServer::splitUrl(const std::string &url,
 
 void bell::HTTPServer::registerHandler(RequestType requestType,
                                        const std::string &routeUrl,
-                                       httpHandler handler) {
+                                       httpHandler handler,
+                                       bool readBodyToStr) {
     if (routes.find(routeUrl) == routes.end()) {
         routes.insert({routeUrl, std::vector<HTTPRoute>()});
     }
-    this->routes[routeUrl].push_back(HTTPRoute{
-        .requestType = requestType,
-        .handler = handler,
-    });
+    this->routes[routeUrl].push_back(HTTPRoute{.requestType = requestType,
+                                               .handler = handler,
+                                               .readBodyToStr = readBodyToStr});
 }
 
 void bell::HTTPServer::listen() {
@@ -132,6 +132,7 @@ void bell::HTTPServer::listen() {
 
                     this->connections.insert({newFd, conn});
                 } else {
+
                     /* Data arriving on an already-connected socket. */
                     readFromClient(i);
                 }
@@ -154,6 +155,10 @@ void bell::HTTPServer::listen() {
 
 void bell::HTTPServer::readFromClient(int clientFd) {
     HTTPConnection &conn = this->connections[clientFd];
+    if (conn.headersRead) {
+        return;
+    }
+    conn.fd = clientFd;
 
     int nbytes = recv(clientFd, &conn.buffer[0], conn.buffer.size(), 0);
     if (nbytes < 0) {
@@ -163,48 +168,54 @@ void bell::HTTPServer::readFromClient(int clientFd) {
     } else if (nbytes == 0) {
         this->closeConnection(clientFd);
     } else {
-        conn.currentLine +=
-            std::string(conn.buffer.data(), conn.buffer.data() + nbytes);
-    READBODY:
-        if (!conn.isReadingBody) {
-            while (conn.currentLine.find("\r\n") != std::string::npos) {
-                auto line =
-                    conn.currentLine.substr(0, conn.currentLine.find("\r\n"));
-                conn.currentLine = conn.currentLine.substr(
-                    conn.currentLine.find("\r\n") + 2, conn.currentLine.size());
-                if (line.find("GET ") != std::string::npos ||
-                    line.find("POST ") != std::string::npos ||
-                    line.find("OPTIONS ") != std::string::npos) {
-                    conn.httpMethod = line;
-                }
+        // append buffer to partialBuffer
+        conn.partialBuffer.insert(conn.partialBuffer.end(), conn.buffer.begin(),
+                                  conn.buffer.begin() + nbytes);
+        auto stringifiedBuffer =
+            std::string(conn.partialBuffer.data(),
+                        conn.partialBuffer.data() + conn.partialBuffer.size());
 
-                if (line.find("Content-Length: ") != std::string::npos) {
-                    conn.contentLength =
-                        std::stoi(line.substr(16, line.size() - 1));
-                }
-                // detect hostname for captive portal
-                if (line.find("Host: connectivitycheck.gstatic.com") !=
-                    std::string::npos) {
-                    conn.isCaptivePortal = true;
-                    BELL_LOG(info, "http", "Captive portal request detected");
-                }
-                if (line.size() == 0) {
-                    if (conn.contentLength != 0) {
-                        conn.isReadingBody = true;
-                        goto READBODY;
+    READBODY:
+        auto readSize = 0;
+
+        while (stringifiedBuffer.find("\r\n") != std::string::npos) {
+            auto line =
+                stringifiedBuffer.substr(0, stringifiedBuffer.find("\r\n"));
+            readSize += stringifiedBuffer.find("\r\n") + 2;
+            stringifiedBuffer = stringifiedBuffer.substr(
+                stringifiedBuffer.find("\r\n") + 2, stringifiedBuffer.size());
+            if (line.find("GET ") != std::string::npos ||
+                line.find("POST ") != std::string::npos ||
+                line.find("OPTIONS ") != std::string::npos) {
+                conn.httpMethod = line;
+            }
+
+            if (line.find("Content-Length: ") != std::string::npos) {
+                conn.contentLength =
+                    std::stoi(line.substr(16, line.size() - 1));
+            }
+            // detect hostname for captive portal
+            if (line.find("Host: connectivitycheck.gstatic.com") !=
+                std::string::npos) {
+                conn.isCaptivePortal = true;
+                BELL_LOG(info, "http", "Captive portal request detected");
+            }
+            if (line.size() == 0) {
+                if (conn.contentLength != 0) {
+                    // conn.isReadingBody = true;
+                    // remove readSize bytes from partialBuffer
+                    conn.partialBuffer.erase(conn.partialBuffer.begin(),
+                                             conn.partialBuffer.begin() +
+                                                 readSize);
+                    findAndHandleRoute(conn);
+                    // goto READBODY;
+                } else {
+                    if (!conn.isCaptivePortal) {
+                        findAndHandleRoute(conn);
                     } else {
-                        if (!conn.isCaptivePortal) {
-                            findAndHandleRoute(conn.httpMethod,
-                                               conn.currentLine, clientFd);
-                        } else {
-                            this->redirectCaptivePortal(clientFd);
-                        }
+                        this->redirectCaptivePortal(clientFd);
                     }
                 }
-            }
-        } else {
-            if (conn.currentLine.size() >= conn.contentLength) {
-                findAndHandleRoute(conn.httpMethod, conn.currentLine, clientFd);
             }
         }
     }
@@ -365,8 +376,11 @@ bell::HTTPServer::parseQueryString(const std::string &queryString) {
     return query;
 }
 
-void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body,
-                                          int connectionFd) {
+void bell::HTTPServer::findAndHandleRoute(HTTPConnection &conn) {
+    conn.headersRead = true;
+    auto connectionFd = conn.fd;
+    // auto body = conn.partialBuffer;
+    auto url = conn.httpMethod;
     std::map<std::string, std::string> pathParams;
     std::map<std::string, std::string> queryParams;
 
@@ -449,18 +463,36 @@ void bell::HTTPServer::findAndHandleRoute(std::string &url, std::string &body,
             }
 
             if (matches) {
-                if (body.find('&') != std::string::npos) {
-                    queryParams = this->parseQueryString(body);
+                auto reader = std::make_unique<RequestBodyReader>(
+                    conn.contentLength, conn.fd, conn.partialBuffer);
+
+                auto body = std::string();
+                if (route.readBodyToStr) {
+                    body.reserve(conn.contentLength);
+                    auto read = 0;
+                    while (read < conn.contentLength) {
+                        auto readBytes = reader->read(
+                            body.data() + read, conn.contentLength - read);
+                        read += readBytes;
+                    }
+
+                    if (body.find('&') != std::string::npos) {
+                        queryParams = this->parseQueryString(body);
+                    }
                 }
 
-                HTTPRequest req = {.urlParams = pathParams,
-                                   .queryParams = queryParams,
-                                   .body = body,
-                                   .url = path,
-                                   .handlerId = 0,
-                                   .connection = connectionFd};
+                std::unique_ptr<HTTPRequest> req =
+                    std::make_unique<HTTPRequest>();
+                req->queryParams = queryParams;
+                req->urlParams = pathParams;
+                req->url = path;
+                req->body = body;
+                req->connection = connectionFd;
+                req->handlerId = 0;
+                req->responseReader = std::move(reader);
+                req->contentLength = conn.contentLength;
 
-                route.handler(req);
+                route.handler(std::move(req));
                 return;
             }
         }

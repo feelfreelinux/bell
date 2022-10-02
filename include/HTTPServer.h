@@ -46,7 +46,7 @@ namespace bell
         std::map<int, HTTPConnection> connections;
         void writeResponse(const HTTPResponse &);
         void writeResponseEvents(int connFd);
-        void findAndHandleRoute(std::string &, std::string &, int connectionFd);
+        void findAndHandleRoute(HTTPConnection& connection);
 
         std::vector<std::string> splitUrl(const std::string &url, char delimiter);
         std::mutex responseMutex;
@@ -60,7 +60,7 @@ namespace bell
     public:
         HTTPServer(int serverPort);
 
-        void registerHandler(RequestType requestType, const std::string &, httpHandler);
+        void registerHandler(RequestType requestType, const std::string &, httpHandler, bool readDataToStr = false);
         void respond(const HTTPResponse &);
         void redirectTo(const std::string&, int connectionFd);
         void publishEvent(std::string eventName, std::string eventData);
