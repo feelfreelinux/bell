@@ -6,7 +6,7 @@
 #include <ByteStream.h>
 #include <BellSocket.h>
 #include <TCPSocket.h>
-#include <platform/TLSSocket.h>
+#include <TLSSocket.h>
 
 /*
 * HTTPStream
