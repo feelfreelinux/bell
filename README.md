@@ -7,7 +7,7 @@ What's included:
 
 - `HTTPServer`, `HTTPClient` - no need to explain
 - `BufferedStream` - wrapper for `ByteStream` with a worker-thread ring buffer
-- Crypto (openssl and mbedtls backed)
+- Crypto (mbedtls backed)
 - Audio sinks interface:
     - for Unix/Cygwin: ALSA, PortAudio, named pipe outputs (see root CMakeLists for options)
     - for ESP32: DACs (`AC101`, `ES8388`, `ES9018`, `PCM5102`, `TAS5711`), S/PDIF over I2S, internal DAC output
