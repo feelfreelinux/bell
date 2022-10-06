@@ -13,70 +13,77 @@ namespace bell
     {
     public:
         bool enableSubmodule = false;
+        bool enableColors = true;
         virtual void debug(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
         virtual void error(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
         virtual void info(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
     };
 
+    extern int (*function_printf)(const char *, ...);
+    extern int (*function_vprintf)(const char*, va_list);
     extern std::shared_ptr<bell::AbstractLogger> bellGlobalLogger;
     class BellLogger : public bell::AbstractLogger
     {
     public:
-        // static bool enableColors = true;
         void debug(std::string filename, int line, std::string submodule, const char *format, ...)
         {
-
-            printf(colorRed);
-            printf("D ");
+            if(enableColors)
+                function_printf(colorRed);
+            function_printf("D ");
             if (enableSubmodule) {
-                printf(colorReset);
-                printf("[%s] ", submodule.c_str());
+                if(enableColors)
+                    function_printf(colorReset);
+                function_printf("[%s] ", submodule.c_str());
             }
             printFilename(filename);
-            printf(":%d: ", line);
+            function_printf(":%d: ", line);
             va_list args;
             va_start(args, format);
-            vprintf(format, args);
+            function_vprintf(format, args);
             va_end(args);
-            printf("\n");
+            function_printf("\n");
         };
 
         void error(std::string filename, int line, std::string submodule, const char *format, ...)
         {
-
-            printf(colorRed);
-            printf("E ");
+            if(enableColors)
+                function_printf(colorRed);
+            function_printf("E ");
             if (enableSubmodule) {
-                printf(colorReset);
-                printf("[%s] ", submodule.c_str());
+                if(enableColors)
+                    function_printf(colorReset);
+                function_printf("[%s] ", submodule.c_str());
             }
             printFilename(filename);
-            printf(":%d: ", line);
-            printf(colorRed);
+            function_printf(":%d: ", line);
+            if(enableColors)
+                function_printf(colorRed);
             va_list args;
             va_start(args, format);
-            vprintf(format, args);
+            function_vprintf(format, args);
             va_end(args);
-            printf("\n");
+            function_printf("\n");
         };
 
         void info(std::string filename, int line, std::string submodule, const char *format, ...)
         {
-
-            printf(colorBlue);
-            printf("I ");
+            if(enableColors)
+                printf(colorBlue);
+            function_printf("I ");
             if (enableSubmodule) {
-                printf(colorReset);
-                printf("[%s] ", submodule.c_str());
+                if(enableColors)
+                    function_printf(colorReset);
+                function_printf("[%s] ", submodule.c_str());
             }
             printFilename(filename);
-            printf(":%d: ", line);
-            printf(colorReset);
+            function_printf(":%d: ", line);
+            if(enableColors)
+                function_printf(colorReset);
             va_list args;
             va_start(args, format);
-            vprintf(format, args);
+            function_vprintf(format, args);
             va_end(args);
-            printf("\n");
+            function_printf("\n");
         };
 
         void printFilename(std::string filename)
@@ -88,10 +95,12 @@ namespace bell
                 hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
             }
 
-            printf("\e[0;%dm", allColors[hash % NColors]);
+            if(enableColors)
+                function_printf("\e[0;%dm", allColors[hash % NColors]);
 
-            printf("%s", basenameStr.c_str());
-            printf(colorReset);
+            function_printf("%s", basenameStr.c_str());
+            if(enableColors)
+                function_printf(colorReset);
         }
 
     private:
@@ -104,6 +113,7 @@ namespace bell
 
     void setDefaultLogger();
     void enableSubmoduleLogging();
+    void disableColors();
 }
 
 #define BELL_LOG(type, ...)                                      \
