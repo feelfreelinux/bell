@@ -2,6 +2,7 @@
 #define BELL_BASE_HTTP_SERV
 
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <map>
 #include <memory>
