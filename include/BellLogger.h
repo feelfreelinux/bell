@@ -18,7 +18,7 @@ namespace bell
         virtual void info(std::string filename, int line, std::string submodule, const char *format, ...) = 0;
     };
 
-    extern std::shared_ptr<bell::AbstractLogger> bellGlobalLogger;
+    extern bell::AbstractLogger* bellGlobalLogger;
     class BellLogger : public bell::AbstractLogger
     {
     public:
