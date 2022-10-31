@@ -51,11 +51,6 @@ ES8388AudioSink::ES8388AudioSink()
         ESP_LOGE("OI", "i2s set pin error: %d", err);
     }
 
-    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
-    REG_SET_FIELD(PIN_CTRL, CLK_OUT1, 0);
-    ESP_LOGI("OI", "MCLK output on CLK_OUT1");
-
-
     err = i2c_param_config(0, &i2c_config);
     if (err != ESP_OK) {
         ESP_LOGE("OI", "i2c param config error: %d", err);

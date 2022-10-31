@@ -5,6 +5,7 @@ InternalAudioSink::InternalAudioSink()
 {
     softwareVolumeControl = true;
     usign = true;
+    #ifdef I2S_MODE_DAC_BUILT_IN
 
     i2s_config_t i2s_config = {
         .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN),                                  // Only TX
@@ -24,6 +25,7 @@ InternalAudioSink::InternalAudioSink()
     i2s_driver_install((i2s_port_t)0, &i2s_config, 0, NULL);
     //init DAC
     i2s_set_dac_mode(I2S_DAC_CHANNEL_BOTH_EN);
+    #endif
 
     startI2sFeed();
 }
