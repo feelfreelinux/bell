@@ -43,7 +43,7 @@ namespace bell
         }
     };
 
-    extern std::shared_ptr<bell::DecodersInstance> decodersInstance;
+    extern bell::DecodersInstance* decodersInstance;
 
     void createDecoders();
 }
