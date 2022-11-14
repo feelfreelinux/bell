@@ -8,15 +8,20 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#endif
 #include <sstream>
 #include <stdlib.h>
 #include <string>
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <vector>
 
 #include "mbedtls/net_sockets.h"
