@@ -64,11 +64,13 @@ namespace bell
 				cfg.prio = this->priority;
                 esp_pthread_set_cfg(&cfg);
             }
-#elif _WIN32
+#endif
+#if _WIN32
             thread = CreateThread(NULL, stackSize, (LPTHREAD_START_ROUTINE) taskEntryFunc, this, 0, NULL);
             return thread != NULL;
-#endif
+#else
             return (pthread_create(&thread, NULL, taskEntryFunc, this) == 0);
+#endif
         }
 
     protected:
