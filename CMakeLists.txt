@@ -24,10 +24,6 @@ if(BELL_EXTERNAL_MBEDTLS)
 endif()
 
 # Backwards compatibility with deprecated options
-if(BELL_EXTERNAL_TREMOR)
-    message(WARNING "Deprecated Bell options used, replace BELL_EXTERNAL_TREMOR with BELL_CODEC_VORBIS=OFF")
-    set(BELL_CODEC_VORBIS OFF)
-endif()
 if(BELL_USE_ALSA)
     message(WARNING "Deprecated Bell options used, replace BELL_USE_ALSA with BELL_SINK_ALSA")
     set(BELL_SINK_ALSA ${BELL_USE_ALSA})
