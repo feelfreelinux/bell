@@ -67,9 +67,8 @@ namespace bell
 #elif _WIN32
             thread = CreateThread(NULL, stackSize, (LPTHREAD_START_ROUTINE) taskEntryFunc, this, 0, NULL);
             return thread != NULL;
-#else
-            return (pthread_create(&thread, NULL, taskEntryFunc, this) == 0);
 #endif
+            return (pthread_create(&thread, NULL, taskEntryFunc, this) == 0);
         }
 
     protected:
