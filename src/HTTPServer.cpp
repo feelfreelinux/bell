@@ -65,7 +65,7 @@ void bell::HTTPServer::registerHandler(RequestType requestType,
                                                .readBodyToStr = readBodyToStr});
 }
 
-void bell::HTTPServer::listen() {
+void bell::HTTPServer::listen(std::function<void()> const& gotPort) {
     BELL_LOG(info, "http", "Starting server at port %d", this->serverPort);
 
     // setup address
@@ -89,6 +89,15 @@ void bell::HTTPServer::listen() {
         throw std::runtime_error("bind failed on port " +
                                  std::to_string(this->serverPort) + ": " +
                                  std::string(strerror(errno)));
+    }
+    if (!this->serverPort) {
+        struct sockaddr_in addr;
+        socklen_t len = sizeof(struct sockaddr);
+
+        getsockname(sockfd, (struct sockaddr*) &addr, &len);
+        this->serverPort = ntohs(addr.sin_port);
+        BELL_LOG(info, "http", "Bound to port %u", this->serverPort);
+        if (gotPort) gotPort();
     }
     if (::listen(sockfd, 5) < 0) {
         throw std::runtime_error("listen failed on port " +
