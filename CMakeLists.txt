@@ -61,7 +61,7 @@ set(AUDIO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/audio")
 add_definitions("-DUSE_DEFAULT_STDLIB=1")
 
 # Main library sources
-file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c" "src/audio/container/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c")
 list(APPEND EXTRA_INCLUDES "include/platform")
 list(APPEND EXTRA_INCLUDES "include/audio/container")
 
@@ -133,6 +133,8 @@ else()
 endif()
 
 if(NOT BELL_DISABLE_CODECS)
+    file(GLOB EXTRA_SOURCES "src/audio/container/*.cpp")
+    list(APPEND SOURCES "${EXTRA_SOURCES}")
     list(APPEND SOURCES "${AUDIO_DIR}/codec/DecoderGlobals.cpp")
     list(APPEND SOURCES "${AUDIO_DIR}/codec/BaseCodec.cpp")
     list(APPEND SOURCES "${AUDIO_DIR}/codec/AudioCodecs.cpp")
@@ -195,6 +197,8 @@ if(NOT BELL_DISABLE_CODECS)
     # Enable global codecs
     string(REPLACE ";" " " CODEC_FLAGS "${CODEC_FLAGS}")
     set_source_files_properties("${AUDIO_DIR}/codec/AudioCodecs.cpp" PROPERTIES COMPILE_FLAGS "${CODEC_FLAGS}")
+elseif(BELL_EXTERNAL_TREMOR) 	
+    list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_TREMOR})
 endif()
 
 if(NOT BELL_DISABLE_SINKS)
