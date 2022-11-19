@@ -59,9 +59,11 @@ set(AUDIO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/audio")
 add_definitions("-DUSE_DEFAULT_STDLIB=1")
 
 # Main library sources
-file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c" "src/audio/container/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c" "src/audio/container/*.cpp" "src/dsp/*.cpp" "src/dsp/transforms/*.cpp")
 list(APPEND EXTRA_INCLUDES "include/platform")
 list(APPEND EXTRA_INCLUDES "include/audio/container")
+list(APPEND EXTRA_INCLUDES "include/dsp/")
+list(APPEND EXTRA_INCLUDES "include/dsp/transforms")
 
 # Add platform specific sources
 if(ESP_PLATFORM)
@@ -95,7 +97,12 @@ if(ESP_PLATFORM)
 else()
     find_package(Threads REQUIRED)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
-    list(APPEND EXTRA_LIBS mbedtls mbedcrypto mbedx509 Threads::Threads)
+
+    find_package(MbedTLS REQUIRED)
+
+    list(APPEND EXTRA_INCLUDES ${MBEDTLS_INCLUDE_DIRS})
+    list(APPEND EXTRA_LIBS ${MBEDTLS_LIBRARIES})
+    list(APPEND EXTRA_LIBS Threads::Threads)
 endif()
 
 if(NOT BELL_DISABLE_CODECS)
