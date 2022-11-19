@@ -50,7 +50,7 @@ uint32_t BaseContainer::readVarint32() {
 uint32_t BaseContainer::readBytes(uint8_t *dst, uint32_t num) {
 	if (!num)
 		return 0;
-	uint32_t len, total;
+	uint32_t len, total = 0;
 	do {
 		if (dst) {
 			len = source->read(dst, num);

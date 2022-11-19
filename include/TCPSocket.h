@@ -9,15 +9,21 @@
 #include <cstring>
 #include <stdlib.h>
 #include <sys/types.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include "win32shim.h"
+#else
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <netinet/tcp.h>
+#include <sys/ioctl.h>
+#endif
 #include <sstream>
 #include <fstream>
-#include <netinet/tcp.h>
 #include <BellLogger.h>
-#include <sys/ioctl.h>
 
 namespace bell
 {
@@ -77,18 +83,23 @@ namespace bell
         }
 
         size_t read(uint8_t *buf, size_t len) {
-            return recv(sockFd, buf, len, 0);
+            return recv(sockFd, (char*) buf, len, 0);
         }
 
         size_t write(uint8_t *buf, size_t len) {
-            return send(sockFd, buf, len, 0);
+            return send(sockFd, (char*) buf, len, 0);
         }
 
-        size_t poll() {
-            int value;
-            ioctl(sockFd, FIONREAD, &value);
-            return value;
-        }
+		size_t poll() {
+#ifdef _WIN32
+            unsigned long value;
+			ioctlsocket(sockFd, FIONREAD, &value);
+#else
+			int value;
+			ioctl(sockFd, FIONREAD, &value);
+#endif
+			return value;
+		}
 
         void close() {
             if (!isClosed) {

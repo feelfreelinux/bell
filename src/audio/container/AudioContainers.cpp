@@ -2,6 +2,9 @@
 
 #include "AudioContainers.h"
 #include "Mpeg4Container.h"
+#ifdef _WIN32
+#include "win32shim.h"
+#endif
 
 std::unique_ptr<BaseContainer> AudioContainers::create(const char *mimeType) {
 	char *type = strchr((char *)mimeType, '/');

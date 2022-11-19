@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <string>
 #include <memory>
 
@@ -81,23 +82,27 @@ namespace bell
 
         void printFilename(std::string filename)
         {
+#ifdef _WIN32
+            std::string basenameStr(filename.substr(filename.rfind("\\") + 1));
+#else
             std::string basenameStr(filename.substr(filename.rfind("/") + 1));
+#endif
             unsigned long hash = 5381;
             for (char const &c : basenameStr)
             {
                 hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
             }
 
-            printf("\e[0;%dm", allColors[hash % NColors]);
+            printf("\033[0;%dm", allColors[hash % NColors]);
 
             printf("%s", basenameStr.c_str());
             printf(colorReset);
         }
 
     private:
-        static constexpr const char *colorReset = "\e[0m";
-        static constexpr const char *colorRed = "\e[0;31m";
-        static constexpr const char *colorBlue = "\e[0;34m";
+        static constexpr const char *colorReset = "\033[0m";
+        static constexpr const char *colorRed = "\033[0;31m";
+        static constexpr const char *colorBlue = "\033[0;34m";
         static constexpr const int NColors = 15;
         static constexpr int allColors[NColors] = {31, 32, 33, 34, 35, 36, 37, 90, 91, 92, 93, 94, 95, 96, 97};
     };

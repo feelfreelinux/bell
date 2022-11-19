@@ -7,9 +7,12 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/timers.h>
 #include <freertos/task.h>
+#elif _WIN32
+#include <winsock2.h>
+#else
+#include <pthread.h>
 #endif
 
-#include <pthread.h>
 #include <string>
 
 namespace bell
@@ -62,14 +65,23 @@ namespace bell
                 esp_pthread_set_cfg(&cfg);
             }
 #endif
+#if _WIN32
+            thread = CreateThread(NULL, stackSize, (LPTHREAD_START_ROUTINE) taskEntryFunc, this, 0, NULL);
+            return thread != NULL;
+#else
             return (pthread_create(&thread, NULL, taskEntryFunc, this) == 0);
+#endif
         }
 
     protected:
         virtual void runTask() = 0;
 
     private:
+#if _WIN32
+        HANDLE thread;
+#else
         pthread_t thread;
+#endif
 #ifdef ESP_PLATFORM
 		int priority;
         StaticTask_t *xTaskBuffer;
@@ -96,7 +108,11 @@ namespace bell
         {
 			Task* self = (Task*) This;
 			self->runTask();
+#if _WIN32
+            WaitForSingleObject(self->thread, INFINITE);
+#else
 			pthread_join(self->thread, NULL);
+#endif
             return NULL;
         }
     };

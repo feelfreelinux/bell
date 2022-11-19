@@ -51,7 +51,7 @@ bool VorbisDecoder::setup(BaseContainer *container) {
 		return false;
 	op.b_o_s = true;				   // mark this page as beginning of stream
 	uint32_t bytesLeft = setupLen - 1; // minus header count length (8 bit)
-	uint32_t headers[setup[0]];		   // array for header sizes
+	std::vector<uint32_t> headers(setup[0]);
 	for (uint8_t i = 0; i < setup[0]; i++) {
 		uint8_t *sizeByte = (uint8_t *)setup + 1 + i;
 		headers[i] = 0;
