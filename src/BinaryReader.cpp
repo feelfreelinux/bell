@@ -18,8 +18,8 @@ void bell::BinaryReader::close() {
 }
 
 void bell::BinaryReader::skip(size_t pos) {
-    uint8_t b[pos];
-    stream->read((uint8_t *)b, pos);
+    std::vector<uint8_t> b(pos);
+    stream->read(&b[0], pos);
 }
 
 int32_t bell::BinaryReader::readInt() {

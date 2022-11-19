@@ -22,7 +22,6 @@
 *.pch
 
 # Libraries
-*.lib
 *.a
 *.la
 *.lo
@@ -124,3 +123,5 @@ Temporary Items
 # End of https://www.toptal.com/developers/gitignore/api/c,c++,cmake,macos
 
 build/
+__history/
+*.bak

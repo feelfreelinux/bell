@@ -1,6 +1,6 @@
 [submodule "tremor"]
 	path = tremor
-	url = https://gitlab.xiph.org/xiph/tremor.git
+	url = https://github.com/philippe44/tremor
 	branch = lowmem
 [submodule "cJSON"]
 	path = cJSON
@@ -11,7 +11,6 @@
 [submodule "opus"]
 	path = opus
 	url = https://github.com/xiph/opus
-
 [submodule "alac"]
 	path = alac
 	url = https://github.com/philippe44/alac

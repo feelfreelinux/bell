@@ -11,16 +11,21 @@
 #include <iostream>
 #include <queue>
 #include <stdio.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include "win32shim.h"
+#else
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <unistd.h>
+#endif
 #include <sstream>
 #include <BellLogger.h>
-#include <sys/select.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <fstream>
-#include <sys/socket.h>
 #include <string>
-#include <netdb.h>
 #include <mutex>
 #include <fcntl.h>
 #include "BaseHTTPServer.h"

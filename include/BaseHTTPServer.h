@@ -8,7 +8,12 @@
 #include <functional>
 #include <iostream>
 #include <vector>
+#include <cstring>
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
+#endif
 
 namespace bell {
 

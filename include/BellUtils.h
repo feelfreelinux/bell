@@ -18,6 +18,9 @@ void freeAndNull(void *&ptr);
 #define BELL_SLEEP_MS(ms) vTaskDelay(ms / portTICK_PERIOD_MS)
 #define BELL_YIELD() taskYIELD()
 
+#elif defined(_WIN32)
+#define BELL_SLEEP_MS(ms) Sleep(ms)
+#define BELL_YIELD() ;
 #else
 #include <unistd.h>
 

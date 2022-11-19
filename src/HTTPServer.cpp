@@ -80,9 +80,8 @@ void bell::HTTPServer::listen() {
         socket(server->ai_family, server->ai_socktype, server->ai_protocol);
     struct sockaddr_in clientname;
     socklen_t incomingSockSize;
-    int i;
     int yes = true;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) < 0) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*) &yes, sizeof(int)) < 0) {
         throw std::runtime_error("setsockopt failed: " +
                                  std::string(strerror(errno)));
     }
@@ -100,56 +99,57 @@ void bell::HTTPServer::listen() {
     FD_ZERO(&activeFdSet);
     FD_SET(sockfd, &activeFdSet);
 
-    for (;;) {
+    for (int maxfd = sockfd;;) {
         /* Block until input arrives on one or more active sockets. */
         readFdSet = activeFdSet;
         struct timeval tv = {0, 100000};
-
-        if (select(FD_SETSIZE, &readFdSet, NULL, NULL, &tv) < 0) {
+ 
+        if (select(maxfd + 1, &readFdSet, NULL, NULL, &tv) < 0) {
             BELL_LOG(error, "http", "Error in select");
             perror("select");
             // exit(EXIT_FAILURE);
         }
 
-        /* Service all the sockets with input pending. */
-        for (i = 0; i < FD_SETSIZE; ++i)
-            if (FD_ISSET(i, &readFdSet)) {
-                if (i == sockfd) {
-                    /* Connection request on original socket. */
-                    int newFd;
-                    incomingSockSize = sizeof(clientname);
-                    newFd = accept(sockfd, (struct sockaddr *)&clientname,
-                                   &incomingSockSize);
-                    if (newFd < 0) {
-                        perror("accept");
-                        exit(EXIT_FAILURE);
-                    }
+        /* Service listening socket. */
+        if (FD_ISSET(sockfd, &readFdSet)) {
+            int newFd;
+            incomingSockSize = sizeof(clientname);
+            newFd = accept(sockfd, (struct sockaddr*)&clientname,
+                    &incomingSockSize);
+            if (newFd < 0) {
+                perror("accept");
+                exit(EXIT_FAILURE);
+             }
 
-                    FD_SET(newFd, &activeFdSet);
+             FD_SET(newFd, &activeFdSet);
 
-                    HTTPConnection conn = {.buffer = std::vector<uint8_t>(128),
-                                           .httpMethod = ""};
+             HTTPConnection conn = { .buffer = std::vector<uint8_t>(128),
+                                     .httpMethod = "" };
 
-                    this->connections.insert({newFd, conn});
-                } else {
+             this->connections.insert({newFd, conn});
+        }
 
-                    /* Data arriving on an already-connected socket. */
-                    readFromClient(i);
-                }
-            }
-
+        /* Service other sockets and update set & max */
+        maxfd = sockfd;
         for (auto it = this->connections.cbegin();
-             it != this->connections.cend() /* not hoisted */;
-             /* no increment */) {
+            it != this->connections.cend() /* not hoisted */;
+            /* no increment */) {
+            int fd = (*it).first;
             if ((*it).second.toBeClosed) {
-                close((*it).first);
-                FD_CLR((*it).first, &activeFdSet);
+                close(fd);
+                FD_CLR(fd, &activeFdSet);
                 this->connections.erase(
                     it++); // or "it = m.erase(it)" since C++11
             } else {
+                if (fd != sockfd && FD_ISSET(fd, &readFdSet)) {
+                    /* Data arriving on an already-connected socket. */
+                    readFromClient(fd);
+                }
+                if (fd > maxfd) maxfd = fd;
                 ++it;
             }
         }
+
     }
 }
 
@@ -160,7 +160,7 @@ void bell::HTTPServer::readFromClient(int clientFd) {
     }
     conn.fd = clientFd;
 
-    int nbytes = recv(clientFd, &conn.buffer[0], conn.buffer.size(), 0);
+    int nbytes = recv(clientFd, (char*) &conn.buffer[0], conn.buffer.size(), 0);
     if (nbytes < 0) {
         BELL_LOG(error, "http", "Error reading from client");
         perror("recv");
@@ -468,14 +468,14 @@ void bell::HTTPServer::findAndHandleRoute(HTTPConnection &conn) {
 
                 auto body = std::string();
                 if (route.readBodyToStr) {
-                    body.reserve(conn.contentLength);
+                    body.resize(conn.contentLength);
                     auto read = 0;
                     while (read < conn.contentLength) {
                         auto readBytes = reader->read(
                             body.data() + read, conn.contentLength - read);
                         read += readBytes;
                     }
-
+                    body.resize(read);
                     if (body.find('&') != std::string::npos) {
                         queryParams = this->parseQueryString(body);
                     }
