@@ -38,8 +38,14 @@ void BellDSP::process(uint8_t *data, size_t bytes, int channels,
         activePipeline->process(std::move(streamInfo));
 
         for (size_t i = 0; i < length16; i++) {
-            if (dataLeft[i] > 1.0f || dataRight[i] > 1.0f) {
-                std::cout << "Clipping!" << std::endl;
+            if (dataLeft[i] > 1.0f) {
+                std::cout << "Left Clipping!" << std::endl;
+                dataLeft[i] = 1.0f;
+            }
+
+            if (dataRight[i] > 1.0f) {
+                std::cout << "Right Clipping!" << std::endl;
+                dataRight[i] = 1.0f;
             }
             data16Bit[i * 2] = dataLeft[i] * MAX_INT16;      // Denormalize left
             data16Bit[i * 2 + 1] = dataRight[i] * MAX_INT16; // Denormalize right
