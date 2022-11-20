@@ -5,7 +5,7 @@
 #include <mutex>
 #include "StreamInfo.h"
 
-namespace bell::dsp
+namespace bell
 {
     class AudioTransform
     {
@@ -13,8 +13,10 @@ namespace bell::dsp
         std::mutex accessMutex;
     public:
         virtual std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) = 0;
-        virtual void sampleRateChanged(SampleRate sampleRate);
-        virtual int calculateHeadroom() = 0;
+        virtual void sampleRateChanged(SampleRate sampleRate) {};
+        virtual float calculateHeadroom() { return 0; };
+        
+        AudioTransform() = default;
         virtual ~AudioTransform() = default;
     };
 };

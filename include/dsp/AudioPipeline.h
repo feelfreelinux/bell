@@ -3,16 +3,20 @@
 #include "AudioTransform.h"
 #include "StreamInfo.h"
 #include <memory>
+#include "GainTransform.h"
 
-namespace bell::dsp {
+namespace bell {
 class AudioPipeline {
   private:
-    std::vector<std::unique_ptr<AudioTransform>> transforms;
+    std::vector<std::shared_ptr<AudioTransform>> transforms;
+    std::shared_ptr<GainTransform> headroomGainTransform;
 
   public:
     AudioPipeline();
     ~AudioPipeline(){};
-    void addTransform(std::unique_ptr<AudioTransform> transform);
+
+    void recalculateHeadroom();
+    void addTransform(std::shared_ptr<AudioTransform> transform);
     std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data);
 };
-}; // namespace bell::dsp
+}; // namespace bell

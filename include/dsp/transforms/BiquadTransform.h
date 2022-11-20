@@ -5,9 +5,9 @@
 
 #include "AudioTransform.h"
 
-namespace bell::dsp
+namespace bell
 {
-    class BiquadTransform : public bell::dsp::AudioTransform
+    class BiquadTransform : public bell::AudioTransform
     {
     public:
         enum class Type
@@ -29,16 +29,19 @@ namespace bell::dsp
         void configureWithSampleRate(float frequency, float q, float gain);
 
         std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) override;
-        void sampleRateChanged(SampleRate sampleRate);
+        void sampleRateChanged(SampleRate sampleRate) override;
 
-        int calculateHeadroom() { return 0; };
+        float calculateHeadroom() override { return this->gain; };
 
     private:
         float coeffs[5];
         float w[2] = {0, 0};
 
+        int sampleRate = 44100;
+        bool dynamicSampleRate = false;
+
         BiquadTransform::Type type;
-        bell::dsp::Channels channel;
+        bell::Channels channel;
         float freq, q, gain;
 
         void generateHighPassCoEffs(float f, float q);

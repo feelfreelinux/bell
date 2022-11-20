@@ -5,7 +5,7 @@
 #include <vector>
 #include "AudioPipeline.h"
 
-namespace bell::dsp
+namespace bell
 {
     #define MAX_INT16 32767
     

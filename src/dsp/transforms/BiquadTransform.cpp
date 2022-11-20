@@ -1,6 +1,7 @@
 #include "BiquadTransform.h"
+#include <iostream>
 
-using namespace bell::dsp;
+using namespace bell;
 
 BiquadTransform::BiquadTransform(BiquadTransform::Type type, Channels channels)
 {
@@ -8,8 +9,19 @@ BiquadTransform::BiquadTransform(BiquadTransform::Type type, Channels channels)
     this->channel = channels;
 }
 
+void BiquadTransform::sampleRateChanged(SampleRate sampleRate)
+{
+    this->sampleRate = sampleRate == SampleRate::SR_44100 ? 44100 : 48000;
+
+    if (this->dynamicSampleRate) {
+        this->configureWithSampleRate(this->freq, this->q, this->gain);
+    }
+}
+
 void BiquadTransform::configureWithSampleRate(float frequency, float q, float gain) {
-    this->configure(frequency, q, gain);
+    this->configure(frequency / (float) this->sampleRate, q, gain);
+    this->freq = frequency;
+    this->dynamicSampleRate = true;
 }
 
 void BiquadTransform::configure(float frequency, float q, float gain)
@@ -17,6 +29,7 @@ void BiquadTransform::configure(float frequency, float q, float gain)
     this->freq = frequency;
     this->q = q;
     this->gain = gain;
+    this->dynamicSampleRate = false;
 
     switch (type)
     {
@@ -139,6 +152,7 @@ void BiquadTransform::generateHighShelfCoEffs(float f, float gain, float q)
 // Generates coefficients for a low shelf biquad filter
 void BiquadTransform::generateLowShelfCoEffs(float f, float gain, float q)
 {
+    std::cout << "Setting low shelf for" << f << " " << gain << " " << q << std::endl;
     if (q <= 0.0001)
     {
         q = 0.0001;
@@ -313,8 +327,7 @@ void BiquadTransform::generateAllPass360CoEffs(float f, float q)
 std::unique_ptr<StreamInfo> BiquadTransform::process(std::unique_ptr<StreamInfo> stream)
 {
     std::scoped_lock lock(accessMutex);
-    int chanIndex = 0;
-    if (channel == Channels::RIGHT) chanIndex = 1;
+    int chanIndex = channel == Channels::RIGHT ? 1 : 0;
 
     auto input = stream->data[chanIndex];
     auto numSamples = stream->numSamples;

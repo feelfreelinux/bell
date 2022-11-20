@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-namespace bell::dsp
+namespace bell
 {
     enum class Channels {
         LEFT,
