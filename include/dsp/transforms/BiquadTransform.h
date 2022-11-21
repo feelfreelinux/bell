@@ -4,6 +4,7 @@
 #include <mutex>
 
 #include "AudioTransform.h"
+extern "C" int dsps_biquad_f32_ae32(const float* input, float* output, int len, float* coef, float* w);
 
 namespace bell
 {
@@ -25,6 +26,9 @@ namespace bell
 
         BiquadTransform(BiquadTransform::Type type, Channels channels);
 
+        float freq, q, gain;
+        BiquadTransform::Type type;
+
         void configure(float frequency, float q, float gain);
         void configureWithSampleRate(float frequency, float q, float gain);
 
@@ -40,9 +44,7 @@ namespace bell
         int sampleRate = 44100;
         bool dynamicSampleRate = false;
 
-        BiquadTransform::Type type;
         bell::Channels channel;
-        float freq, q, gain;
 
         void generateHighPassCoEffs(float f, float q);
         void generateLowPassCoEffs(float f, float q);

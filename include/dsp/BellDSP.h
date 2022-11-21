@@ -24,6 +24,8 @@ namespace bell
 
         void applyPipeline(std::shared_ptr<AudioPipeline> pipeline);
 
-        void process(uint8_t *data, size_t bytes, int channels, SampleRate sampleRate, BitWidth bitWidth);
+        std::shared_ptr<AudioPipeline> getActivePipeline();
+
+        size_t process(uint8_t *data, size_t bytes, int channels, SampleRate sampleRate, BitWidth bitWidth);
     };
 };

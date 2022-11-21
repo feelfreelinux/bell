@@ -1,5 +1,4 @@
 #include "BiquadTransform.h"
-#include <iostream>
 
 using namespace bell;
 
@@ -7,6 +6,7 @@ BiquadTransform::BiquadTransform(BiquadTransform::Type type, Channels channels)
 {
     this->type = type;
     this->channel = channels;
+    this->filterType = "biquad";
 }
 
 void BiquadTransform::sampleRateChanged(SampleRate sampleRate)
@@ -152,7 +152,6 @@ void BiquadTransform::generateHighShelfCoEffs(float f, float gain, float q)
 // Generates coefficients for a low shelf biquad filter
 void BiquadTransform::generateLowShelfCoEffs(float f, float gain, float q)
 {
-    std::cout << "Setting low shelf for" << f << " " << gain << " " << q << std::endl;
     if (q <= 0.0001)
     {
         q = 0.0001;

@@ -1,11 +1,11 @@
 #include "GainTransform.h"
-#include <iostream>
 
 using namespace bell;
 
 GainTransform::GainTransform(Channels channels) : AudioTransform() {
     this->channel = channels;
     this->gainFactor = 1.0f;
+    this->filterType = "gain";
 }
 
 void GainTransform::configure(float gainDB) {

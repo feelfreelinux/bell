@@ -15,6 +15,8 @@ namespace bell
         virtual std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) = 0;
         virtual void sampleRateChanged(SampleRate sampleRate) {};
         virtual float calculateHeadroom() { return 0; };
+
+        std::string filterType;
         
         AudioTransform() = default;
         virtual ~AudioTransform() = default;
