@@ -70,7 +70,7 @@ namespace bell
         void redirectTo(const std::string&, int connectionFd);
         void publishEvent(std::string eventName, std::string eventData);
         void closeConnection(int connection);
-        void listen(std::function<void()> const& gotPort = NULL);
+        void listen(std::function<void()> const& callback = nullptr);
     };
 }
 #endif
