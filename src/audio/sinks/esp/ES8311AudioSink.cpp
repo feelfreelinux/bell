@@ -55,7 +55,7 @@ ES8311AudioSink::ES8311AudioSink()
         .dma_buf_len = 512,
         .use_apll = false,
         .tx_desc_auto_clear = true, // Auto clear tx descriptor on underflow
-        .fixed_mclk = 256 * 44100};
+    };
 
     i2s_pin_config_t pin_config = {
         .mck_io_num = 42,
@@ -98,6 +98,12 @@ void ES8311AudioSink::volumeChanged(uint16_t volume)
 
 void ES8311AudioSink::writeReg(uint8_t reg_add, uint8_t data)
 {
+}
+
+void ES8311AudioSink::setSampleRate(uint32_t sampleRate) {
+    std::cout << "ES8311AudioSink::setSampleRate(" << sampleRate << ")" << std::endl;
+    // i2s set sample rate
+    es8311_Codec_Startup(0, sampleRate);
 }
 
 ES8311AudioSink::~ES8311AudioSink()
