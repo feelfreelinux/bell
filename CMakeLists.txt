@@ -114,8 +114,10 @@ if(ESP_PLATFORM)
     add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation)
 else()
     find_package(Threads REQUIRED)
+    find_package(MbedTLS REQUIRED)
+    list(APPEND EXTRA_INCLUDES ${MBEDTLS_INCLUDE_DIRS})
     set(THREADS_PREFER_PTHREAD_FLAG ON)
-    list(APPEND EXTRA_LIBS Threads::Threads)
+    list(APPEND EXTRA_LIBS ${MBEDTLS_LIBRARIES} Threads::Threads)
 
     # try to handle mbedtls when not system-wide installed
     if(BELL_EXTERNAL_MBEDTLS)
