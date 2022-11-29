@@ -105,7 +105,9 @@ void bell::HTTPServer::listen(std::function<void()> const& callback) {
                                  std::string(strerror(errno)));
     }
 
-    if (callback) callback();
+    if (callback) {
+        callback();
+    }
 
     FD_ZERO(&activeFdSet);
     FD_SET(sockfd, &activeFdSet);
