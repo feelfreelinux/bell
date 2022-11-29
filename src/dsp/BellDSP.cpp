@@ -16,12 +16,16 @@ void BellDSP::applyPipeline(std::shared_ptr<AudioPipeline> pipeline)
 size_t BellDSP::process(uint8_t *data, size_t bytes, int channels,
                         SampleRate sampleRate, BitWidth bitWidth)
 {
+    if (bytes > 1024 * 2 * channels) {
+        throw std::runtime_error("Too many bytes");
+    }
+
     // Create a StreamInfo object to pass to the pipeline
     auto streamInfo = std::make_unique<StreamInfo>();
     streamInfo->numChannels = channels;
     streamInfo->sampleRate = sampleRate;
     streamInfo->bitwidth = bitWidth;
-    streamInfo->numSamples = bytes / 4;
+    streamInfo->numSamples = bytes / channels / 2;
 
     std::scoped_lock lock(accessMutex);
     if (activePipeline)
@@ -32,9 +36,9 @@ size_t BellDSP::process(uint8_t *data, size_t bytes, int channels,
 
         for (size_t i = 0; i < length16; i++)
         {
-            dataLeft[i] = data16Bit[i * 2] / (float)MAX_INT16; // Normalize left
+            dataLeft[i] = (data16Bit[i * 2] / (float)MAX_INT16 ) ; // Normalize left
             dataRight[i] =
-                data16Bit[i * 2 + 1] / (float)MAX_INT16; // Normalize right
+                (data16Bit[i * 2 + 1] / (float)MAX_INT16 ) ; // Normalize right
         }
         float *sampleData[] = {&dataLeft[0], &dataRight[0]};
         streamInfo->data = sampleData;
@@ -45,22 +49,16 @@ size_t BellDSP::process(uint8_t *data, size_t bytes, int channels,
         {
             if (dataLeft[i] > 1.0f)
             {
-                std::cout << "Left Clipping!" << std::endl;
                 dataLeft[i] = 1.0f;
             }
 
             // Data has been downmixed to mono
-            if (resultInfo->numChannels == 1 && channels == 2)
+            if (resultInfo->numChannels == 1)
             {
                 data16Bit[i] = dataLeft[i] * MAX_INT16; // Denormalize left
             }
             else
             {
-                if (dataRight[i] > 1.0f)
-                {
-                    std::cout << "Right Clipping!" << std::endl;
-                    dataRight[i] = 1.0f;
-                }
                 data16Bit[i * 2] = dataLeft[i] * MAX_INT16;      // Denormalize left
                 data16Bit[i * 2 + 1] = dataRight[i] * MAX_INT16; // Denormalize right
             }

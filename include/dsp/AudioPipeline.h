@@ -3,14 +3,14 @@
 #include "AudioTransform.h"
 #include "StreamInfo.h"
 #include <memory>
-#include "GainTransform.h"
+#include "Gain.h"
 
 namespace bell
 {
   class AudioPipeline
   {
   private:
-    std::shared_ptr<GainTransform> headroomGainTransform;
+    std::shared_ptr<Gain> headroomGainTransform;
 
   public:
     AudioPipeline();

@@ -4,8 +4,8 @@
 using namespace bell;
 
 AudioPipeline::AudioPipeline() {
-    this->headroomGainTransform = std::make_shared<GainTransform>(Channels::LEFT_RIGHT);
-    this->transforms.push_back(this->headroomGainTransform);
+    // this->headroomGainTransform = std::make_shared<Gain>(Channels::LEFT_RIGHT);
+    // this->transforms.push_back(this->headroomGainTransform);
 };
 
 void AudioPipeline::addTransform(std::shared_ptr<AudioTransform> transform) {
@@ -23,7 +23,7 @@ void AudioPipeline::recalculateHeadroom() {
         }
     }
 
-    headroomGainTransform->configure(-headroom);
+    // headroomGainTransform->configure(-headroom);
 }
 
 std::unique_ptr<StreamInfo> AudioPipeline::process(std::unique_ptr<StreamInfo> data) {
