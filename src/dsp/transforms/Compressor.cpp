@@ -69,30 +69,11 @@ void Compressor::applyGain(std::unique_ptr<StreamInfo> &data)
 void Compressor::configure(float attack, float release, float clipLimit, float threshold, float factor, float makeupGain)
 {
     std::scoped_lock lock(this->accessMutex);
-    this->attack = expf(-1.0 / this->sampleRate / attack);
+    this->attack = expf(-0.001 / this->sampleRate / attack);
     this->release = expf(-1.0 / this->sampleRate / release);
-    this->clipLimit = std::pow(10.0, clipLimit / 20.0);
     this->threshold = threshold;
     this->factor = factor;
     this->makeupGain = makeupGain;
-}
-
-void Compressor::applyLimiter(std::unique_ptr<StreamInfo> &data)
-{
-    for (int i = 0; i < data->numSamples; i++)
-    {
-        for (auto &channel : channels)
-        {
-            if (data->data[channel][i] > clipLimit)
-            {
-                data->data[channel][i] = clipLimit;
-            }
-            else if (data->data[channel][i] < -clipLimit)
-            {
-                data->data[channel][i] = -clipLimit;
-            }
-        }
-    }
 }
 
 std::unique_ptr<StreamInfo> Compressor::process(std::unique_ptr<StreamInfo> data) {
@@ -101,6 +82,5 @@ std::unique_ptr<StreamInfo> Compressor::process(std::unique_ptr<StreamInfo> data
     calLoudness();
     calGain();
     applyGain(data);
-    applyLimiter(data);
     return data;
 }

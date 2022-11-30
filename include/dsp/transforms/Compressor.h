@@ -40,16 +40,15 @@ namespace bell
         void calGain();
 
         void applyGain(std::unique_ptr<StreamInfo> &data);
-        void applyLimiter(std::unique_ptr<StreamInfo> &data);
 
         void fromJSON(cJSON* json) override {
             // get field channels
             channels = jsonGetChannels(json);
             float attack = jsonGetNumber<float>(json, "attack", false, 0);
             float release = jsonGetNumber<float>(json, "release", false, 0);
-            float clipLimit = jsonGetNumber<float>(json, "clip_limit", false, -4);
             float factor = jsonGetNumber<float>(json, "factor", false, 4);
             float makeupGain = jsonGetNumber<float>(json, "makeupGain", false, 0);
+            float threshold = jsonGetNumber<float>(json, "threshold", false, 0);
 
             this->configure(attack, release, clipLimit, threshold, factor, makeupGain);
         }
