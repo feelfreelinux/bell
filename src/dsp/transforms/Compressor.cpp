@@ -70,7 +70,7 @@ void Compressor::configure(float attack, float release, float clipLimit, float t
 {
     std::scoped_lock lock(this->accessMutex);
     this->attack = expf(-1000.0 / this->sampleRate / attack);
-    this->release = expf(-1.0 / this->sampleRate / release);
+    this->release = expf(-1000.0 / this->sampleRate / release);
     this->threshold = threshold;
     this->factor = factor;
     this->makeupGain = makeupGain;
