@@ -47,7 +47,7 @@ namespace bell
             float attack = jsonGetNumber<float>(json, "attack", false, 0);
             float release = jsonGetNumber<float>(json, "release", false, 0);
             float factor = jsonGetNumber<float>(json, "factor", false, 4);
-            float makeupGain = jsonGetNumber<float>(json, "makeupGain", false, 0);
+            float makeupGain = jsonGetNumber<float>(json, "makeup_gain", false, 0);
             float threshold = jsonGetNumber<float>(json, "threshold", false, 0);
 
             this->configure(attack, release, clipLimit, threshold, factor, makeupGain);
