@@ -68,46 +68,46 @@ namespace bell
 
         void fromJSON(cJSON *json) override
         {
-            this->channel = jsonGetChannels(json)[0];
-            auto type = jsonGetString(json, "biquad_type");
-            std::map<std::string, float> biquadConfig;
+            // this->channel = jsonGetChannels(json)[0];
+            // auto type = jsonGetString(json, "biquad_type");
+            // std::map<std::string, float> biquadConfig;
 
-            float invalid = -0x7C;
-            float bandwidth = jsonGetNumber<float>(json, "bandwidth", false, invalid);
-            float slope = jsonGetNumber<float>(json, "slope", false, invalid);
-            float gain = jsonGetNumber<float>(json, "gain", false, invalid);
-            float frequency = jsonGetNumber<float>(json, "frequency", false, invalid);
-            float q = jsonGetNumber<float>(json, "q", false, invalid);
+            // float invalid = -0x7C;
+            // float bandwidth = jsonGetNumber<float>(json, "bandwidth", false, invalid);
+            // float slope = jsonGetNumber<float>(json, "slope", false, invalid);
+            // float gain = jsonGetNumber<float>(json, "gain", false, invalid);
+            // float frequency = jsonGetNumber<float>(json, "frequency", false, invalid);
+            // float q = jsonGetNumber<float>(json, "q", false, invalid);
 
-            if (bandwidth != invalid)
-                biquadConfig["bandwidth"] = bandwidth;
-            if (slope != invalid)
-                biquadConfig["slope"] = slope;
-            if (gain != invalid)
-                biquadConfig["gain"] = gain;
-            if (frequency != invalid)
-                biquadConfig["freq"] = frequency;
-            if (q != invalid)
-                biquadConfig["q"] = q;
+            // if (bandwidth != invalid)
+            //     biquadConfig["bandwidth"] = bandwidth;
+            // if (slope != invalid)
+            //     biquadConfig["slope"] = slope;
+            // if (gain != invalid)
+            //     biquadConfig["gain"] = gain;
+            // if (frequency != invalid)
+            //     biquadConfig["freq"] = frequency;
+            // if (q != invalid)
+            //     biquadConfig["q"] = q;
 
-            if (type == "free")
-            {
-                biquadConfig["a1"] = jsonGetNumber<float>(json, "a1", false);
-                biquadConfig["a2"] = jsonGetNumber<float>(json, "a2", false);
-                biquadConfig["b0"] = jsonGetNumber<float>(json, "b0", false);
-                biquadConfig["b1"] = jsonGetNumber<float>(json, "b1", false);
-                biquadConfig["b2"] = jsonGetNumber<float>(json, "b2", false);
-            }
+            // if (type == "free")
+            // {
+            //     biquadConfig["a1"] = jsonGetNumber<float>(json, "a1", false);
+            //     biquadConfig["a2"] = jsonGetNumber<float>(json, "a2", false);
+            //     biquadConfig["b0"] = jsonGetNumber<float>(json, "b0", false);
+            //     biquadConfig["b1"] = jsonGetNumber<float>(json, "b1", false);
+            //     biquadConfig["b2"] = jsonGetNumber<float>(json, "b2", false);
+            // }
 
-            auto typeElement = strMapType.find(type);
-            if (typeElement != strMapType.end())
-            {
-                this->configure(typeElement->second, biquadConfig);
-            }
-            else
-            {
-                throw std::invalid_argument("No biquad of type " + type);
-            }
+            // auto typeElement = strMapType.find(type);
+            // if (typeElement != strMapType.end())
+            // {
+            //     this->configure(typeElement->second, biquadConfig);
+            // }
+            // else
+            // {
+            //     throw std::invalid_argument("No biquad of type " + type);
+            // }
         }
 
     private:

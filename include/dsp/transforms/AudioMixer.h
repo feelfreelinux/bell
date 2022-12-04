@@ -39,47 +39,47 @@ namespace bell
 
         void fromJSON(cJSON *json) override
         {
-            cJSON *mappedChannels = cJSON_GetObjectItem(json, "mapped_channels");
+            // cJSON *mappedChannels = cJSON_GetObjectItem(json, "mapped_channels");
 
-            if (mappedChannels == NULL || !cJSON_IsArray(mappedChannels))
-            {
-                throw std::invalid_argument("Mixer configuration invalid");
-            }
+            // if (mappedChannels == NULL || !cJSON_IsArray(mappedChannels))
+            // {
+            //     throw std::invalid_argument("Mixer configuration invalid");
+            // }
 
-            this->config = std::vector<MixerConfig>();
+            // this->config = std::vector<MixerConfig>();
 
-            cJSON *iterator = NULL;
-            cJSON_ArrayForEach(iterator, mappedChannels)
-            {
-                std::vector<int> sources(0);
-                cJSON *iteratorNested = NULL;
-                cJSON_ArrayForEach(iteratorNested, cJSON_GetObjectItem(iterator, "source"))
-                {
-                    sources.push_back(iteratorNested->valueint);
-                }
+            // cJSON *iterator = NULL;
+            // cJSON_ArrayForEach(iterator, mappedChannels)
+            // {
+            //     std::vector<int> sources(0);
+            //     cJSON *iteratorNested = NULL;
+            //     cJSON_ArrayForEach(iteratorNested, cJSON_GetObjectItem(iterator, "source"))
+            //     {
+            //         sources.push_back(iteratorNested->valueint);
+            //     }
 
-                this->config.push_back(MixerConfig{
-                    .source = sources,
-                    .destination = jsonGetNumber<int>(iterator, "destination", true),
-                });
-            }
+            //     this->config.push_back(MixerConfig{
+            //         .source = sources,
+            //         .destination = jsonGetNumber<int>(iterator, "destination", true),
+            //     });
+            // }
 
-            std::vector<uint8_t> sources(0);
+            // std::vector<uint8_t> sources(0);
 
-            for (auto &config : config)
-            {
+            // for (auto &config : config)
+            // {
 
-                for (auto &source : config.source)
-                {
-                    if (std::find(sources.begin(), sources.end(), source) == sources.end())
-                    {
-                        sources.push_back(source);
-                    }
-                }
-            }
+            //     for (auto &source : config.source)
+            //     {
+            //         if (std::find(sources.begin(), sources.end(), source) == sources.end())
+            //         {
+            //             sources.push_back(source);
+            //         }
+            //     }
+            // }
 
-            this->from = sources.size();
-            this->to = config.size();
+            // this->from = sources.size();
+            // this->to = config.size();
         }
     };
 }

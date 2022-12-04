@@ -38,25 +38,25 @@ namespace bell
         void sampleRateChanged(uint32_t sampleRate) override;
 
         void fromJSON(cJSON* json) override {
-            // get field channels
-            this->channel = jsonGetChannels(json)[0];
+            // // get field channels
+            // this->channel = jsonGetChannels(json)[0];
 
-            float freq = jsonGetNumber<float>(json, "frequency", false, 0);
-            int order = jsonGetNumber<int>(json, "order", false, 0);
+            // float freq = jsonGetNumber<float>(json, "frequency", false, 0);
+            // int order = jsonGetNumber<int>(json, "order", false, 0);
             
-            auto type = jsonGetString(json, "combo_type");
+            // auto type = jsonGetString(json, "combo_type");
 
-            if (type == "lr_lowpass") {
-                this->linkwitzRiley(freq, order, FilterType::Lowpass);
-            } else if (type == "lr_highpass") {
-                this->linkwitzRiley(freq, order, FilterType::Highpass);
-            } else if (type == "bw_highpass") {
-                this->butterworth(freq, order, FilterType::Highpass);
-            } else if (type == "bw_lowpass") {
-                this->butterworth(freq, order, FilterType::Highpass);
-            } else {
-                throw std::invalid_argument("Invalid combo filter type");
-            }
+            // if (type == "lr_lowpass") {
+            //     this->linkwitzRiley(freq, order, FilterType::Lowpass);
+            // } else if (type == "lr_highpass") {
+            //     this->linkwitzRiley(freq, order, FilterType::Highpass);
+            // } else if (type == "bw_highpass") {
+            //     this->butterworth(freq, order, FilterType::Highpass);
+            // } else if (type == "bw_lowpass") {
+            //     this->butterworth(freq, order, FilterType::Highpass);
+            // } else {
+            //     throw std::invalid_argument("Invalid combo filter type");
+            // }
         }
 
         float calculateHeadroom() override { return 0.0f; };

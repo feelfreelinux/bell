@@ -20,6 +20,9 @@ option(BELL_SINK_PORTAUDIO "Enable PortAudio sink" OFF)
 option(BELL_DISABLE_CJSON "Disable cJSON and JSONObject completely" OFF)
 set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, optional")
 
+# disable json tests
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
 if(BELL_EXTERNAL_MBEDTLS)
     set(MbedTLS_DIR ${BELL_EXTERNAL_MBEDTLS})
     message(STATUS "Setting local mbedtls ${MbedTLS_DIR}")
@@ -68,7 +71,7 @@ set(AUDIO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/audio")
 add_definitions("-DUSE_DEFAULT_STDLIB=1")
 
 # Main library sources
-file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c" "src/audio/container/*.cpp" "src/dsp/*.cpp" "src/dsp/transforms/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c" "src/audio/container/*.cpp" "src/dsp/*.cpp" "" "src/dsp/transforms/*.cpp")
 list(APPEND EXTRA_INCLUDES "include/platform")
 list(APPEND EXTRA_INCLUDES "include/audio/container")
 list(APPEND EXTRA_INCLUDES "include/dsp/")
@@ -268,6 +271,8 @@ endif()
 if(BELL_DISABLE_CJSON)
     list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/JSONObject.cpp")
 else()
+    add_subdirectory(nlohmann_json)
+    list(APPEND EXTRA_LIBS nlohmann_json::nlohmann_json)
     if(BELL_EXTERNAL_CJSON)
         list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_CJSON})
     else()

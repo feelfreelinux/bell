@@ -27,10 +27,10 @@ namespace bell
         float calculateHeadroom() override { return gainDb; };
 
         void fromJSON(cJSON* json) override {
-            // get field channels
-            auto channels = jsonGetChannels(json);
-            float gain = jsonGetNumber<float>(json, "gain", true);
-            this->configure(channels, gain);
+            // // get field channels
+            // auto channels = jsonGetChannels(json);
+            // float gain = jsonGetNumber<float>(json, "gain", true);
+            // this->configure(channels, gain);
         }
     };
 }
