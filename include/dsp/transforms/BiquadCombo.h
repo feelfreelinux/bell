@@ -40,19 +40,19 @@ namespace bell
 
         void reconfigure() override
         {
-            this->biquads = std::vector<std::unique_ptr<bell::Biquad>>();
-            this->channel = config->getChannels()[0];
             float freq = config->getFloat("frequency");
             int order = config->getInt("order");
 
-            if (paramCache["frequency"] == freq && paramCache["order"] == order)
-            {
-                return;
-            } else {
-                paramCache["frequency"] = freq;
-                paramCache["order"] = order;
-            }
+            // if (paramCache["frequency"] == freq && paramCache["order"] == order)
+            // {
+            //     return;
+            // } else {
+            //     paramCache["frequency"] = freq;
+            //     paramCache["order"] = order;
+            // }
 
+            this->channel = config->getChannels()[0];
+            this->biquads = std::vector<std::unique_ptr<bell::Biquad>>();
             auto type = config->getString("combo_type");
             if (type == "lr_lowpass")
             {

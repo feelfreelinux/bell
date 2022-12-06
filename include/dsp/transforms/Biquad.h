@@ -86,7 +86,7 @@ namespace bell
             {
                 return;
             }
-            
+
             if (bandwidth != invalid)
                 biquadConfig["bandwidth"] = bandwidth;
             if (slope != invalid)

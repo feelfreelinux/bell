@@ -44,7 +44,7 @@ int main()
     file2.seekg(0, std::ios::beg);
 
     std::vector<uint8_t> buffer2(size2);
-    if (!file2.read((char*) buffer2.data(), size2))
+    if (!file2.read((char *)buffer2.data(), size2))
     {
         throw std::invalid_argument("pipeline file not found");
     }
@@ -72,12 +72,15 @@ int main()
             continue;
 
         auto typeStr = std::string(type->valuestring);
+        auto config = std::make_unique<bell::JSONTransformConfig>(iterator);
 
         if (typeStr == "gain")
         {
             auto filter = std::make_shared<bell::Gain>();
             // filter->fromJSON(iterator);
-            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->config = std::move(config);
+            filter->reconfigure();
+            filter->config->currentVolume = 60;
             filter->reconfigure();
             pipeline->addTransform(filter);
         }
@@ -85,14 +88,16 @@ int main()
         {
             auto filter = std::make_shared<bell::Compressor>();
             // filter->fromJSON(iterator);
-            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->config = std::move(config);
+            filter->reconfigure();
+            filter->config->currentVolume = 60;
             filter->reconfigure();
             pipeline->addTransform(filter);
         }
         else if (typeStr == "mixer")
         {
             auto filter = std::make_shared<bell::AudioMixer>();
-            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->config = std::move(config);
             filter->fromJSON(iterator);
             pipeline->addTransform(filter);
         }
@@ -100,7 +105,9 @@ int main()
         {
             auto filter = std::make_shared<bell::Biquad>();
             // filter->fromJSON(iterator);
-            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->config = std::move(config);
+            filter->reconfigure();
+            filter->config->currentVolume = 60;
             filter->reconfigure();
             pipeline->addTransform(filter);
         }
@@ -108,7 +115,9 @@ int main()
         {
             auto filter = std::make_shared<bell::BiquadCombo>();
             // filter->fromJSON(iterator);
-            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->config = std::move(config);
+            filter->reconfigure();
+            filter->config->currentVolume = 60;
             filter->reconfigure();
             pipeline->addTransform(filter);
         }
