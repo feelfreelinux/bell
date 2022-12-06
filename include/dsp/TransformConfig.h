@@ -36,6 +36,8 @@ namespace bell
         Value getRawValue(const std::string &field)
         {
             int index = this->currentVolume * (rawValues[field].size()) / 100;
+            if (index >= rawValues[field].size())
+                index = rawValues[field].size() - 1;
             return rawValues[field][index];
         }
 
