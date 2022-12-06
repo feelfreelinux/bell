@@ -109,10 +109,11 @@ void bell::HTTPServer::listen(std::function<void()> const& callback) {
         callback();
     }
 
+    listening = true;
     FD_ZERO(&activeFdSet);
     FD_SET(sockfd, &activeFdSet);
 
-    for (int maxfd = sockfd;;) {
+    for (int maxfd = sockfd; listening;) {
         /* Block until input arrives on one or more active sockets. */
         readFdSet = activeFdSet;
         struct timeval tv = {0, 100000};
@@ -164,6 +165,13 @@ void bell::HTTPServer::listen(std::function<void()> const& callback) {
         }
 
     }
+
+    // close and erase all connections
+    for (auto it = this->connections.cbegin(); it != this->connections.cend(); ++it) {
+        close((*it).first);
+    }
+    connections.clear();
+    close(sockfd);
 }
 
 void bell::HTTPServer::readFromClient(int clientFd) {
