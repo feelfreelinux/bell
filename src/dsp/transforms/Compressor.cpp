@@ -66,7 +66,7 @@ void Compressor::applyGain(std::unique_ptr<StreamInfo> &data)
     }
 }
 
-void Compressor::configure(float attack, float release, float clipLimit, float threshold, float factor, float makeupGain)
+void Compressor::configure(float attack, float release, float threshold, float factor, float makeupGain)
 {
     std::scoped_lock lock(this->accessMutex);
     this->attack = expf(-1000.0 / this->sampleRate / attack);

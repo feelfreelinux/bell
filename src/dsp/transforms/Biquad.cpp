@@ -10,13 +10,13 @@ Biquad::Biquad()
 void Biquad::sampleRateChanged(uint32_t sampleRate)
 {
     this->sampleRate = sampleRate;
-    this->configure(this->type, this->config);
+    this->configure(this->type, this->currentConfig);
 }
 
 void Biquad::configure(Type type, std::map<std::string, float> &config)
 {
     this->type = type;
-    this->config = config;
+    this->currentConfig = config;
 
     switch (type)
     {

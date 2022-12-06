@@ -31,13 +31,15 @@ namespace bell
         int to;
 
         // Configuration of each channels in the mixer
-        std::vector<MixerConfig> config;
+        std::vector<MixerConfig> mixerConfig;
 
         std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) override;
 
-        float calculateHeadroom() override { return 0; };
+        void reconfigure() override
+        {
+        }
 
-        void fromJSON(cJSON *json) override
+        void fromJSON(cJSON *json)
         {
             cJSON *mappedChannels = cJSON_GetObjectItem(json, "mapped_channels");
 
@@ -46,7 +48,7 @@ namespace bell
                 throw std::invalid_argument("Mixer configuration invalid");
             }
 
-            this->config = std::vector<MixerConfig>();
+            this->mixerConfig = std::vector<MixerConfig>();
 
             cJSON *iterator = NULL;
             cJSON_ArrayForEach(iterator, mappedChannels)
@@ -58,15 +60,17 @@ namespace bell
                     sources.push_back(iteratorNested->valueint);
                 }
 
-                this->config.push_back(MixerConfig{
+                int destination = cJSON_GetObjectItem(iterator, "destination")->valueint;
+
+                this->mixerConfig.push_back(MixerConfig{
                     .source = sources,
-                    .destination = jsonGetNumber<int>(iterator, "destination", true),
+                    .destination = destination
                 });
             }
 
             std::vector<uint8_t> sources(0);
 
-            for (auto &config : config)
+            for (auto &config : mixerConfig)
             {
 
                 for (auto &source : config.source)
@@ -79,7 +83,7 @@ namespace bell
             }
 
             this->from = sources.size();
-            this->to = config.size();
+            this->to = mixerConfig.size();
         }
     };
 }

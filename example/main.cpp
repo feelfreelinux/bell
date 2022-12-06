@@ -16,6 +16,7 @@
 #include <cJSON.h>
 #include <BiquadCombo.h>
 #include <FileStream.h>
+#include <JSONTransformConfig.h>
 
 std::vector<uint8_t> generate_sine_wave(int sample_rate, int channels, int seconds, int bits_per_sample)
 {
@@ -75,31 +76,40 @@ int main()
         if (typeStr == "gain")
         {
             auto filter = std::make_shared<bell::Gain>();
-            filter->fromJSON(iterator);
+            // filter->fromJSON(iterator);
+            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->reconfigure();
             pipeline->addTransform(filter);
         }
         else if (typeStr == "compressor")
         {
             auto filter = std::make_shared<bell::Compressor>();
-            filter->fromJSON(iterator);
+            // filter->fromJSON(iterator);
+            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->reconfigure();
             pipeline->addTransform(filter);
         }
         else if (typeStr == "mixer")
         {
             auto filter = std::make_shared<bell::AudioMixer>();
+            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
             filter->fromJSON(iterator);
             pipeline->addTransform(filter);
         }
         else if (typeStr == "biquad")
         {
             auto filter = std::make_shared<bell::Biquad>();
-            filter->fromJSON(iterator);
+            // filter->fromJSON(iterator);
+            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->reconfigure();
             pipeline->addTransform(filter);
         }
         else if (typeStr == "biquad_combo")
         {
             auto filter = std::make_shared<bell::BiquadCombo>();
-            filter->fromJSON(iterator);
+            // filter->fromJSON(iterator);
+            filter->config = std::make_unique<bell::JSONTransformConfig>(iterator);
+            filter->reconfigure();
             pipeline->addTransform(filter);
         }
         else
@@ -123,7 +133,7 @@ int main()
         {
             bytes = 1024;
         }
-        int res = dsp->process(&buffer2[i], bytes, 2, bell::SampleRate::SR_44100, bell::BitWidth::BW_16);
+        int res = dsp->process(&buffer2[i], bytes, 2, bell::SampleRate::SR_44100, bell::BitWidth::BW_16, 1024, 0);
         fwrite(&buffer2[i], 1, res, f);
     }
 

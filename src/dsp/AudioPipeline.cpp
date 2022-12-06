@@ -26,7 +26,16 @@ void AudioPipeline::recalculateHeadroom() {
     // headroomGainTransform->configure(-headroom);
 }
 
+void AudioPipeline::volumeUpdated(int volume) {
+    std::scoped_lock lock(this->accessMutex);
+    for (auto transform : transforms) {
+        transform->config->currentVolume = volume;
+        transform->reconfigure();
+    }
+}
+
 std::unique_ptr<StreamInfo> AudioPipeline::process(std::unique_ptr<StreamInfo> data) {
+    std::scoped_lock lock(this->accessMutex);
     for (auto &transform : transforms) {
         data = transform->process(std::move(data));
     }

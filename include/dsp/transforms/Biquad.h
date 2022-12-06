@@ -35,7 +35,7 @@ namespace bell
             AllpassFO
         };
 
-        std::map<std::string, float> config;
+        std::map<std::string, float> currentConfig;
 
         std::unordered_map<std::string, Type> const strMapType = {
             {"free", Type::Free},
@@ -61,23 +61,22 @@ namespace bell
         std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) override;
 
         void configure(Type type, std::map<std::string, float> &config);
-        
+
         void sampleRateChanged(uint32_t sampleRate) override;
 
-        float calculateHeadroom() override { return this->gain; };
-
-        void fromJSON(cJSON *json) override
+        void reconfigure() override
         {
-            this->channel = jsonGetChannels(json)[0];
-            auto type = jsonGetString(json, "biquad_type");
             std::map<std::string, float> biquadConfig;
+            this->channel = config->getChannels()[0];
 
             float invalid = -0x7C;
-            float bandwidth = jsonGetNumber<float>(json, "bandwidth", false, invalid);
-            float slope = jsonGetNumber<float>(json, "slope", false, invalid);
-            float gain = jsonGetNumber<float>(json, "gain", false, invalid);
-            float frequency = jsonGetNumber<float>(json, "frequency", false, invalid);
-            float q = jsonGetNumber<float>(json, "q", false, invalid);
+
+            auto type = config->getString("biquad_type");
+            float bandwidth = config->getFloat("bandwidth", false, invalid);
+            float slope = config->getFloat("slope", false, invalid);
+            float gain = config->getFloat("gain", false, invalid);
+            float frequency = config->getFloat("frequency", false, invalid);
+            float q = config->getFloat("q", false, invalid);
 
             if (bandwidth != invalid)
                 biquadConfig["bandwidth"] = bandwidth;
@@ -92,11 +91,11 @@ namespace bell
 
             if (type == "free")
             {
-                biquadConfig["a1"] = jsonGetNumber<float>(json, "a1", false);
-                biquadConfig["a2"] = jsonGetNumber<float>(json, "a2", false);
-                biquadConfig["b0"] = jsonGetNumber<float>(json, "b0", false);
-                biquadConfig["b1"] = jsonGetNumber<float>(json, "b1", false);
-                biquadConfig["b2"] = jsonGetNumber<float>(json, "b2", false);
+                biquadConfig["a1"] = config->getFloat("a1");
+                biquadConfig["a2"] = config->getFloat("a2");
+                biquadConfig["b0"] = config->getFloat("b0");
+                biquadConfig["b1"] = config->getFloat("b1");
+                biquadConfig["b2"] = config->getFloat("b2");
             }
 
             auto typeElement = strMapType.find(type);

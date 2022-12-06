@@ -37,28 +37,33 @@ namespace bell
         std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) override;
         void sampleRateChanged(uint32_t sampleRate) override;
 
-        void fromJSON(cJSON* json) override {
-            // get field channels
-            this->channel = jsonGetChannels(json)[0];
+        void reconfigure() override
+        {
+            this->channel = config->getChannels()[0];
+            float freq = config->getFloat("freq");
+            int order = config->getInt("order");
 
-            float freq = jsonGetNumber<float>(json, "frequency", false, 0);
-            int order = jsonGetNumber<int>(json, "order", false, 0);
-            
-            auto type = jsonGetString(json, "combo_type");
-
-            if (type == "lr_lowpass") {
+            auto type = config->getString("type");
+            if (type == "lr_lowpass")
+            {
                 this->linkwitzRiley(freq, order, FilterType::Lowpass);
-            } else if (type == "lr_highpass") {
+            }
+            else if (type == "lr_highpass")
+            {
                 this->linkwitzRiley(freq, order, FilterType::Highpass);
-            } else if (type == "bw_highpass") {
+            }
+            else if (type == "bw_highpass")
+            {
                 this->butterworth(freq, order, FilterType::Highpass);
-            } else if (type == "bw_lowpass") {
+            }
+            else if (type == "bw_lowpass")
+            {
                 this->butterworth(freq, order, FilterType::Highpass);
-            } else {
+            }
+            else
+            {
                 throw std::invalid_argument("Invalid combo filter type");
             }
         }
-
-        float calculateHeadroom() override { return 0.0f; };
     };
 };

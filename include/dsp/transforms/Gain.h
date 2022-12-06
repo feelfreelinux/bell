@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <mutex>
+#include <iostream>
 
 #include "AudioTransform.h"
 
@@ -24,12 +25,10 @@ namespace bell
 
         std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) override;
 
-        float calculateHeadroom() override { return gainDb; };
+        void reconfigure() override {
+            float gain = config->getFloat("gain");
+            this->channels = config->getChannels();
 
-        void fromJSON(cJSON* json) override {
-            // get field channels
-            auto channels = jsonGetChannels(json);
-            float gain = jsonGetNumber<float>(json, "gain", true);
             this->configure(channels, gain);
         }
     };
