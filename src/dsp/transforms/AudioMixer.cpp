@@ -6,6 +6,7 @@ AudioMixer::AudioMixer() {
 }
 
 std::unique_ptr<StreamInfo> AudioMixer::process(std::unique_ptr<StreamInfo> info) {
+    std::scoped_lock lock(this->accessMutex);
     if (info->numChannels != from) {
         throw std::runtime_error("AudioMixer: Input channel count does not match configuration");
     }

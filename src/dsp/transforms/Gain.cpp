@@ -10,7 +10,6 @@ Gain::Gain() : AudioTransform()
 
 void Gain::configure(std::vector<int> channels, float gainDB)
 {
-    std::scoped_lock lock(this->accessMutex);
     this->channels = channels;
     this->gainDb = gainDB;
     this->gainFactor = std::pow(10.0f, gainDB / 20.0f);

@@ -66,6 +66,7 @@ namespace bell
 
         void reconfigure() override
         {
+            std::scoped_lock lock(this->accessMutex);
             std::map<std::string, float> biquadConfig;
             this->channel = config->getChannels()[0];
 

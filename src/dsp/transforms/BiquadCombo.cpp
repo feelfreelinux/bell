@@ -54,7 +54,6 @@ std::vector<float> BiquadCombo::calculateLRQ(int order)
 
 void BiquadCombo::butterworth(float freq, int order, FilterType type)
 {
-    std::scoped_lock lock(this->accessMutex);
     std::vector<float> qValues = calculateBWQ(order);
     for (auto &q : qValues)
     {
@@ -63,7 +62,6 @@ void BiquadCombo::butterworth(float freq, int order, FilterType type)
 
 void BiquadCombo::linkwitzRiley(float freq, int order, FilterType type)
 {
-    std::scoped_lock lock(this->accessMutex);
     std::vector<float> qValues = calculateLRQ(order);
     for (auto &q : qValues)
     {
@@ -102,7 +100,7 @@ void BiquadCombo::linkwitzRiley(float freq, int order, FilterType type)
 }
 
 std::unique_ptr<StreamInfo> BiquadCombo::process(std::unique_ptr<StreamInfo> data) {
-    
+    std::scoped_lock lock(this->accessMutex);
     for (auto &transform : this->biquads) {
         data = transform->process(std::move(data));
     }

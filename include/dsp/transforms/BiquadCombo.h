@@ -24,7 +24,11 @@ namespace bell
         BiquadCombo();
         ~BiquadCombo(){};
         int channel;
-        std::map<std::string, float> paramCache;
+
+        std::map<std::string, float> paramCache = {
+            {"order", 0.0f},
+            {"frequency", 0.0f}
+        };
 
         enum class FilterType
         {
@@ -40,16 +44,18 @@ namespace bell
 
         void reconfigure() override
         {
+            std::scoped_lock lock(this->accessMutex);
+
             float freq = config->getFloat("frequency");
             int order = config->getInt("order");
 
-            // if (paramCache["frequency"] == freq && paramCache["order"] == order)
-            // {
-            //     return;
-            // } else {
-            //     paramCache["frequency"] = freq;
-            //     paramCache["order"] = order;
-            // }
+            if (paramCache["frequency"] == freq && paramCache["order"] == order)
+            {
+                return;
+            } else {
+                paramCache["frequency"] = freq;
+                paramCache["order"] = order;
+            }
 
             this->channel = config->getChannels()[0];
             this->biquads = std::vector<std::unique_ptr<bell::Biquad>>();

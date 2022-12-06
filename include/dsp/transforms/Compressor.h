@@ -35,7 +35,7 @@ namespace bell
         Compressor();
         ~Compressor(){};
 
-        void configure(float attack, float release, float threshold, float factor, float makeupGain);
+        void configure(std::vector<int> channels, float attack, float release, float threshold, float factor, float makeupGain);
 
         void sumChannels(std::unique_ptr<StreamInfo> &data);
         void calLoudness();
@@ -45,7 +45,9 @@ namespace bell
 
         void reconfigure() override
         {
-            this->channels = config->getChannels();
+            std::scoped_lock lock(this->accessMutex);
+            auto channels = config->getChannels();
+            
             float attack = config->getFloat("attack");
             float release = config->getFloat("release");
             float threshold = config->getFloat("threshold");
@@ -70,7 +72,7 @@ namespace bell
                 paramCache["makeup_gain"] = makeupGain;
             }
 
-            this->configure(attack, release, threshold, factor, makeupGain);
+            this->configure(channels, attack, release, threshold, factor, makeupGain);
         }
 
         // void fromJSON(cJSON* json) override {

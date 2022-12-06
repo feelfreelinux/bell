@@ -26,6 +26,7 @@ namespace bell
         std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) override;
 
         void reconfigure() override {
+            std::scoped_lock lock(this->accessMutex);
             float gain = config->getFloat("gain");
             this->channels = config->getChannels();
 
