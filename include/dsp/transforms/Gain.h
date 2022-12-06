@@ -29,6 +29,10 @@ namespace bell
             float gain = config->getFloat("gain");
             this->channels = config->getChannels();
 
+            if (gainDb == gain) {
+                return;
+            }
+
             this->configure(channels, gain);
         }
     };

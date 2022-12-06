@@ -24,6 +24,7 @@ namespace bell
         BiquadCombo();
         ~BiquadCombo(){};
         int channel;
+        std::map<std::string, float> paramCache;
 
         enum class FilterType
         {
@@ -39,11 +40,20 @@ namespace bell
 
         void reconfigure() override
         {
+            this->biquads = std::vector<std::unique_ptr<bell::Biquad>>();
             this->channel = config->getChannels()[0];
-            float freq = config->getFloat("freq");
+            float freq = config->getFloat("frequency");
             int order = config->getInt("order");
 
-            auto type = config->getString("type");
+            if (paramCache["frequency"] == freq && paramCache["order"] == order)
+            {
+                return;
+            } else {
+                paramCache["frequency"] = freq;
+                paramCache["order"] = order;
+            }
+
+            auto type = config->getString("combo_type");
             if (type == "lr_lowpass")
             {
                 this->linkwitzRiley(freq, order, FilterType::Lowpass);

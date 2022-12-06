@@ -78,6 +78,15 @@ namespace bell
             float frequency = config->getFloat("frequency", false, invalid);
             float q = config->getFloat("q", false, invalid);
 
+            if (currentConfig["bandwidth"] == bandwidth &&
+                currentConfig["slope"] == slope &&
+                currentConfig["gain"] == gain &&
+                currentConfig["frequency"] == frequency &&
+                currentConfig["q"] == q)
+            {
+                return;
+            }
+            
             if (bandwidth != invalid)
                 biquadConfig["bandwidth"] = bandwidth;
             if (slope != invalid)

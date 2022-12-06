@@ -18,6 +18,8 @@ namespace bell
         std::vector<int> channels;
         std::vector<float> tmp;
 
+        std::map<std::string, float> paramCache;
+
         float attack;
         float release;
         float threshold;
@@ -41,13 +43,32 @@ namespace bell
 
         void applyGain(std::unique_ptr<StreamInfo> &data);
 
-        void reconfigure() override {
+        void reconfigure() override
+        {
             this->channels = config->getChannels();
             float attack = config->getFloat("attack");
             float release = config->getFloat("release");
             float threshold = config->getFloat("threshold");
             float factor = config->getFloat("factor");
             float makeupGain = config->getFloat("makeup_gain");
+
+            if (paramCache["attack"] == attack &&
+                paramCache["release"] == release &&
+                paramCache["threshold"] == threshold &&
+                paramCache["factor"] == factor &&
+                paramCache["makeup_gain"] == makeupGain)
+            {
+                return;
+            }
+            else
+            {
+
+                paramCache["attack"] = attack;
+                paramCache["release"] = release;
+                paramCache["threshold"] = threshold;
+                paramCache["factor"] = factor;
+                paramCache["makeup_gain"] = makeupGain;
+            }
 
             this->configure(attack, release, threshold, factor, makeupGain);
         }
