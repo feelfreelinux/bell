@@ -101,6 +101,7 @@ int Es7243ReadReg(uint8_t regAdd);
 int Es8311ConfigFmt(ESCodecModule mode, ESCodecI2SFmt fmt);
 int Es8311I2sConfigClock(ESCodecI2sClock cfg);
 int Es8311SetBitsPerSample(ESCodecModule mode, BitsLength bitPerSample);
+void es8311_Codec_Startup(uint32_t mclk_freq, uint32_t lrck_freq);
 
 int Es8311Start(ESCodecModule mode);
 int Es8311Stop(ESCodecModule mode);

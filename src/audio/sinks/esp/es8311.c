@@ -505,7 +505,7 @@ static void es8311_init(uint32_t mclk_freq, uint32_t lrck_freq)
             Es8311WriteReg(ES8311_CLK_MANAGER_REG01, regv);
             break;
     }
-    es8311_pcm_hw_params(mclk_freq, lrck_freq);
+    es8311_pcm_hw_params(lrck_freq * 256, lrck_freq);
 
     /*
     *   mclk inverted or not
@@ -561,7 +561,7 @@ static void es8311_init(uint32_t mclk_freq, uint32_t lrck_freq)
 /*
 * set codec private data and initialize codec
 */
-static void es8311_Codec_Startup(uint32_t mclk_freq, uint32_t lrck_freq)
+void es8311_Codec_Startup(uint32_t mclk_freq, uint32_t lrck_freq)
 {
     ESP_LOGI(TAG, "Enter into es8311_Codec_Startup()\n");
     es8311_priv->dmic_enable = false;
@@ -717,14 +717,12 @@ int Es8311Stop(ESCodecModule mode)
 int Es8311SetVoiceVolume(int volume)
 {
     int res = 0;
-    if (volume < 0) {
-        volume = 0;
-    } else if (volume > 100) {
-        volume = 100;
+
+    if (volume == 0) {
+        volume = 1;
     }
-    int vol = (volume) * 2550 / 1000 + 0.5;
-    ESP_LOGI(TAG, "SET: volume:%d\n", vol);
-    Es8311WriteReg(ES8311_DAC_REG32, vol);
+
+    Es8311WriteReg(ES8311_DAC_REG32, volume);
     return res;
 }
 

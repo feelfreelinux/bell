@@ -21,6 +21,7 @@ public:
     ~ES8311AudioSink();
     void writeReg(uint8_t reg_add, uint8_t data);
     void volumeChanged(uint16_t volume);
+    void setSampleRate(uint32_t sampleRate);
 private:
 };
 
