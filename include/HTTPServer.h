@@ -44,6 +44,7 @@ namespace bell
         fd_set readFds;
         fd_set activeFdSet, readFdSet;
 
+        bool listening = false;
         bool isClosed = true;
         bool writingResponse = false;
 
@@ -71,6 +72,7 @@ namespace bell
         void publishEvent(std::string eventName, std::string eventData);
         void closeConnection(int connection);
         void listen(std::function<void()> const& callback = nullptr);
+        void stopListen(void) { listening = false;  };
     };
 }
 #endif
