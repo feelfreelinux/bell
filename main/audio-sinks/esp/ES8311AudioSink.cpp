@@ -88,11 +88,6 @@ ES8311AudioSink::ES8311AudioSink()
 
 void ES8311AudioSink::volumeChanged(uint16_t volume)
 {
-    // int volAdj = (int)((((float)volume) / 65536) * 100);
-    // es8311_codec_set_voice_vo0lume(volAdj);
-    if (volume > 79) {
-        volume = 79;
-    }
     Es8311SetVoiceVolume(volume);
 }
 

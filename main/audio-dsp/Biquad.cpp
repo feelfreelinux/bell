@@ -10,106 +10,106 @@ Biquad::Biquad()
 void Biquad::sampleRateChanged(uint32_t sampleRate)
 {
     this->sampleRate = sampleRate;
-    this->configure(this->type, this->config);
+    //this->configure(this->type, this->currentConfig);
 }
 
-void Biquad::configure(Type type, std::map<std::string, float> &config)
+void Biquad::configure(Type type, std::map<std::string, float> &newConf)
 {
     this->type = type;
-    this->config = config;
+    this->currentConfig = newConf;
 
     switch (type)
     {
     case Type::Free:
-        coeffs[0] = config["a1"];
-        coeffs[1] = config["a2"];
-        coeffs[2] = config["b0"];
-        coeffs[3] = config["b1"];
-        coeffs[4] = config["b2"];
+        coeffs[0] = newConf["a1"];
+        coeffs[1] = newConf["a2"];
+        coeffs[2] = newConf["b0"];
+        coeffs[3] = newConf["b1"];
+        coeffs[4] = newConf["b2"];
         break;
     case Type::Highpass:
-        highPassCoEffs(config["freq"], config["q"]);
+        highPassCoEffs(newConf["freq"], newConf["q"]);
         break;
     case Type::HighpassFO:
-        highPassFOCoEffs(config["freq"]);
+        highPassFOCoEffs(newConf["freq"]);
         break;
     case Type::Lowpass:
-        lowPassCoEffs(config["freq"], config["q"]);
+        lowPassCoEffs(newConf["freq"], newConf["q"]);
         break;
     case Type::LowpassFO:
-        lowPassFOCoEffs(config["freq"]);
+        lowPassFOCoEffs(newConf["freq"]);
         break;
     case Type::Highshelf:
         // check if config has slope key
-        if (config.find("slope") != config.end())
+        if (newConf.find("slope") != newConf.end())
         {
-            highShelfCoEffsSlope(config["freq"], config["gain"], config["slope"]);
+            highShelfCoEffsSlope(newConf["freq"], newConf["gain"], newConf["slope"]);
         }
         else
         {
-            highShelfCoEffs(config["freq"], config["gain"], config["q"]);
+            highShelfCoEffs(newConf["freq"], newConf["gain"], newConf["q"]);
         }
         break;
     case Type::HighshelfFO:
-        highShelfFOCoEffs(config["freq"], config["gain"]);
+        highShelfFOCoEffs(newConf["freq"], newConf["gain"]);
         break;
     case Type::Lowshelf:
         // check if config has slope key
-        if (config.find("slope") != config.end())
+        if (newConf.find("slope") != newConf.end())
         {
-            lowShelfCoEffsSlope(config["freq"], config["gain"], config["slope"]);
+            lowShelfCoEffsSlope(newConf["freq"], newConf["gain"], newConf["slope"]);
         }
         else
         {
-            lowShelfCoEffs(config["freq"], config["gain"], config["q"]);
+            lowShelfCoEffs(newConf["freq"], newConf["gain"], newConf["q"]);
         }
         break;
     case Type::LowshelfFO:
-        lowShelfFOCoEffs(config["freq"], config["gain"]);
+        lowShelfFOCoEffs(newConf["freq"], newConf["gain"]);
         break;
     case Type::Peaking:
         // check if config has bandwidth key
-        if (config.find("bandwidth") != config.end())
+        if (newConf.find("bandwidth") != newConf.end())
         {
-            peakCoEffsBandwidth(config["freq"], config["gain"], config["bandwidth"]);
+            peakCoEffsBandwidth(newConf["freq"], newConf["gain"], newConf["bandwidth"]);
         }
         else
         {
-            peakCoEffs(config["freq"], config["gain"], config["q"]);
+            peakCoEffs(newConf["freq"], newConf["gain"], newConf["q"]);
         }
         break;
     case Type::Notch:
-        if (config.find("bandwidth") != config.end())
+        if (newConf.find("bandwidth") != newConf.end())
         {
-            notchCoEffsBandwidth(config["freq"], config["gain"], config["bandwidth"]);
+            notchCoEffsBandwidth(newConf["freq"], newConf["gain"], newConf["bandwidth"]);
         }
         else
         {
-            notchCoEffs(config["freq"], config["gain"], config["q"]);
+            notchCoEffs(newConf["freq"], newConf["gain"], newConf["q"]);
         }
         break;
     case Type::Bandpass:
-        if (config.find("bandwidth") != config.end())
+        if (newConf.find("bandwidth") != newConf.end())
         {
-            bandPassCoEffsBandwidth(config["freq"], config["bandwidth"]);
+            bandPassCoEffsBandwidth(newConf["freq"], newConf["bandwidth"]);
         }
         else
         {
-            bandPassCoEffs(config["freq"], config["q"]);
+            bandPassCoEffs(newConf["freq"], newConf["q"]);
         }
         break;
     case Type::Allpass:
-        if (config.find("bandwidth") != config.end())
+        if (newConf.find("bandwidth") != newConf.end())
         {
-            allPassCoEffsBandwidth(config["freq"], config["bandwidth"]);
+            allPassCoEffsBandwidth(newConf["freq"], newConf["bandwidth"]);
         }
         else
         {
-            allPassCoEffs(config["freq"], config["q"]);
+            allPassCoEffs(newConf["freq"], newConf["q"]);
         }
         break;
     case Type::AllpassFO:
-        allPassFOCoEffs(config["freq"]);
+        allPassFOCoEffs(newConf["freq"]);
         break;
     }
 }
@@ -435,7 +435,6 @@ void Biquad::allPassFOCoEffs(float f) {
 
 void Biquad::normalizeCoEffs(float a0, float a1, float a2, float b0, float b1, float b2)
 {
-    std::scoped_lock lock(accessMutex);
     coeffs[0] = b0 / a0;
     coeffs[1] = b1 / a0;
     coeffs[2] = b2 / a0;

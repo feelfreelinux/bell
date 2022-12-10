@@ -717,14 +717,12 @@ int Es8311Stop(ESCodecModule mode)
 int Es8311SetVoiceVolume(int volume)
 {
     int res = 0;
-    if (volume < 0) {
-        volume = 0;
-    } else if (volume > 100) {
-        volume = 100;
+
+    if (volume == 0) {
+        volume = 1;
     }
-    int vol = (volume) * 2550 / 1000 + 0.5;
-    ESP_LOGI(TAG, "SET: volume:%d\n", vol);
-    Es8311WriteReg(ES8311_DAC_REG32, vol);
+
+    Es8311WriteReg(ES8311_DAC_REG32, volume);
     return res;
 }
 

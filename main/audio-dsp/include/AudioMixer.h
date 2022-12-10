@@ -31,55 +31,59 @@ namespace bell
         int to;
 
         // Configuration of each channels in the mixer
-        std::vector<MixerConfig> config;
+        std::vector<MixerConfig> mixerConfig;
 
         std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data) override;
 
-        float calculateHeadroom() override { return 0; };
-
-        void fromJSON(cJSON *json) override
+        void reconfigure() override
         {
-            // cJSON *mappedChannels = cJSON_GetObjectItem(json, "mapped_channels");
+        }
 
-            // if (mappedChannels == NULL || !cJSON_IsArray(mappedChannels))
-            // {
-            //     throw std::invalid_argument("Mixer configuration invalid");
-            // }
+        void fromJSON(cJSON *json)
+        {
+            cJSON *mappedChannels = cJSON_GetObjectItem(json, "mapped_channels");
 
-            // this->config = std::vector<MixerConfig>();
+            if (mappedChannels == NULL || !cJSON_IsArray(mappedChannels))
+            {
+                throw std::invalid_argument("Mixer configuration invalid");
+            }
 
-            // cJSON *iterator = NULL;
-            // cJSON_ArrayForEach(iterator, mappedChannels)
-            // {
-            //     std::vector<int> sources(0);
-            //     cJSON *iteratorNested = NULL;
-            //     cJSON_ArrayForEach(iteratorNested, cJSON_GetObjectItem(iterator, "source"))
-            //     {
-            //         sources.push_back(iteratorNested->valueint);
-            //     }
+            this->mixerConfig = std::vector<MixerConfig>();
 
-            //     this->config.push_back(MixerConfig{
-            //         .source = sources,
-            //         .destination = jsonGetNumber<int>(iterator, "destination", true),
-            //     });
-            // }
+            cJSON *iterator = NULL;
+            cJSON_ArrayForEach(iterator, mappedChannels)
+            {
+                std::vector<int> sources(0);
+                cJSON *iteratorNested = NULL;
+                cJSON_ArrayForEach(iteratorNested, cJSON_GetObjectItem(iterator, "source"))
+                {
+                    sources.push_back(iteratorNested->valueint);
+                }
 
-            // std::vector<uint8_t> sources(0);
+                int destination = cJSON_GetObjectItem(iterator, "destination")->valueint;
 
-            // for (auto &config : config)
-            // {
+                this->mixerConfig.push_back(MixerConfig{
+                    .source = sources,
+                    .destination = destination
+                });
+            }
 
-            //     for (auto &source : config.source)
-            //     {
-            //         if (std::find(sources.begin(), sources.end(), source) == sources.end())
-            //         {
-            //             sources.push_back(source);
-            //         }
-            //     }
-            // }
+            std::vector<uint8_t> sources(0);
 
-            // this->from = sources.size();
-            // this->to = config.size();
+            for (auto &config : mixerConfig)
+            {
+
+                for (auto &source : config.source)
+                {
+                    if (std::find(sources.begin(), sources.end(), source) == sources.end())
+                    {
+                        sources.push_back(source);
+                    }
+                }
+            }
+
+            this->from = sources.size();
+            this->to = mixerConfig.size();
         }
     };
 }
