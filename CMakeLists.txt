@@ -60,49 +60,62 @@ endif()
 message(STATUS "    Disable cJSON and JSONObject: ${BELL_DISABLE_CJSON}")
 
 # Include nanoPB library
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/nanopb/extra")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/nanopb/extra")
 find_package(Nanopb REQUIRED)
+message(${NANOPB_INCLUDE_DIRS})
 list(APPEND EXTRA_INCLUDES ${NANOPB_INCLUDE_DIRS})
 
 # CMake options
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-set(AUDIO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/audio")
+
+set(AUDIO_CODEC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/audio-codec")
+set(AUDIO_CONTAINERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/audio-containers")
+set(AUDIO_DSP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/audio-dsp")
+set(AUDIO_SINKS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/audio-sinks")
+set(IO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/io")
+set(PLATFORM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/platform")
+set(UTILITIES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/utilities")
+
 add_definitions("-DUSE_DEFAULT_STDLIB=1")
 
 # Main library sources
-file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c" "src/audio/container/*.cpp" "src/dsp/*.cpp" "" "src/dsp/transforms/*.cpp")
-list(APPEND EXTRA_INCLUDES "include/platform")
-list(APPEND EXTRA_INCLUDES "include/audio/container")
-list(APPEND EXTRA_INCLUDES "include/dsp/")
-list(APPEND EXTRA_INCLUDES "include/dsp/transforms")
+file(GLOB SOURCES
+    "external/nanopb/*.c"
+    "main/utilities/*.cpp" "main/utilities/*.c"
+    "main/io/*.cpp" "main/io/*.c"
+    "main/audio-codec/*.cpp" "main/audio-codec/*.c"
+    "main/audio-dsp/*.cpp" "main/audio-dsp/*.c"
+)
+
+list(APPEND EXTRA_INCLUDES "main/audio-codec/include")
+list(APPEND EXTRA_INCLUDES "main/audio-dsp/include")
+list(APPEND EXTRA_INCLUDES "main/audio-sinks/include")
+list(APPEND EXTRA_INCLUDES "main/io/include")
+list(APPEND EXTRA_INCLUDES "main/utilities/include")
+list(APPEND EXTRA_INCLUDES "main/platform")
 
 # Add platform specific sources
 if(ESP_PLATFORM)
-    file(GLOB ESP_PLATFORM_SOURCES "src/platform/esp/*.cpp" "src/platform/esp/*.c" "src/asm/biquad_f32_ae32.S")
+    file(GLOB ESP_PLATFORM_SOURCES "main/platform/esp/*.cpp" "main/platform/esp/*.c" "main/asm/biquad_f32_ae32.S")
     list(APPEND SOURCES ${ESP_PLATFORM_SOURCES})
 endif()
 
-if(UNIX)
-    file(GLOB UNIX_PLATFORM_SOURCES "src/platform/unix/*.cpp" "src/platform/unix/*.c")
-    list(APPEND SOURCES ${UNIX_PLATFORM_SOURCES})
-endif()
-
 if(APPLE)
-    file(GLOB APPLE_PLATFORM_SOURCES "src/platform/apple/*.cpp" "src/platform/apple/*.c")
+    file(GLOB APPLE_PLATFORM_SOURCES "main/platform/apple/*.cpp" "main/platform/apple/*.c")
     list(APPEND SOURCES ${APPLE_PLATFORM_SOURCES})
     list(APPEND EXTRA_INCLUDES "/usr/local/opt/mbedtls@3/include")
 endif()
 
 if(UNIX AND NOT APPLE)
-    file(GLOB LINUX_PLATFORM_SOURCES "src/platform/linux/*.cpp" "src/platform/linux/*.c")
+    file(GLOB LINUX_PLATFORM_SOURCES "main/platform/linux/*.cpp" "main/platform/linux/*.c")
     list(APPEND SOURCES ${LINUX_PLATFORM_SOURCES})
 endif()
 
 if(WIN32)
-    file(GLOB WIN32_PLATFORM_SOURCES "src/platform/win32/*.cpp" "src/platform/win32/*.c")
+    file(GLOB WIN32_PLATFORM_SOURCES "main/platform/win32/*.cpp" "main/platform/win32/*.c")
     list(APPEND SOURCES ${WIN32_PLATFORM_SOURCES})
-    list(APPEND EXTRA_INCLUDES "include/platform/win32")
+    list(APPEND EXTRA_INCLUDES "main/platform/include/win32")
 endif()
 
 # A hack to make Opus keep quiet
@@ -111,6 +124,7 @@ function(message)
         _message(${ARGN})
     endif()
 endfunction()
+
 
 if(ESP_PLATFORM)
     list(APPEND EXTRA_LIBS idf::mbedtls idf::pthread idf::mdns)
@@ -150,45 +164,46 @@ else()
 endif()
 
 if(NOT BELL_DISABLE_CODECS)
-    file(GLOB EXTRA_SOURCES "src/audio/container/*.cpp")
+    file(GLOB EXTRA_SOURCES "main/audio-decoders/*.cpp")
+
     list(APPEND SOURCES "${EXTRA_SOURCES}")
-    list(APPEND SOURCES "${AUDIO_DIR}/codec/DecoderGlobals.cpp")
-    list(APPEND SOURCES "${AUDIO_DIR}/codec/BaseCodec.cpp")
-    list(APPEND SOURCES "${AUDIO_DIR}/codec/AudioCodecs.cpp")
-    list(APPEND EXTRA_INCLUDES "include/audio/codec")
+    list(APPEND SOURCES "${AUDIO_CODEC_DIR}/DecoderGlobals.cpp")
+    list(APPEND SOURCES "${AUDIO_CODEC_DIR}/BaseCodec.cpp")
+    list(APPEND SOURCES "${AUDIO_CODEC_DIR}/AudioCodecs.cpp")
+    list(APPEND EXTRA_INCLUDES "main/audio-containers/include")
 
     # AAC-LC codec
     if(BELL_CODEC_AAC)
-        file(GLOB LIBHELIX_AAC_SOURCES "libhelix-aac/*.c")
+        file(GLOB LIBHELIX_AAC_SOURCES "external/libhelix-aac/*.c")
         list(APPEND LIBHELIX_SOURCES ${LIBHELIX_AAC_SOURCES})
-        list(APPEND EXTRA_INCLUDES "libhelix-aac")
-        list(APPEND SOURCES "${AUDIO_DIR}/codec/AACDecoder.cpp")
+        list(APPEND EXTRA_INCLUDES "external/libhelix-aac")
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/AACDecoder.cpp")
         list(APPEND CODEC_FLAGS "-DBELL_CODEC_AAC")
     endif()
 
     # MP3 codec
     if(BELL_CODEC_MP3)
-        file(GLOB LIBHELIX_MP3_SOURCES "libhelix-mp3/*.c")
+        file(GLOB LIBHELIX_MP3_SOURCES "external/libhelix-mp3/*.c")
         list(APPEND LIBHELIX_SOURCES ${LIBHELIX_MP3_SOURCES})
-        list(APPEND EXTRA_INCLUDES "libhelix-mp3")
-        list(APPEND SOURCES "${AUDIO_DIR}/codec/MP3Decoder.cpp")
+        list(APPEND EXTRA_INCLUDES "external/libhelix-mp3")
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/MP3Decoder.cpp")
         list(APPEND CODEC_FLAGS "-DBELL_CODEC_MP3")
     endif()
 
     # MP3 codec
-    if(BELL_CODEC_ALAC)
-        file(GLOB ALAC_SOURCES "alac/*.c" "alac/*.cpp")
-        list(APPEND ALAC_SOURCES ${ALAC_SOURCES})
-        list(APPEND EXTRA_INCLUDES "alac")
+    # if(BELL_CODEC_ALAC)
+    #     file(GLOB ALAC_SOURCES "external/alac/*.c" "external/alac/*.cpp")
+    #     list(APPEND ALAC_SOURCES ${ALAC_SOURCES})
+    #     list(APPEND EXTRA_INCLUDES "external/alac")
 
-        # list(APPEND SOURCES "${AUDIO_DIR}/codec/ALACDecoder.cpp")
-        list(APPEND CODEC_FLAGS "-DBELL_CODEC_ALAC")
-    endif()
+    #     # list(APPEND SOURCES "${AUDIO_DIR}/codec/ALACDecoder.cpp")
+    #     list(APPEND CODEC_FLAGS "-DBELL_CODEC_ALAC")
+    # endif()
 
     # libhelix Cygwin workaround
     if(CYGWIN)
         # Both Cygwin and ESP are Unix-like so this seems to work (or, at least, compile)
-        set_source_files_properties("${AUDIO_DIR}/codec/DecoderGlobals.cpp" ${LIBHELIX_SOURCES} PROPERTIES COMPILE_FLAGS "-DESP_PLATFORM")
+        set_source_files_properties("${AUDIO_CODEC_DIR}/DecoderGlobals.cpp" ${LIBHELIX_SOURCES} PROPERTIES COMPILE_FLAGS "-DESP_PLATFORM")
     endif()
 
     list(APPEND SOURCES ${LIBHELIX_SOURCES})
@@ -196,11 +211,11 @@ if(NOT BELL_DISABLE_CODECS)
 
     # Vorbis codec
     if(BELL_CODEC_VORBIS)
-        file(GLOB TREMOR_SOURCES "tremor/*.c")
-        list(REMOVE_ITEM TREMOR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tremor/ivorbisfile_example.c")
+        file(GLOB TREMOR_SOURCES "external/tremor/*.c")
+        list(REMOVE_ITEM TREMOR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/external/tremor/ivorbisfile_example.c")
         list(APPEND SOURCES ${TREMOR_SOURCES})
-        list(APPEND EXTRA_INCLUDES "tremor")
-        list(APPEND SOURCES "${AUDIO_DIR}/codec/VorbisDecoder.cpp")
+        list(APPEND EXTRA_INCLUDES "external/tremor")
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
         list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
     endif()
 
@@ -211,17 +226,17 @@ if(NOT BELL_DISABLE_CODECS)
         set(OPUS_INSTALL_PKG_CONFIG_MODULE OFF CACHE BOOL "")
         set(OPUS_INSTALL_PKG_CONFIG_MODULE OFF)
         set(MESSAGE_QUIET ON)
-        add_subdirectory("opus")
+        add_subdirectory("external/opus")
         unset(MESSAGE_QUIET)
         target_compile_options(opus PRIVATE "-O3")
         list(APPEND EXTRA_LIBS Opus::opus)
-        list(APPEND SOURCES "${AUDIO_DIR}/codec/OPUSDecoder.cpp")
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/OPUSDecoder.cpp")
         list(APPEND CODEC_FLAGS -DBELL_CODEC_OPUS)
     endif()
 
     # Enable global codecs
     string(REPLACE ";" " " CODEC_FLAGS "${CODEC_FLAGS}")
-    set_source_files_properties("${AUDIO_DIR}/codec/AudioCodecs.cpp" PROPERTIES COMPILE_FLAGS "${CODEC_FLAGS}")
+    set_source_files_properties("${AUDIO_CODEC_DIR}/AudioCodecs.cpp" PROPERTIES COMPILE_FLAGS "${CODEC_FLAGS}")
 elseif(BELL_EXTERNAL_TREMOR)
     list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_TREMOR})
 endif()
@@ -234,8 +249,8 @@ if(NOT BELL_DISABLE_SINKS)
     endif()
 
     # Add all built-in audio sinks
-    file(GLOB SINK_SOURCES "${AUDIO_DIR}/sinks/${PLATFORM}/*.cpp" "${AUDIO_DIR}/sinks/${PLATFORM}/*.c")
-    list(APPEND EXTRA_INCLUDES "include/audio/sinks/${PLATFORM}")
+    file(GLOB SINK_SOURCES "${AUDIO_SINKS_DIR}/${PLATFORM}/*.cpp" "${AUDIO_SINKS_DIR}/${PLATFORM}/*.c")
+    list(APPEND EXTRA_INCLUDES "main/audio-sinks/include/${PLATFORM}")
 
     # Find ALSA if required, else remove the sink
     if(BELL_SINK_ALSA)
@@ -243,18 +258,18 @@ if(NOT BELL_DISABLE_SINKS)
         list(APPEND EXTRA_INCLUDES ${ALSA_INCLUDE_DIRS})
         list(APPEND EXTRA_LIBS ${ALSA_LIBRARIES})
     else()
-        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_DIR}/sinks/unix/ALSAAudioSink.cpp")
+        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/ALSAAudioSink.cpp")
     endif()
 
     # Find PortAudio if required, else remove the sink
     if(BELL_SINK_PORTAUDIO)
         if(WIN32)
-            list(APPEND EXTRA_INCLUDES "portaudio/include")
+            list(APPEND EXTRA_INCLUDES "external/portaudio/include")
 
             if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/portaudio/portaudio_win32.lib")
+                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/portaudio_win32.lib")
             else()
-                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/portaudio/portaudio_x64.lib")
+                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/portaudio_x64.lib")
             endif()
         else()
             find_package(portaudio REQUIRED)
@@ -262,30 +277,35 @@ if(NOT BELL_DISABLE_SINKS)
             list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
         endif()
     else()
-        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_DIR}/sinks/unix/PortAudioSink.cpp")
+        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/PortAudioSink.cpp")
     endif()
 
     list(APPEND SOURCES ${SINK_SOURCES})
 endif()
 
 if(BELL_DISABLE_CJSON)
-    list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/JSONObject.cpp")
+    list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/main/io/JSONObject.cpp")
 else()
-    add_subdirectory(nlohmann_json)
+    add_subdirectory(external/nlohmann_json)
     list(APPEND EXTRA_LIBS nlohmann_json::nlohmann_json)
     if(BELL_EXTERNAL_CJSON)
         list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_CJSON})
     else()
-        list(APPEND SOURCES "cJSON/cJSON.c")
-        list(APPEND EXTRA_INCLUDES "cJSON")
+        list(APPEND SOURCES "external/cJSON/cJSON.c")
+        list(APPEND EXTRA_INCLUDES "external/cJSON")
     endif()
 endif()
+
+file(GLOB CIVET_SRC "external/civetweb/*.c" "external/civetweb/*.inl" "external/civetweb/*.cpp")
+
+list(APPEND SOURCES ${CIVET_SRC})
+list(APPEND EXTRA_INCLUDES "external/civetweb/include")
 
 add_library(bell STATIC ${SOURCES})
 
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
-target_include_directories(bell PUBLIC "include" ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(bell PUBLIC ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC)
 
 if(WIN32)
