@@ -50,16 +50,16 @@ namespace bell
             if (runOnPSRAM)
             {
                 xTaskBuffer = (StaticTask_t*) heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-                return (xTaskCreateStaticPinnedToCore(taskEntryFuncPSRAM, this->taskName.c_str(), this->stackSize, this, 
+                return (xTaskCreateStaticPinnedToCore(taskEntryFuncPSRAM, this->TASK.c_str(), this->stackSize, this, 
 													  this->priority, xStack, xTaskBuffer, this->core) != NULL);
             }
             else
             {
-                printf("task on internal %s", this->taskName.c_str());
+                printf("task on internal %s", this->TASK.c_str());
                 esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
                 cfg.stack_size = stackSize;
                 cfg.inherit_cfg = true;
-                cfg.thread_name = this->taskName.c_str();
+                cfg.thread_name = this->TASK.c_str();
                 cfg.pin_to_core = core;
 				cfg.prio = this->priority;
                 esp_pthread_set_cfg(&cfg);

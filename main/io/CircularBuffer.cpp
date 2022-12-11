@@ -6,7 +6,7 @@ CircularBuffer::CircularBuffer(size_t dataCapacity)
 {
     this->dataCapacity = dataCapacity;
     buffer = std::vector<uint8_t>(dataCapacity);
-    dataSemaphore = std::make_unique<bell::WrappedSemaphore>(5);
+    this->dataSemaphore = std::make_unique<bell::WrappedSemaphore>(5);
 };
 
 size_t CircularBuffer::write(const uint8_t *data, size_t bytes)
@@ -36,7 +36,7 @@ size_t CircularBuffer::write(const uint8_t *data, size_t bytes)
 
     dataSize += bytesToWrite;
 
-    dataSemaphore->give();
+    // this->dataSemaphore->give();
     return bytesToWrite;
 }
 

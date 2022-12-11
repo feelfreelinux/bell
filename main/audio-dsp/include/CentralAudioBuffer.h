@@ -6,22 +6,24 @@
 
 #include "CircularBuffer.h"
 #include "StreamInfo.h"
+#include "BellUtils.h"
 
 typedef std::function<void(std::string)> shutdownEventHandler;
 
 namespace bell {
 class CentralAudioBuffer {
   private:
-	std::shared_ptr<bell::CircularBuffer> audioBuffer;
 	std::mutex accessMutex;
 
-	uint32_t sampleRate		   = 0;
 	std::atomic<bool> isLocked = false;
 
   public:
 	CentralAudioBuffer(size_t size) {
 		audioBuffer = std::make_shared<CircularBuffer>(size);
 	}
+	
+	std::shared_ptr<bell::CircularBuffer> audioBuffer;
+	uint32_t sampleRate		   = 0;
 
 	/**
 	 * Sends an event which reconfigures current audio output
@@ -84,11 +86,16 @@ class CentralAudioBuffer {
 			bytesWritten += write;
 
 			if (write == 0) {
-                audioBuffer->dataSemaphore->wait();
+                //audioBuffer->dataSemaphore->wait();
+				BELL_SLEEP_MS(10);
 			}
 		}
 
 		return bytesWritten;
+	}
+
+	bool hasAtLeast(size_t bytes) {
+		return audioBuffer->size() >= bytes;
 	}
 };
 
