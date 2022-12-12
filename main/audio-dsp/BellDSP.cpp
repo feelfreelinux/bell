@@ -1,10 +1,12 @@
 #include "BellDSP.h"
 #include <iostream>
+#include "CentralAudioBuffer.h"
 
 using namespace bell;
 
-BellDSP::BellDSP(){
-
+BellDSP::BellDSP(std::shared_ptr<CentralAudioBuffer> buffer)
+{
+    this->buffer = buffer;
 };
 
 void BellDSP::applyPipeline(std::shared_ptr<AudioPipeline> pipeline)
@@ -20,6 +22,9 @@ size_t BellDSP::process(uint8_t *data, size_t bytes, int channels,
     {
         throw std::runtime_error("Too many bytes");
     }
+    
+    auto bytesLeftInBuffer = buffer->audioBuffer->size();
+    size_t fadeoutBytes = 44100;
 
     // Create a StreamInfo object to pass to the pipeline
     auto streamInfo = std::make_unique<StreamInfo>();
@@ -53,11 +58,18 @@ size_t BellDSP::process(uint8_t *data, size_t bytes, int channels,
                 dataLeft[i] = 1.0f;
             }
 
-
             // Data has been downmixed to mono
             if (resultInfo->numChannels == 1)
             {
+                size_t actualBytesInBuffer = (bytesLeftInBuffer + bytes);
+                actualBytesInBuffer -= (length16 * 4) - (i * 4);
+
                 data16Bit[i] = dataLeft[i] * MAX_INT16; // Denormalize left
+                if (actualBytesInBuffer < fadeoutBytes)
+                {
+                    int steps = (actualBytesInBuffer * 33) / fadeoutBytes;
+                    data16Bit[i] *= (float)steps / 33;
+                }
             }
             else
             {

@@ -4,6 +4,7 @@
 #include <mutex>
 #include <vector>
 #include "AudioPipeline.h"
+#include "CentralAudioBuffer.h"
 
 namespace bell
 {
@@ -14,12 +15,13 @@ namespace bell
 
     private:
         std::shared_ptr<AudioPipeline> activePipeline;
+        std::shared_ptr<CentralAudioBuffer> buffer;
         std::mutex accessMutex;
         std::vector<float> dataLeft = std::vector<float>(1024);
         std::vector<float> dataRight = std::vector<float>(1024);
 
     public:
-        BellDSP();
+        BellDSP(std::shared_ptr<CentralAudioBuffer> centralAudioBuffer);
         ~BellDSP(){};
 
         void applyPipeline(std::shared_ptr<AudioPipeline> pipeline);

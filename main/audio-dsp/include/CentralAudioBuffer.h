@@ -23,7 +23,7 @@ class CentralAudioBuffer {
 	}
 	
 	std::shared_ptr<bell::CircularBuffer> audioBuffer;
-	uint32_t sampleRate		   = 0;
+	uint32_t sampleRate		   = 44100;
 
 	/**
 	 * Sends an event which reconfigures current audio output
