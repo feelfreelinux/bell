@@ -73,6 +73,11 @@ class CentralAudioBuffer {
 		}
 	}
 
+	size_t read(uint8_t* dst, size_t bytes) {
+		size_t readBytes = this->audioBuffer->read(dst, bytes);
+		return readBytes;
+	}
+
 	/**
 	 * Write audio data to the main buffer
 	 * @param data pointer to raw PCM data
