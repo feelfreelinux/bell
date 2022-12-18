@@ -303,11 +303,7 @@ else()
 endif()
 
 file(GLOB CIVET_SRC "external/civetweb/*.c" "external/civetweb/*.inl" "external/civetweb/*.cpp")
-<<<<<<< Updated upstream
 file(GLOB COREHTTP_SRC "external/coreHTTP/*.c")
-=======
-file(GLOB FMT_SRC "external/fmt/*.cpp")
->>>>>>> Stashed changes
 
 list(APPEND SOURCES ${CIVET_SRC} ${COREHTTP_SRC})
 list(APPEND EXTRA_INCLUDES "external/civetweb/include" "external/coreHTTP")
