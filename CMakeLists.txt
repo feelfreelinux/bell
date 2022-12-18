@@ -297,9 +297,10 @@ else()
 endif()
 
 file(GLOB CIVET_SRC "external/civetweb/*.c" "external/civetweb/*.inl" "external/civetweb/*.cpp")
+file(GLOB COREHTTP_SRC "external/coreHTTP/*.c")
 
-list(APPEND SOURCES ${CIVET_SRC})
-list(APPEND EXTRA_INCLUDES "external/civetweb/include")
+list(APPEND SOURCES ${CIVET_SRC} ${COREHTTP_SRC})
+list(APPEND EXTRA_INCLUDES "external/civetweb/include" "external/coreHTTP")
 
 add_library(bell STATIC ${SOURCES})
 

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CivetServer.h"
 #include <BellLogger.h>
+#include <stdlib.h>
+#include <sys/types.h>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -9,55 +10,74 @@
 #include <memory>
 #include <optional>
 #include <sstream>
-#include <stdlib.h>
 #include <string>
-#include <sys/types.h>
+#include <unordered_map>
+#include "CivetServer.h"
 
 using namespace bell;
-
 namespace bell {
 class BellHTTPServer {
-  private:
-	std::unique_ptr<CivetServer> server;
-	int serverPort;
+ public:
+  BellHTTPServer(int serverPort);
 
-  public:
-	BellHTTPServer(int serverPort);
+  enum class WSState { CONNECTED, READY, CLOSED };
 
-	enum class WSState { CONNECTED, READY, CLOSED };
+  struct HTTPResponse {
+    uint8_t* body;
+    size_t bodySize;
+    std::map<std::string, std::string> headers;
 
-	struct HTTPResponse {
-		uint8_t *body;
-		size_t bodySize;
-		std::map<std::string, std::string> headers;
+    int status;
 
-		int status;
+    HTTPResponse() {
+      body = nullptr;
+      bodySize = 0;
+      status = 200;
+    }
 
-		HTTPResponse() {
-			body	 = nullptr;
-			bodySize = 0;
-			status	 = 200;
-		}
+    ~HTTPResponse() {
+      if (body != nullptr) {
+        free(body);
+      }
+    }
+  };
 
-		~HTTPResponse() {
-			if (body != nullptr) {
-				free(body);
-			}
-		}
-	};
+  typedef std::function<HTTPResponse(struct mg_connection* conn)> HTTPHandler;
+  typedef std::function<void(struct mg_connection* conn, WSState)>
+      WSStateHandler;
+  typedef std::function<void(struct mg_connection* conn, char*, size_t)>
+      WSDataHandler;
 
-	typedef std::function<HTTPResponse(struct mg_connection *conn)> HTTPHandler;
-	typedef std::function<void(struct mg_connection *conn, WSState)> WSStateHandler;
-	typedef std::function<void(struct mg_connection *conn, char *, size_t)> WSDataHandler;
+  class RequestHandler : public CivetHandler {
+		private:
+    BellHTTPServer::HTTPHandler getReqHandler = nullptr;
+		BellHTTPServer::HTTPHandler postReqHandler = nullptr;
 
-	HTTPResponse makeJsonResponse(const std::string &json, int status = 200);
-	HTTPResponse makeEmptyResponse();
+   public:
+    enum class RequestType { GET, POST, PUT, DELETE };
 
-	void registerGet(const std::string &, HTTPHandler handler);
-	void registerPost(const std::string &, HTTPHandler handler);
-	void registerWS(const std::string &, WSDataHandler dataHandler, WSStateHandler stateHandler);
+    RequestType requestType;
 
-	void listen();
+    RequestHandler();
+
+		void setReqHandler(RequestType type, BellHTTPServer::HTTPHandler handler);
+
+    bool handlePost(CivetServer* server, struct mg_connection* conn);
+
+    bool handleGet(CivetServer* server, struct mg_connection* conn);
+  };
+
+  HTTPResponse makeJsonResponse(const std::string& json, int status = 200);
+  HTTPResponse makeEmptyResponse();
+
+  void registerGet(const std::string&, HTTPHandler handler);
+  void registerPost(const std::string&, HTTPHandler handler);
+  void registerWS(const std::string&, WSDataHandler dataHandler,
+                  WSStateHandler stateHandler);
+ private:
+  std::unique_ptr<CivetServer> server;
+	int serverPort = 8080;
+  std::unordered_map<std::string, RequestHandler*> handlers;
 };
 
-} // namespace bell
+}  // namespace bell

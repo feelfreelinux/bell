@@ -1,10 +1,8 @@
-#ifndef BELL_NANOPB_HELPER_H
-#define BELL_NANOPB_HELPER_H
+#pragma once
 
 #include <vector>
 #include "pb_encode.h"
 #include "pb_decode.h"
-#include "HTTPClient.h"
 #include <string>
 
 std::vector<uint8_t> pbEncode(const pb_msgdesc_t *fields, const void *src_struct);
@@ -47,6 +45,3 @@ void pbPutCharArray(const char * stringToPack, char* dst);
 void pbPutBytes(const std::vector<uint8_t> &data, pb_bytes_array_t &dst);
 
 const char* pb_encode_to_string(const pb_msgdesc_t *fields, const void *data);
-pb_istream_t pb_istream_from_http(bell::HTTPClient::HTTPResponse *response, size_t length = 0);
-
-#endif
