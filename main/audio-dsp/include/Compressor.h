@@ -4,6 +4,7 @@
 #include <memory>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <mutex>
 #include <map>
 
@@ -46,33 +47,33 @@ namespace bell
         void reconfigure() override
         {
             std::scoped_lock lock(this->accessMutex);
-            auto channels = config->getChannels();
+            auto newChannels = config->getChannels();
             
-            float attack = config->getFloat("attack");
-            float release = config->getFloat("release");
-            float threshold = config->getFloat("threshold");
-            float factor = config->getFloat("factor");
-            float makeupGain = config->getFloat("makeup_gain");
+            float newAttack = config->getFloat("attack");
+            float newRelease = config->getFloat("release");
+            float newThreshold = config->getFloat("threshold");
+            float newFactor = config->getFloat("factor");
+            float newMakeupGain = config->getFloat("makeup_gain");
 
-            if (paramCache["attack"] == attack &&
-                paramCache["release"] == release &&
-                paramCache["threshold"] == threshold &&
-                paramCache["factor"] == factor &&
-                paramCache["makeup_gain"] == makeupGain)
+            if (paramCache["attack"] == newAttack &&
+                paramCache["release"] == newRelease &&
+                paramCache["threshold"] == newThreshold &&
+                paramCache["factor"] == newFactor &&
+                paramCache["makeup_gain"] == newMakeupGain)
             {
                 return;
             }
             else
             {
 
-                paramCache["attack"] = attack;
-                paramCache["release"] = release;
-                paramCache["threshold"] = threshold;
-                paramCache["factor"] = factor;
-                paramCache["makeup_gain"] = makeupGain;
+                paramCache["attack"] = newAttack;
+                paramCache["release"] = newRelease;
+                paramCache["threshold"] = newThreshold;
+                paramCache["factor"] = newFactor;
+                paramCache["makeup_gain"] = newMakeupGain;
             }
 
-            this->configure(channels, attack, release, threshold, factor, makeupGain);
+            this->configure(newChannels, newAttack, newRelease, newThreshold, newFactor, newMakeupGain);
         }
 
         // void fromJSON(cJSON* json) override {
