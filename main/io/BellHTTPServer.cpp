@@ -1,4 +1,7 @@
 #include "BellHTTPServer.h"
+#include <regex>
+#include "CivetServer.h"
+#include "civetweb.h"
 
 using namespace bell;
 
@@ -35,30 +38,84 @@ class WebSocketHandler : public CivetWebSocketHandler {
   }
 };
 
-BellHTTPServer::RequestHandler::RequestHandler(){};
-
-void BellHTTPServer::RequestHandler::setReqHandler(
-    RequestType type, BellHTTPServer::HTTPHandler handler) {
-  switch (type) {
-    case RequestType::GET:
-      getReqHandler = handler;
-      break;
-    case RequestType::POST:
-      postReqHandler = handler;
-      break;
-    default:
-      break;
-  }
+std::vector<std::string> BellHTTPServer::Router::split(
+    const std::string str, const std::string regex_str) {
+  std::regex regexz(regex_str);
+  return {std::sregex_token_iterator(str.begin(), str.end(), regexz, -1),
+          std::sregex_token_iterator()};
 }
 
-bool BellHTTPServer::RequestHandler::handleGet(CivetServer* server,
-                                               struct mg_connection* conn) {
-  if (getReqHandler == nullptr) {
+void BellHTTPServer::Router::insert(const std::string& route,
+                                    HTTPHandler& value) {
+  auto parts = split(route, "/");
+  auto currentNode = &root;
+
+  for (int index = 0; index < parts.size(); index++) {
+    auto part = parts[index];
+    if (part[0] == ':') {
+      currentNode->isParam = true;
+      currentNode->paramName = part.substr(1);
+      part = "";
+    } else if (part[0] == '*') {
+      currentNode->isCatchAll = true;
+      currentNode->value = value;
+      return;
+    }
+
+    if (!currentNode->children.count(part)) {
+      currentNode->children[part] = RouterNode();
+    }
+    currentNode = &currentNode->children[part];
+  }
+  currentNode->value = value;
+}
+
+BellHTTPServer::Router::HandlerAndParams BellHTTPServer::Router::find(
+    const std::string& route) {
+  auto parts = split(route, "/");
+  auto currentNode = &root;
+  std::unordered_map<std::string, std::string> params;
+
+  for (int index = 0; index < parts.size(); index++) {
+    auto part = parts[index];
+
+    if (currentNode->children.count(part)) {
+      currentNode = &currentNode->children[part];
+    } else if (currentNode->isParam) {
+      params[currentNode->paramName] = part;
+      if (currentNode->children.count("")) {
+        currentNode = &currentNode->children[""];
+      } else {
+        return {nullptr, Params()};
+      }
+    } else if (currentNode->isCatchAll) {
+      params["**"] = '*';
+      return {currentNode->value, params};
+    } else {
+      return {nullptr, Params()};
+    }
+  }
+
+  if (currentNode->value != nullptr) {
+    return {currentNode->value, params};
+  }
+
+  return {nullptr, Params()};
+}
+
+bool BellHTTPServer::handleGet(CivetServer* server,
+                               struct mg_connection* conn) {
+  auto requestInfo = mg_get_request_info(conn);
+  auto handler = getRequestsRouter.find(requestInfo->local_uri);
+
+  if (handler.first == nullptr) {
     return false;
   }
 
+  mg_set_user_connection_data(conn, &handler.second);
+
   try {
-    auto reply = getReqHandler(conn);
+    auto reply = handler.first(conn);
     if (reply.body == nullptr) {
       return true;
     }
@@ -76,15 +133,19 @@ bool BellHTTPServer::RequestHandler::handleGet(CivetServer* server,
   }
 }
 
-bool BellHTTPServer::RequestHandler::handlePost(CivetServer* server,
-                                                struct mg_connection* conn) {
-  if (postReqHandler == nullptr) {
+bool BellHTTPServer::handlePost(CivetServer* server,
+                                struct mg_connection* conn) {
+  auto requestInfo = mg_get_request_info(conn);
+  auto handler = postRequestsRouter.find(requestInfo->local_uri);
+
+  if (handler.first == nullptr) {
     return false;
   }
 
-  try {
-    auto reply = postReqHandler(conn);
+  mg_set_user_connection_data(conn, &handler.second);
 
+  try {
+    auto reply = handler.first(conn);
     if (reply.body == nullptr) {
       return true;
     }
@@ -94,6 +155,7 @@ bool BellHTTPServer::RequestHandler::handlePost(CivetServer* server,
               "%s\r\nConnection: close\r\n\r\n",
               reply.status, reply.headers["Content-Type"].c_str());
     mg_write(conn, reply.body, reply.bodySize);
+
     return true;
   } catch (std::exception& e) {
     BELL_LOG(error, "HttpServer", "Exception occured in handler: %s", e.what());
@@ -130,22 +192,14 @@ BellHTTPServer::HTTPResponse BellHTTPServer::makeEmptyResponse() {
 
 void BellHTTPServer::registerGet(const std::string& url,
                                  BellHTTPServer::HTTPHandler handler) {
-  if (this->handlers.find(url) == this->handlers.end()) {
-    this->handlers[url] = new RequestHandler();
-    server->addHandler(url, handlers[url]);
-  }
-
-  handlers[url]->setReqHandler(RequestHandler::RequestType::GET, handler);
+  server->addHandler(url, this);
+  getRequestsRouter.insert(url, handler);
 }
 
 void BellHTTPServer::registerPost(const std::string& url,
                                   BellHTTPServer::HTTPHandler handler) {
-  if (this->handlers.find(url) == this->handlers.end()) {
-    this->handlers[url] = new RequestHandler();
-    server->addHandler(url, handlers[url]);
-  }
-
-  handlers[url]->setReqHandler(RequestHandler::RequestType::POST, handler);
+  server->addHandler(url, this);
+  postRequestsRouter.insert(url, handler);
 }
 
 void BellHTTPServer::registerWS(const std::string& url,
@@ -153,4 +207,12 @@ void BellHTTPServer::registerWS(const std::string& url,
                                 BellHTTPServer::WSStateHandler stateHandler) {
   server->addWebSocketHandler(url,
                               new WebSocketHandler(dataHandler, stateHandler));
+}
+
+std::unordered_map<std::string, std::string> BellHTTPServer::extractParams(
+    struct mg_connection* conn) {
+  std::unordered_map<std::string, std::string>& params =
+      *(std::unordered_map<std::string, std::string>*)
+          mg_get_user_connection_data(conn);
+  return params;
 }

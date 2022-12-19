@@ -9,14 +9,16 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include "CivetServer.h"
+#include "civetweb.h"
 
 using namespace bell;
 namespace bell {
-class BellHTTPServer {
+class BellHTTPServer : public CivetHandler {
  public:
   BellHTTPServer(int serverPort);
 
@@ -41,30 +43,34 @@ class BellHTTPServer {
       }
     }
   };
-
   typedef std::function<HTTPResponse(struct mg_connection* conn)> HTTPHandler;
   typedef std::function<void(struct mg_connection* conn, WSState)>
       WSStateHandler;
   typedef std::function<void(struct mg_connection* conn, char*, size_t)>
       WSDataHandler;
 
-  class RequestHandler : public CivetHandler {
-		private:
-    BellHTTPServer::HTTPHandler getReqHandler = nullptr;
-		BellHTTPServer::HTTPHandler postReqHandler = nullptr;
-
+  class Router {
    public:
-    enum class RequestType { GET, POST, PUT, DELETE };
+    struct RouterNode {
+      std::unordered_map<std::string, RouterNode> children;
+      HTTPHandler value = nullptr;
+      std::string paramName = "";
 
-    RequestType requestType;
+      bool isParam = false;
+      bool isCatchAll = false;
+    };
 
-    RequestHandler();
+    RouterNode root = RouterNode();
 
-		void setReqHandler(RequestType type, BellHTTPServer::HTTPHandler handler);
+    typedef std::unordered_map<std::string, std::string> Params;
+    typedef std::pair<HTTPHandler, Params> HandlerAndParams;
 
-    bool handlePost(CivetServer* server, struct mg_connection* conn);
+    std::vector<std::string> split(const std::string str,
+                                   const std::string regex_str);
 
-    bool handleGet(CivetServer* server, struct mg_connection* conn);
+    void insert(const std::string& route, HTTPHandler& value);
+
+    HandlerAndParams find(const std::string& route);
   };
 
   HTTPResponse makeJsonResponse(const std::string& json, int status = 200);
@@ -74,10 +80,18 @@ class BellHTTPServer {
   void registerPost(const std::string&, HTTPHandler handler);
   void registerWS(const std::string&, WSDataHandler dataHandler,
                   WSStateHandler stateHandler);
+
+  static std::unordered_map<std::string, std::string> extractParams(struct mg_connection* conn);
+
  private:
   std::unique_ptr<CivetServer> server;
-	int serverPort = 8080;
-  std::unordered_map<std::string, RequestHandler*> handlers;
+  int serverPort = 8080;
+
+  Router getRequestsRouter;
+  Router postRequestsRouter;
+
+  bool handleGet(CivetServer* server, struct mg_connection* conn);
+  bool handlePost(CivetServer* server, struct mg_connection* conn);
 };
 
 }  // namespace bell

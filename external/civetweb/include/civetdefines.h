@@ -10,3 +10,4 @@
 
 #define MG_EXTERNAL_FUNCTION_mg_cry_internal_impl
 #define MG_EXTERNAL_FUNCTION_log_access
+#define MG_EXPERIMENTAL_INTERFACES
