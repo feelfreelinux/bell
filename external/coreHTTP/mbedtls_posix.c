@@ -26,7 +26,6 @@
 
 /* POSIX socket includes. */
 #include <errno.h>
-#include <poll.h>
 #include <sys/socket.h>
 
 #include "mbedtls_posix.h"

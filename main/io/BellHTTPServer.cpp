@@ -63,9 +63,9 @@ void BellHTTPServer::Router::insert(const std::string& route,
     }
 
     if (!currentNode->children.count(part)) {
-      currentNode->children[part] = RouterNode();
+      currentNode->children[part] = std::make_unique<RouterNode>();
     }
-    currentNode = &currentNode->children[part];
+    currentNode = currentNode->children[part].get();
   }
   currentNode->value = value;
 }
@@ -80,11 +80,11 @@ BellHTTPServer::Router::HandlerAndParams BellHTTPServer::Router::find(
     auto part = parts[index];
 
     if (currentNode->children.count(part)) {
-      currentNode = &currentNode->children[part];
+      currentNode = currentNode->children[part].get();
     } else if (currentNode->isParam) {
       params[currentNode->paramName] = part;
       if (currentNode->children.count("")) {
-        currentNode = &currentNode->children[""];
+        currentNode = currentNode->children[""].get();
       } else {
         return {nullptr, Params()};
       }

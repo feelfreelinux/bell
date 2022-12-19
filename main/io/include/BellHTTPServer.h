@@ -53,7 +53,7 @@ class BellHTTPServer : public CivetHandler {
   class Router {
    public:
     struct RouterNode {
-      std::unordered_map<std::string, RouterNode> children;
+      std::unordered_map<std::string, std::unique_ptr<RouterNode>> children;
       HTTPHandler value = nullptr;
       std::string paramName = "";
 
