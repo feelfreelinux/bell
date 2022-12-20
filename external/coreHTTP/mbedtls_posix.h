@@ -53,6 +53,10 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/debug.h"
 
+#ifndef ESP_PLATFORM
+#include "poll.h"
+#endif
+
 /**
  * @brief Parameters for the transport-interface
  * implementation that uses plaintext POSIX sockets.

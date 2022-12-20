@@ -1,11 +1,11 @@
 #include "Crypto.h"
 
-CryptoMbedTLS::CryptoMbedTLS() {
-  mbedtls_aes_init(&aesCtx);
-}
+CryptoMbedTLS::CryptoMbedTLS() {}
 
 CryptoMbedTLS::~CryptoMbedTLS() {
-  mbedtls_aes_free(&aesCtx);
+  if (aesCtxInitialized) {
+    mbedtls_aes_free(&aesCtx);
+  }
 }
 
 std::vector<uint8_t> CryptoMbedTLS::base64Decode(const std::string& data) {
@@ -84,6 +84,10 @@ std::vector<uint8_t> CryptoMbedTLS::sha1HMAC(
 void CryptoMbedTLS::aesCTRXcrypt(const std::vector<uint8_t>& key,
                                  std::vector<uint8_t>& iv, uint8_t* buffer,
                                  size_t nbytes) {
+  if (!aesCtxInitialized) {
+    mbedtls_aes_init(&aesCtx);
+    aesCtxInitialized = true;
+  }
   // needed for internal cache
   size_t off = 0;
   unsigned char streamBlock[16] = {0};
@@ -101,14 +105,13 @@ void CryptoMbedTLS::aesCTRXcrypt(const std::vector<uint8_t>& key,
 
 void CryptoMbedTLS::aesECBdecrypt(const std::vector<uint8_t>& key,
                                   std::vector<uint8_t>& data) {
-  // Set 192bit key
-  mbedtls_aes_setkey_dec(&aesCtx, key.data(), key.size() * 8);
 
-  // Mbedtls's decrypt only works on 16 byte blocks
+  struct AES_ctx aesCtr;
+  AES_init_ctx(&aesCtr, key.data());
+
   for (unsigned int x = 0; x < data.size() / 16; x++) {
-    // Perform finalize
-    mbedtls_aes_crypt_ecb(&aesCtx, MBEDTLS_AES_DECRYPT, data.data() + (x * 16),
-                          data.data() + (x * 16));
+
+    AES_ECB_decrypt(&aesCtr, data.data() + (x * 16));
   }
 }
 

@@ -7,6 +7,9 @@
 #include <string>
 #include <memory>
 
+extern "C" {
+#include "aes.h"
+}
 #include <mbedtls/base64.h>
 #include <mbedtls/bignum.h>
 #include <mbedtls/md.h>
@@ -39,6 +42,7 @@ class CryptoMbedTLS {
 private:
     mbedtls_md_context_t sha1Context;
     mbedtls_aes_context aesCtx;
+    bool aesCtxInitialized = false;
 public:
     CryptoMbedTLS();
     ~CryptoMbedTLS();
