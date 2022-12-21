@@ -54,9 +54,9 @@ class CentralAudioBuffer {
 	 * Clears input buffer, to be called for track change and such
 	 */
   void clearBuffer() {
-    // size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
-    // audioBuffer->emptyExcept(exceptSize);
-    audioBuffer->emptyBuffer();
+    size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
+    audioBuffer->emptyExcept(exceptSize);
+    // audioBuffer->emptyBuffer();
   }
 
   /**
@@ -98,6 +98,7 @@ class CentralAudioBuffer {
 
     auto readBytes =
         audioBuffer->read((uint8_t*)&lastReadChunk, sizeof(AudioChunk));
+    currentSampleRate = lastReadChunk.sampleRate;
     return lastReadChunk;
   }
 
