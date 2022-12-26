@@ -32,7 +32,7 @@ void BellDSP::applyPipeline(std::shared_ptr<AudioPipeline> pipeline) {
 size_t BellDSP::process(uint8_t* data, size_t bytes, int channels,
                         SampleRate sampleRate, BitWidth bitWidth) {
   if (bytes > 1024 * 2 * channels) {
-    throw std::runtime_error("Too many bytes");
+    return 0;
   }
 
   size_t bytesPerSample = channels * 2;
