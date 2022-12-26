@@ -97,6 +97,7 @@ class CentralAudioBuffer {
 
     auto readBytes =
         audioBuffer->read((uint8_t*)&lastReadChunk, sizeof(AudioChunk));
+    currentSampleRate = lastReadChunk.sampleRate;
     return lastReadChunk;
   }
 
