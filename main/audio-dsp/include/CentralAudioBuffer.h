@@ -54,9 +54,12 @@ class CentralAudioBuffer {
 	 * Clears input buffer, to be called for track change and such
 	 */
   void clearBuffer() {
-    // size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
-    // audioBuffer->emptyExcept(exceptSize);
-    audioBuffer->emptyBuffer();
+    size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
+    audioBuffer->emptyExcept(exceptSize);
+  }
+
+  bool hasAtLeast(size_t chunks) {
+    return this->audioBuffer->size() >= chunks * sizeof(AudioChunk);
   }
 
   /**
@@ -79,10 +82,6 @@ class CentralAudioBuffer {
       this->accessMutex.unlock();
       isLocked = false;
     }
-  }
-
-  bool hasAtLeast(size_t chunks) {
-    return audioBuffer->size() >= sizeof(AudioChunk) * chunks;
   }
 
   AudioChunk currentChunk = {.pcmSize = 0};

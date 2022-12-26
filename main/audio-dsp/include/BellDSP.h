@@ -6,28 +6,36 @@
 #include "AudioPipeline.h"
 #include "CentralAudioBuffer.h"
 
-namespace bell
-{
-    #define MAX_INT16 32767
-    
-    class BellDSP
-    {
+namespace bell {
+#define MAX_INT16 32767
 
-    private:
-        std::shared_ptr<AudioPipeline> activePipeline;
-        std::shared_ptr<CentralAudioBuffer> buffer;
-        std::mutex accessMutex;
-        std::vector<float> dataLeft = std::vector<float>(1024);
-        std::vector<float> dataRight = std::vector<float>(1024);
+class BellDSP {
 
-    public:
-        BellDSP(std::shared_ptr<CentralAudioBuffer> centralAudioBuffer);
-        ~BellDSP(){};
+ private:
+  std::shared_ptr<AudioPipeline> activePipeline;
+  std::shared_ptr<CentralAudioBuffer> buffer;
+  std::mutex accessMutex;
+  std::vector<float> dataLeft = std::vector<float>(1024);
+  std::vector<float> dataRight = std::vector<float>(1024);
 
-        void applyPipeline(std::shared_ptr<AudioPipeline> pipeline);
+ public:
+  BellDSP(std::shared_ptr<CentralAudioBuffer> centralAudioBuffer);
+  ~BellDSP() {};
 
-        std::shared_ptr<AudioPipeline> getActivePipeline();
+  class AudioEffect {
+   public:
+    size_t duration;
+    virtual void apply(float* sampleData, size_t samples, size_t relativePosition) = 0;
+  };
 
-        size_t process(uint8_t *data, size_t bytes, int channels, SampleRate sampleRate, BitWidth bitWidth);
-    };
+  std::unique_ptr<AudioEffect> underflowEffect = nullptr;
+  std::unique_ptr<AudioEffect> startEffect = nullptr;
+
+  void applyPipeline(std::shared_ptr<AudioPipeline> pipeline);
+
+  std::shared_ptr<AudioPipeline> getActivePipeline();
+
+  size_t process(uint8_t* data, size_t bytes, int channels,
+                 SampleRate sampleRate, BitWidth bitWidth);
 };
+};  // namespace bell

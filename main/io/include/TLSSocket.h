@@ -1,13 +1,13 @@
 #ifndef BELL_TLS_SOCKET_H
 #define BELL_TLS_SOCKET_H
 
-#include "BellLogger.h"
-#include "BellSocket.h"
-#include <cstring>
 #include <ctype.h>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include "BellLogger.h"
+#include "BellSocket.h"
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -18,41 +18,42 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #endif
-#include <sstream>
 #include <stdlib.h>
-#include <string>
 #include <sys/types.h>
+#include <sstream>
+#include <string>
 #include <vector>
 
-#include "mbedtls/net_sockets.h"
-#include "mbedtls/ssl.h"
-#include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/debug.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/net_sockets.h"
+#include "mbedtls/ssl.h"
 
 namespace bell {
 class TLSSocket : public bell::Socket {
-private:
-    mbedtls_net_context server_fd;
-    mbedtls_entropy_context entropy;
-    mbedtls_ctr_drbg_context ctr_drbg;
-    mbedtls_ssl_context ssl;
-    mbedtls_ssl_config conf;
+ private:
+  mbedtls_net_context server_fd;
+  mbedtls_entropy_context entropy;
+  mbedtls_ctr_drbg_context ctr_drbg;
+  mbedtls_ssl_context ssl;
+  mbedtls_ssl_config conf;
 
   bool isClosed = false;
-public:
+
+ public:
   TLSSocket();
   ~TLSSocket() { close(); };
 
-  void open(std::string host, uint16_t port);
+  void open(const std::string& host, uint16_t port);
 
-  size_t read(uint8_t *buf, size_t len);
-  size_t write(uint8_t *buf, size_t len);
+  size_t read(uint8_t* buf, size_t len);
+  size_t write(uint8_t* buf, size_t len);
   size_t poll();
 
   void close();
 };
 
-} // namespace bell
+}  // namespace bell
 
 #endif
