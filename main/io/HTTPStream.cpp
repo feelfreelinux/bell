@@ -150,6 +150,7 @@ void HTTPStream::Response::readResponseHeaders() {
 
   std::string contentLengthValue = std::string(getHeader("Content-Length"));
   if (contentLengthValue.size() > 0) {
+    this->hasContentSize = true;
     this->contentSize = std::stoi(contentLengthValue);
   }
 }
