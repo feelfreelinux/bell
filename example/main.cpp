@@ -13,6 +13,7 @@
 #include "EncodedAudioStream.h"
 #include "HTTPStream.h"
 #include "PortAudioSink.h"
+#include "Compressor.h"
 
 #include <BellDSP.h>
 #include <BellLogger.h>

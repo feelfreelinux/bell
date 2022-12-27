@@ -24,7 +24,7 @@ void Compressor::calLoudness()
 {
     for (auto &value : tmp)
     {
-        value = 20 * std::log10(std::abs(value) + 1.0e-9f);
+        value = 20 * log10f_fast(std::abs(value) + 1.0e-9f);
         if (value >= lastLoudness)
         {
             value = attack * lastLoudness + (1.0 - attack) * value;
@@ -51,7 +51,7 @@ void Compressor::calGain()
         value += makeupGain;
 
         // convert to linear
-        value = std::pow(10.0f, value / 20.0f);
+        value = pow10f(value / 20.0f);
     }
 }
 

@@ -4,12 +4,34 @@
 #include <memory>
 #include <algorithm>
 #include <cmath>
+#include <math.h>
 #include <iostream>
 #include <mutex>
 #include <map>
 
 #include "Biquad.h"
 #include "AudioTransform.h"
+
+#define pow10f(x) expf(2.302585092994046f*x)  
+
+// This is a fast approximation to log2()
+// Y = C[0]*F*F*F + C[1]*F*F + C[2]*F + C[3] + E;
+float log2f_approx(float X) {
+  float Y, F;
+  int E;
+  F = frexpf(fabsf(X), &E);
+  Y = 1.23149591368684f;
+  Y *= F;
+  Y += -4.11852516267426f;
+  Y *= F;
+  Y += 6.02197014179219f;
+  Y *= F;
+  Y += -3.13396450166353f;
+  Y += E;
+  return(Y);
+}
+
+#define log10f_fast(x)  (log2f_approx(x)*0.3010299956639812f)
 
 namespace bell
 {
