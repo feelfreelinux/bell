@@ -56,7 +56,7 @@ class CentralAudioBuffer {
 	 */
   void clearBuffer() {
     //size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
-    audioBuffer->emptyExcept(sizeof(AudioChunk) * 16);
+    audioBuffer->emptyBuffer();
   }
 
   void emptyCompletely() {

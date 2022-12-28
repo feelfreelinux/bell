@@ -4,29 +4,37 @@
 
 using namespace bell;
 
-class FadeOutEffect : public bell::BellDSP::AudioEffect {
-public:
-  FadeOutEffect() {
-    this->duration = 44100;
-  }
-  ~FadeOutEffect() {}
+BellDSP::FadeoutEffect::FadeoutEffect(size_t duration, std::function<void()> onFinish) {
+  this->duration = duration;
+  this->onFinish = onFinish;
+}
 
-  void apply(float* audioData, size_t samples, size_t relativePosition) override {
-    float effect = relativePosition / (float) this->duration;
-    for (int x = 0; x < samples; x++) {
-      audioData[x] *= effect;
-    }
+void BellDSP::FadeoutEffect::apply(float* audioData, size_t samples,
+                              size_t relativePosition) {
+  float effect = (this->duration - relativePosition) / (float)this->duration;
+
+  for (int x = 0; x <= samples; x++) {
+    audioData[x] *= effect;
   }
-};
+
+  if (relativePosition + samples > this->duration && onFinish != nullptr) {
+    onFinish();
+  }
+}
+
 
 BellDSP::BellDSP(std::shared_ptr<CentralAudioBuffer> buffer) {
   this->buffer = buffer;
-  this->underflowEffect = std::make_unique<FadeOutEffect>();
 };
 
 void BellDSP::applyPipeline(std::shared_ptr<AudioPipeline> pipeline) {
   std::scoped_lock lock(accessMutex);
   activePipeline = pipeline;
+}
+
+void BellDSP::queryInstantEffect(std::unique_ptr<AudioEffect> instantEffect) {
+  this->instantEffect = std::move(instantEffect);
+  samplesSinceInstantQueued = 0;
 }
 
 size_t BellDSP::process(uint8_t* data, size_t bytes, int channels,
@@ -64,15 +72,20 @@ size_t BellDSP::process(uint8_t* data, size_t bytes, int channels,
     streamInfo = activePipeline->process(std::move(streamInfo));
   }
 
-  if (this->underflowEffect != nullptr &&
-      this->underflowEffect->duration >= samplesLeftInBuffer + length16) {
-    this->underflowEffect->apply(dataLeft.data(), length16, samplesLeftInBuffer);
+  if (this->instantEffect != nullptr) {
+    this->instantEffect->apply(dataLeft.data(), length16, samplesSinceInstantQueued);
 
-    if (streamInfo->numChannels > 1) {
-      this->underflowEffect->apply(dataRight.data(), length16, samplesLeftInBuffer);
+    if (streamInfo->numSamples > 1) {
+      this->instantEffect->apply(dataRight.data(), length16, samplesSinceInstantQueued);
     }
 
+    samplesSinceInstantQueued += length16;
+
+    if (this->instantEffect->duration <= samplesSinceInstantQueued) {
+      this->instantEffect = nullptr;
+    }
   }
+
   for (size_t i = 0; i < length16; i++) {
     if (dataLeft[i] > 1.0f) {
       dataLeft[i] = 1.0f;
