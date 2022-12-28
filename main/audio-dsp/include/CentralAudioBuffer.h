@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cmath>
 #include <memory>
+#include <iostream>
 
 #include "BellUtils.h"
 #include "CircularBuffer.h"
@@ -54,8 +55,12 @@ class CentralAudioBuffer {
 	 * Clears input buffer, to be called for track change and such
 	 */
   void clearBuffer() {
-    size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
-    audioBuffer->emptyExcept(exceptSize);
+    //size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
+    audioBuffer->emptyExcept(sizeof(AudioChunk) * 16);
+  }
+
+  void emptyCompletely() {
+    audioBuffer->emptyBuffer();
   }
 
   bool hasAtLeast(size_t chunks) {
