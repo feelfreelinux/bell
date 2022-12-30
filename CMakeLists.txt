@@ -298,8 +298,7 @@ endif()
 
 if (BELL_DISABLE_FMT)
 else()
-    add_subdirectory(external/fmt)
-    list(APPEND EXTRA_LIBS fmt::fmt)
+    list(APPEND EXTRA_INCLUDES "external/fmt/include")
 endif()
 
 file(GLOB CIVET_SRC "external/civetweb/*.c" "external/civetweb/*.inl" "external/civetweb/*.cpp")
@@ -314,7 +313,7 @@ add_library(bell STATIC ${SOURCES})
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
 target_include_directories(bell PUBLIC ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
-target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC)
+target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC FMT_HEADER_ONLY)
 
 if(WIN32)
     target_compile_definitions(bell PUBLIC PB_NO_STATIC_ASSERT)
