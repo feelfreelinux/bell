@@ -4,14 +4,19 @@
 
 using namespace bell;
 
-BellDSP::FadeoutEffect::FadeoutEffect(size_t duration, std::function<void()> onFinish) {
+BellDSP::FadeEffect::FadeEffect(size_t duration, bool isFadeIn, std::function<void()> onFinish) {
   this->duration = duration;
   this->onFinish = onFinish;
+  this->isFadeIn = isFadeIn;
 }
 
-void BellDSP::FadeoutEffect::apply(float* audioData, size_t samples,
+void BellDSP::FadeEffect::apply(float* audioData, size_t samples,
                               size_t relativePosition) {
   float effect = (this->duration - relativePosition) / (float)this->duration;
+
+  if (!isFadeIn) {
+    effect = relativePosition / (float) this->duration;
+  }
 
   for (int x = 0; x <= samples; x++) {
     audioData[x] *= effect;

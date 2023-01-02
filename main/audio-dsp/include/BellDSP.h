@@ -22,12 +22,13 @@ class BellDSP {
     virtual void apply(float* sampleData, size_t samples, size_t relativePosition) = 0;
   };
 
-  class FadeoutEffect: public AudioEffect {
+  class FadeEffect: public AudioEffect {
   private:
     std::function<void()> onFinish;
+    bool isFadeIn;
   public:
-    FadeoutEffect(size_t duration, std::function<void()> onFinish = nullptr);
-    ~FadeoutEffect() {};
+    FadeEffect(size_t duration, bool isFadeIn, std::function<void()> onFinish = nullptr);
+    ~FadeEffect() {};
 
     void apply(float* sampleData, size_t samples, size_t relativePosition);
   };

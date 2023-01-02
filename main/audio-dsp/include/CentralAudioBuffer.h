@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cmath>
 #include <memory>
+#include <mutex>
 #include <iostream>
 
 #include "BellUtils.h"
@@ -17,6 +18,7 @@ class CentralAudioBuffer {
   std::mutex accessMutex;
 
   std::atomic<bool> isLocked = false;
+  std::mutex dataAccessMutex;
 
  public:
   static const size_t PCM_CHUNK_SIZE = 4096;
@@ -55,11 +57,13 @@ class CentralAudioBuffer {
 	 * Clears input buffer, to be called for track change and such
 	 */
   void clearBuffer() {
+    std::scoped_lock lock(this->dataAccessMutex);
     //size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
     audioBuffer->emptyBuffer();
   }
 
   void emptyCompletely() {
+    std::scoped_lock lock(this->dataAccessMutex);
     audioBuffer->emptyBuffer();
   }
 
@@ -95,6 +99,7 @@ class CentralAudioBuffer {
   AudioChunk lastReadChunk = {.pcmSize = 0};
 
   AudioChunk readChunk() {
+    std::scoped_lock lock(this->dataAccessMutex);
     if (audioBuffer->size() < sizeof(AudioChunk)) {
       lastReadChunk.pcmSize = 0;
       return lastReadChunk;
@@ -109,6 +114,7 @@ class CentralAudioBuffer {
   size_t writePCM(const uint8_t* data, size_t dataSize, size_t hash,
                   uint32_t sampleRate = 44100, uint8_t channels = 2,
                   uint8_t bitDepth = 16) {
+    std::scoped_lock lock(this->dataAccessMutex);
     if (hasChunk && (currentChunk.trackHash != hash ||
                      currentChunk.pcmSize >= PCM_CHUNK_SIZE)) {
 
