@@ -14,7 +14,7 @@ void BellDSP::FadeEffect::apply(float* audioData, size_t samples,
                               size_t relativePosition) {
   float effect = (this->duration - relativePosition) / (float)this->duration;
 
-  if (!isFadeIn) {
+  if (isFadeIn) {
     effect = relativePosition / (float) this->duration;
   }
 
