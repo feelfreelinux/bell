@@ -13,13 +13,12 @@ EncodedAudioStream::EncodedAudioStream() {
 
 EncodedAudioStream::~EncodedAudioStream() {
   this->innerStream->close();
+  this->innerStream = nullptr;
 }
 
 void EncodedAudioStream::openWithStream(
     std::unique_ptr<bell::ByteStream> byteStream) {
-  if (this->innerStream) {
-    this->innerStream->close();
-  }
+  this->innerStream = nullptr;
   this->innerStream = std::move(byteStream);
   this->guessDataFormat();
 }

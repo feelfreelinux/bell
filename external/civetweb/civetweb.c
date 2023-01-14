@@ -186,6 +186,9 @@ mg_static_assert(sizeof(void *) >= sizeof(int), "data type size check");
 #endif /* __SYMBIAN32__ */
 
 #if defined(ESP_PLATFORM)
+
+#include "esp_pthread_extra.inl"
+
 #include <esp_pthread.h>
 #include <esp_task.h>
 #include <ctype.h>
@@ -323,6 +326,51 @@ static void DEBUG_TRACE_FUNC(const char *func,
 #else
 #define DEBUG_ASSERT(cond)
 #endif /* DEBUG */
+#endif
+
+#if defined(ESP_PLATFORM)
+
+typedef struct {
+  TaskHandle_t task_handle;
+  StaticTask_t* task_buffer;
+  StackType_t* x_stack;
+  size_t stack_size;
+  mg_thread_func_t entry_func;
+  void* param;
+} cw_freertos_handle;
+
+typedef cw_freertos_handle cw_thread_handle_t;
+
+
+static void freeRTOSTaskEntryFunc(void* handle) {
+  cw_thread_handle_t* task_param = (cw_thread_handle_t*) handle;
+
+  task_param->entry_func(task_param->param);
+
+  // TCB are cleanup in IDLE task, so give it some time
+  // TODO: IMPLEMENT TCB CLEANUP
+
+  vTaskDelete(NULL); 
+}
+
+static bool cw_is_thread_null(cw_thread_handle_t* handle) {
+  return handle->task_handle == NULL;
+}
+
+static void cw_stop_thread(cw_thread_handle_t* handle) {
+  handle->task_handle = NULL;
+}
+
+#else
+typedef pthread_t cw_thread_handle_t;
+
+static bool cw_is_thread_null(cw_thread_handle_t* handle) {
+  return *handle == 0;
+}
+
+static void cw_stop_thread(cw_thread_handle_t* handle) {
+  *handle = 0;
+}
 #endif
 
 
@@ -2434,10 +2482,10 @@ struct mg_context {
 	stop_flag_t stop_flag;        /* Should we stop event loop */
 	pthread_mutex_t thread_mutex; /* Protects client_socks or queue */
 
-	pthread_t masterthreadid; /* The master thread ID */
+	cw_thread_handle_t masterthreadid; /* The master thread ID */
 	unsigned int
 	    cfg_worker_threads;      /* The number of configured worker threads. */
-	pthread_t *worker_threadids; /* The worker thread IDs */
+	cw_thread_handle_t *worker_threadids; /* The worker thread IDs */
 	unsigned long starter_thread_idx; /* thread index which called mg_start */
 
 	/* Connection to thread dispatching */
@@ -5762,14 +5810,28 @@ set_close_on_exec(int fd,
 CIVETWEB_API int
 mg_start_thread(mg_thread_func_t func, void *param)
 {
-	pthread_t thread_id;
-	pthread_attr_t attr;
+	cw_thread_handle_t thread_id;
 	int result;
 
-	printf("Callin the funky one\n");
+#if defined(ESP_PLATFORM)
+  thread_id.stack_size = (HTTP_ESP_STACK + sizeof(StackType_t) - 1) / sizeof(StackType_t);
+  thread_id.task_buffer = (StaticTask_t*) heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT); 
+  thread_id.x_stack = (StackType_t*) heap_caps_malloc(thread_id.stack_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  thread_id.param = param;
+  thread_id.entry_func = func;
+  thread_id.task_handle = xTaskCreateStaticPinnedToCore(freeRTOSTaskEntryFunc, "civetweb", thread_id.stack_size, &thread_id,
+                  CONFIG_ESP32_PTHREAD_TASK_PRIO_DEFAULT, thread_id.x_stack, thread_id.task_buffer, 1);
+  if (thread_id.task_handle != NULL) {
+    result = 0;
+  } else {
+    result = -1;
+  }
+
+#else
+	pthread_attr_t attr;
+
 	(void)pthread_attr_init(&attr);
 	(void)pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-#if defined(ESP_PLATFORM)
                 esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
                 cfg.stack_size = HTTP_ESP_STACK;
                 cfg.inherit_cfg = false;
@@ -5777,7 +5839,7 @@ mg_start_thread(mg_thread_func_t func, void *param)
                 cfg.pin_to_core = 1;
 				cfg.prio = 5;
                 esp_pthread_set_cfg(&cfg);
-#elif defined(__ZEPHYR__)
+#if defined(__ZEPHYR__)
 	pthread_attr_setstack(&attr, &civetweb_main_stack, ZEPHYR_STACK_SIZE);
 #elif defined(USE_STACK_SIZE) && (USE_STACK_SIZE > 1)
 	/* Compile-time option to control stack size,
@@ -5787,6 +5849,7 @@ mg_start_thread(mg_thread_func_t func, void *param)
 
 	result = pthread_create(&thread_id, &attr, func, param);
 	pthread_attr_destroy(&attr);
+#endif
 
 	return result;
 }
@@ -5796,22 +5859,30 @@ mg_start_thread(mg_thread_func_t func, void *param)
 static int
 mg_start_thread_with_id(mg_thread_func_t func,
                         void *param,
-                        pthread_t *threadidptr)
+                        cw_thread_handle_t *threadidptr)
 {
-	pthread_t thread_id;
+	cw_thread_handle_t thread_id;
 	int result;
 
 #if defined(ESP_PLATFORM)
-	printf("ESP_PLATFORM %d\n", HTTP_ESP_STACK);
+  result = 0;
 
-                esp_pthread_cfg_t pthreadCfg = esp_pthread_get_default_config();
-                pthreadCfg.stack_size = HTTP_ESP_STACK;
-                pthreadCfg.inherit_cfg = true;
-                pthreadCfg.thread_name = "civetweb";
-                pthreadCfg.pin_to_core = 1;
-				pthreadCfg.prio = 5;
-                esp_pthread_set_cfg(&pthreadCfg);
-#elif defined(__ZEPHYR__)
+  thread_id.stack_size = (HTTP_ESP_STACK + sizeof(StackType_t) - 1) / sizeof(StackType_t);
+  thread_id.task_buffer = (StaticTask_t*) heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT); 
+  thread_id.x_stack = (StackType_t*) heap_caps_malloc(thread_id.stack_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  thread_id.param = param;
+  thread_id.entry_func = func;
+  thread_id.task_handle = xTaskCreateStaticPinnedToCore(freeRTOSTaskEntryFunc, "civetweb", thread_id.stack_size, &thread_id,
+                  CONFIG_ESP32_PTHREAD_TASK_PRIO_DEFAULT, thread_id.x_stack, thread_id.task_buffer, 1);
+  if (thread_id.task_handle != NULL) {
+    result = 0;
+		*threadidptr = thread_id;
+  } else {
+    result = -1;
+  }
+#else
+
+#if defined(__ZEPHYR__)
 	pthread_attr_setstack(&attr,
 	                      &civetweb_worker_stacks[zephyr_worker_stack_index++],
 	                      ZEPHYR_STACK_SIZE);
@@ -5825,17 +5896,22 @@ mg_start_thread_with_id(mg_thread_func_t func,
 	if ((result == 0) && (threadidptr != NULL)) {
 		*threadidptr = thread_id;
 	}
+#endif
 	return result;
 }
 
 
 /* Wait for a thread to finish. */
 static int
-mg_join_thread(pthread_t threadid)
+mg_join_thread(cw_thread_handle_t threadid)
 {
 	int result;
-
+#if defined(ESP_PLATFORM)
+  //TODO FREERTOS JOIN, WILL REQUIRE A SEMAPHORE
+  result = 0;
+#else 
 	result = pthread_join(threadid, NULL);
+#endif
 	return result;
 }
 
@@ -17982,7 +18058,7 @@ mg_close_connection(struct mg_connection *conn)
 
 		/* join worker thread */
 		for (i = 0; i < conn->phys_ctx->cfg_worker_threads; i++) {
-			mg_join_thread(conn->phys_ctx->worker_threadids[i]);
+			// mg_join_thread(conn->phys_ctx->worker_threadids[i]);
 		}
 	}
 #endif /* defined(USE_WEBSOCKET) */
@@ -19180,7 +19256,7 @@ mg_connect_websocket_client_impl(const struct mg_client_options *client_options,
 	thread_data->callback_data = user_data;
 
 	conn->phys_ctx->worker_threadids =
-	    (pthread_t *)mg_calloc_ctx(1, sizeof(pthread_t), conn->phys_ctx);
+	    (cw_thread_handle_t *)mg_calloc_ctx(1, sizeof(cw_thread_handle_t), conn->phys_ctx);
 	if (!conn->phys_ctx->worker_threadids) {
 		DEBUG_TRACE("%s\r\n", "Out of memory");
 		mg_free(thread_data);
@@ -20184,7 +20260,7 @@ master_thread_run(struct mg_context *ctx)
 	/* Join all worker threads to avoid leaking threads. */
 	workerthreadcount = ctx->cfg_worker_threads;
 	for (i = 0; i < workerthreadcount; i++) {
-		if (ctx->worker_threadids[i] != 0) {
+		if (!cw_is_thread_null(&ctx->worker_threadids[i])) {
 			mg_join_thread(ctx->worker_threadids[i]);
 		}
 	}
@@ -20362,7 +20438,7 @@ free_context(struct mg_context *ctx)
 CIVETWEB_API void
 mg_stop(struct mg_context *ctx)
 {
-	pthread_t mt;
+	cw_thread_handle_t mt;
 	if (!ctx) {
 		return;
 	}
@@ -20370,11 +20446,11 @@ mg_stop(struct mg_context *ctx)
 	/* We don't use a lock here. Calling mg_stop with the same ctx from
 	 * two threads is not allowed. */
 	mt = ctx->masterthreadid;
-	if (mt == 0) {
+	if (cw_is_thread_null(&mt)) {
 		return;
 	}
 
-	ctx->masterthreadid = 0;
+  cw_stop_thread(&ctx->masterthreadid);
 
 	/* Set stop flag, so all threads know they have to exit. */
 	STOP_FLAG_ASSIGN(&ctx->stop_flag, 1);
@@ -20993,8 +21069,8 @@ mg_start2(struct mg_init_data *init, struct mg_error_data *error)
 	}
 
 	ctx->cfg_worker_threads = ((unsigned int)(workerthreadcount));
-	ctx->worker_threadids = (pthread_t *)mg_calloc_ctx(ctx->cfg_worker_threads,
-	                                                   sizeof(pthread_t),
+	ctx->worker_threadids = (cw_thread_handle_t *)mg_calloc_ctx(ctx->cfg_worker_threads,
+	                                                   sizeof(cw_thread_handle_t),
 	                                                   ctx);
 
 	if (ctx->worker_threadids == NULL) {
@@ -21004,7 +21080,7 @@ mg_start2(struct mg_init_data *init, struct mg_error_data *error)
 		if (error != NULL) {
 			error->code = MG_ERROR_DATA_CODE_OUT_OF_MEMORY;
 			error->code_sub =
-			    (unsigned)ctx->cfg_worker_threads * (unsigned)sizeof(pthread_t);
+			    (unsigned)ctx->cfg_worker_threads * (unsigned)sizeof(cw_thread_handle_t);
 			mg_snprintf(NULL,
 			            NULL, /* No truncation check for error buffers */
 			            error->text,

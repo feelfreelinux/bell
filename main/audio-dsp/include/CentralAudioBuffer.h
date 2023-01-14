@@ -9,6 +9,7 @@
 #include "BellUtils.h"
 #include "CircularBuffer.h"
 #include "StreamInfo.h"
+#include "WrappedSemaphore.h"
 
 typedef std::function<void(std::string)> shutdownEventHandler;
 
@@ -22,6 +23,7 @@ class CentralAudioBuffer {
 
  public:
   static const size_t PCM_CHUNK_SIZE = 4096;
+  std::unique_ptr<bell::WrappedSemaphore> chunkReady;
 
   // Audio marker for track change detection, and DSP autoconfig
   struct AudioChunk {
@@ -42,6 +44,7 @@ class CentralAudioBuffer {
 
   CentralAudioBuffer(size_t chunks) {
     audioBuffer = std::make_shared<CircularBuffer>(chunks * sizeof(AudioChunk));
+    chunkReady = std::make_unique<bell::WrappedSemaphore>(50);
   }
 
   std::shared_ptr<bell::CircularBuffer> audioBuffer;
@@ -126,6 +129,7 @@ class CentralAudioBuffer {
       // Track changed or buf full, return current chunk
       hasChunk = false;
       this->audioBuffer->write((uint8_t*)&currentChunk, sizeof(AudioChunk));
+      this->chunkReady->give();
     }
 
 		// New chunk requested, initialize

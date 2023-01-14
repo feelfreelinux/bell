@@ -122,7 +122,7 @@ bool BellHTTPServer::handleGet(CivetServer* server,
 
     mg_printf(conn,
               "HTTP/1.1 %d OK\r\nContent-Type: "
-              "%s\r\nConnection: close\r\n\r\n",
+              "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
               reply.status, reply.headers["Content-Type"].c_str());
     mg_write(conn, reply.body, reply.bodySize);
 
@@ -152,7 +152,7 @@ bool BellHTTPServer::handlePost(CivetServer* server,
 
     mg_printf(conn,
               "HTTP/1.1 %d OK\r\nContent-Type: "
-              "%s\r\nConnection: close\r\n\r\n",
+              "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
               reply.status, reply.headers["Content-Type"].c_str());
     mg_write(conn, reply.body, reply.bodySize);
 

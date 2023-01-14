@@ -13,7 +13,7 @@ namespace bell
     {
     public:
         ByteStream(){};
-        ~ByteStream(){};
+        virtual ~ByteStream() = default;
 
         virtual size_t read(uint8_t *buf, size_t nbytes) = 0;
         virtual size_t skip(size_t nbytes) = 0;
