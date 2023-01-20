@@ -17,7 +17,7 @@ namespace bell {
 class WrappedSemaphore {
   private:
 #ifdef ESP_PLATFORM
-	xSemaphoreHandle semaphoreHandle;
+	SemaphoreHandle_t semaphoreHandle;
 #elif __APPLE__
 	dispatch_semaphore_t semaphoreHandle;
 #elif _WIN32

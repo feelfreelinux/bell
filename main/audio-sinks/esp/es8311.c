@@ -209,7 +209,7 @@ static int Es8311WriteReg(uint8_t regAdd, uint8_t data)
     res |= i2c_master_write_byte(cmd, regAdd, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_write_byte(cmd, data, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_stop(cmd);
-    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_RATE_MS);
+    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     ES_ASSERT(res, "Es8311 Write Reg error", -1);
     return res;
@@ -225,7 +225,7 @@ int Es8311ReadReg(uint8_t regAdd)
     res |= i2c_master_write_byte(cmd, ES8311_ADDR, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_write_byte(cmd, regAdd, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_stop(cmd);
-    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_RATE_MS);
+    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
 
     cmd = i2c_cmd_link_create();
@@ -233,7 +233,7 @@ int Es8311ReadReg(uint8_t regAdd)
     res |= i2c_master_write_byte(cmd, ES8311_ADDR | 0x01, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_read_byte(cmd, &data, 0x01 /*NACK_VAL*/);
     res |= i2c_master_stop(cmd);
-    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_RATE_MS);
+    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
 
     ES_ASSERT(res, "Es8311 Read Reg error", -1);
@@ -249,7 +249,7 @@ static int Es7243WriteReg(uint8_t regAdd, uint8_t data)
     res |= i2c_master_write_byte(cmd, regAdd, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_write_byte(cmd, data, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_stop(cmd);
-    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_RATE_MS);
+    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
     ES_ASSERT(res, "Es7243 Write Reg error", -1);
     return res;
@@ -266,7 +266,7 @@ int Es7243ReadReg(uint8_t regAdd)
     res |= i2c_master_write_byte(cmd, ES7243_ADDR, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_write_byte(cmd, regAdd, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_stop(cmd);
-    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_RATE_MS);
+    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
 
     cmd = i2c_cmd_link_create();
@@ -274,7 +274,7 @@ int Es7243ReadReg(uint8_t regAdd)
     res |= i2c_master_write_byte(cmd, ES7243_ADDR | 0x01, 1 /*ACK_CHECK_EN*/);
     res |= i2c_master_read_byte(cmd, &data, 0x01 /*NACK_VAL*/);
     res |= i2c_master_stop(cmd);
-    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_RATE_MS);
+    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
 
     ES_ASSERT(res, "Es7243 Read Reg error", -1);
@@ -791,6 +791,6 @@ void Es8311ReadAll()
 {
     for (int i = 0; i < 0x4A; i++) {
         uint8_t reg = Es8311ReadReg(i);
-        ets_printf("REG:%02x, %02x\n", reg, i);
+        // ets_printf("REG:%02x, %02x\n", reg, i);
     }
 }

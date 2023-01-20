@@ -135,7 +135,7 @@ void ES8388AudioSink::writeReg(uint8_t reg_add, uint8_t data)
     res |= i2c_master_write_byte(cmd, reg_add, ACK_CHECK_EN);
     res |= i2c_master_write_byte(cmd, data, ACK_CHECK_EN);
     res |= i2c_master_stop(cmd);
-    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_RATE_MS);
+    res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
 
     if (res != ESP_OK) {

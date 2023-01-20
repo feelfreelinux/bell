@@ -187,8 +187,6 @@ mg_static_assert(sizeof(void *) >= sizeof(int), "data type size check");
 
 #if defined(ESP_PLATFORM)
 
-#include "esp_pthread_extra.inl"
-
 #include <esp_pthread.h>
 #include <esp_task.h>
 #include <ctype.h>
@@ -215,8 +213,8 @@ mg_static_assert(sizeof(void *) >= sizeof(int), "data type size check");
 #define EAI_OVERFLOW 14
 
 int getnameinfo(const struct sockaddr *sa, socklen_t salen,
-		    char *host, size_t hostlen,
-			char *serv, size_t servlen, int flags)
+		    char *host, socklen_t hostlen,
+			char *serv, socklen_t servlen, int flags)
 {
 	 if (flags & ~(NI_NUMERICHOST | NI_NUMERICSERV)) {
 		return EAI_BADFLAGS;

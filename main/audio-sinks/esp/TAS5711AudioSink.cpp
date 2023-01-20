@@ -70,7 +70,7 @@ TAS5711AudioSink::TAS5711AudioSink()
     i2c_master_read_byte(i2c_cmd, &data, ACK_CHECK_EN);
 
     i2c_master_stop(i2c_cmd);
-    int ret = i2c_master_cmd_begin(i2c_port, i2c_cmd, 50 / portTICK_RATE_MS);
+    int ret = i2c_master_cmd_begin(i2c_port, i2c_cmd, 50 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(i2c_cmd);
 
     if (ret == ESP_OK) {
@@ -103,7 +103,7 @@ void TAS5711AudioSink::writeReg(uint8_t reg, uint8_t value)
 
 
     i2c_master_stop(i2c_cmd);
-    esp_err_t res = i2c_master_cmd_begin(i2c_port, i2c_cmd, 500 / portTICK_RATE_MS);
+    esp_err_t res = i2c_master_cmd_begin(i2c_port, i2c_cmd, 500 / portTICK_PERIOD_MS);
 
     if (res != ESP_OK) {
         ESP_LOGE("RR", "Unable to write to TAS5711");

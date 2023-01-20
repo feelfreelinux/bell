@@ -238,7 +238,7 @@ static esp_err_t i2c_write_reg(uint8_t reg, uint16_t val)
 	ret |= i2c_master_start(cmd);
 	ret |= i2c_master_write(cmd, send_buff, 4, ACK_CHECK_EN);
 	ret |= i2c_master_stop(cmd);
-	ret |= i2c_master_cmd_begin(i2c_port, cmd, 1000 / portTICK_RATE_MS);
+	ret |= i2c_master_cmd_begin(i2c_port, cmd, 1000 / portTICK_PERIOD_MS);
 	i2c_cmd_link_delete(cmd);
 	return ret;
 }
@@ -258,7 +258,7 @@ static uint16_t i2c_read_reg(uint8_t reg)
 	i2c_master_write_byte(cmd, (AC101_ADDR << 1) | READ_BIT, ACK_CHECK_EN); //check or not
 	i2c_master_read(cmd, data, 2, ACK_VAL);
 	i2c_master_stop(cmd);
-	i2c_master_cmd_begin(i2c_port, cmd, 1000 / portTICK_RATE_MS);
+	i2c_master_cmd_begin(i2c_port, cmd, 1000 / portTICK_PERIOD_MS);
 	i2c_cmd_link_delete(cmd);
 
 	return (data[0] << 8) + data[1];

@@ -127,8 +127,8 @@ endfunction()
 
 
 if(ESP_PLATFORM)
-    list(APPEND EXTRA_LIBS idf::mbedtls idf::pthread idf::mdns)
-    add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation)
+    list(APPEND EXTRA_LIBS idf::espressif__mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
+    add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation -Wno-stringop-overflow -Wno-error=format -Wno-format -Wno-stringop-overread -Wno-stringop-overflow)
 else()
     find_package(Threads REQUIRED)
     find_package(MbedTLS REQUIRED)
