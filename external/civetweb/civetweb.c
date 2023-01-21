@@ -359,16 +359,6 @@ static void cw_stop_thread(cw_thread_handle_t* handle) {
   handle->task_handle = NULL;
 }
 
-#else
-typedef pthread_t cw_thread_handle_t;
-
-static bool cw_is_thread_null(cw_thread_handle_t* handle) {
-  return *handle == 0;
-}
-
-static void cw_stop_thread(cw_thread_handle_t* handle) {
-  *handle = 0;
-}
 #endif
 
 
@@ -997,6 +987,18 @@ typedef unsigned short int in_port_t;
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
+
+typedef pthread_t cw_thread_handle_t;
+
+static bool cw_is_thread_null(cw_thread_handle_t* handle) {
+  return *handle == 0;
+}
+
+static void cw_stop_thread(cw_thread_handle_t* handle) {
+  *handle = 0;
+}
+
 #if defined(USE_X_DOM_SOCKET)
 #include <sys/un.h>
 #endif
@@ -5830,13 +5832,7 @@ mg_start_thread(mg_thread_func_t func, void *param)
 
 	(void)pthread_attr_init(&attr);
 	(void)pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-                esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
-                cfg.stack_size = HTTP_ESP_STACK;
-                cfg.inherit_cfg = false;
-                cfg.thread_name = "civetweb";
-                cfg.pin_to_core = 1;
-				cfg.prio = 5;
-                esp_pthread_set_cfg(&cfg);
+
 #if defined(__ZEPHYR__)
 	pthread_attr_setstack(&attr, &civetweb_main_stack, ZEPHYR_STACK_SIZE);
 #elif defined(USE_STACK_SIZE) && (USE_STACK_SIZE > 1)
