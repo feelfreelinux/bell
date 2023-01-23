@@ -109,7 +109,14 @@ bool BellHTTPServer::handleGet(CivetServer* server,
   auto handler = getRequestsRouter.find(requestInfo->local_uri);
 
   if (handler.first == nullptr) {
-    return false;
+    BELL_LOG(info, "HttpServer", "Redirecting to captive portal");
+    // Not found 404
+    mg_printf(conn,
+              "HTTP/1.1 302 Temporary Redirect\r\nContent-Type: text/html"
+              "\r\nLocation: /\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n"
+              "Redirect to the captive portal");
+
+    return true;
   }
 
   mg_set_user_connection_data(conn, &handler.second);
@@ -120,10 +127,11 @@ bool BellHTTPServer::handleGet(CivetServer* server,
       return true;
     }
 
-    mg_printf(conn,
-              "HTTP/1.1 %d OK\r\nContent-Type: "
-              "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
-              reply.status, reply.headers["Content-Type"].c_str());
+    mg_printf(
+        conn,
+        "HTTP/1.1 %d OK\r\nContent-Type: "
+        "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
+        reply.status, reply.headers["Content-Type"].c_str());
     mg_write(conn, reply.body, reply.bodySize);
 
     return true;
@@ -150,10 +158,11 @@ bool BellHTTPServer::handlePost(CivetServer* server,
       return true;
     }
 
-    mg_printf(conn,
-              "HTTP/1.1 %d OK\r\nContent-Type: "
-              "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
-              reply.status, reply.headers["Content-Type"].c_str());
+    mg_printf(
+        conn,
+        "HTTP/1.1 %d OK\r\nContent-Type: "
+        "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
+        reply.status, reply.headers["Content-Type"].c_str());
     mg_write(conn, reply.body, reply.bodySize);
 
     return true;
