@@ -129,7 +129,7 @@ class CentralAudioBuffer {
       // Track changed or buf full, return current chunk
       hasChunk = false;
       this->audioBuffer->write((uint8_t*)&currentChunk, sizeof(AudioChunk));
-      this->chunkReady->give();
+      // this->chunkReady->give();
     }
 
 		// New chunk requested, initialize

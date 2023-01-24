@@ -77,6 +77,7 @@ class BellHTTPServer : public CivetHandler {
   HTTPResponse makeJsonResponse(const std::string& json, int status = 200);
   HTTPResponse makeEmptyResponse();
 
+  void registerNotFound(HTTPHandler handler);
   void registerGet(const std::string&, HTTPHandler handler);
   void registerPost(const std::string&, HTTPHandler handler);
   void registerWS(const std::string&, WSDataHandler dataHandler,
@@ -90,6 +91,7 @@ class BellHTTPServer : public CivetHandler {
 
   Router getRequestsRouter;
   Router postRequestsRouter;
+  HTTPHandler notFoundHandler;
 
   bool handleGet(CivetServer* server, struct mg_connection* conn);
   bool handlePost(CivetServer* server, struct mg_connection* conn);

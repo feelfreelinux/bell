@@ -109,14 +109,12 @@ bool BellHTTPServer::handleGet(CivetServer* server,
   auto handler = getRequestsRouter.find(requestInfo->local_uri);
 
   if (handler.first == nullptr) {
-    BELL_LOG(info, "HttpServer", "Redirecting to captive portal");
-    // Not found 404
-    mg_printf(conn,
-              "HTTP/1.1 302 Temporary Redirect\r\nContent-Type: text/html"
-              "\r\nLocation: /\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n"
-              "Redirect to the captive portal");
+    if (this->notFoundHandler != nullptr) {
+      this->notFoundHandler(conn); 
+      return true;
+    }
 
-    return true;
+    return false;
   }
 
   mg_set_user_connection_data(conn, &handler.second);
@@ -216,6 +214,10 @@ void BellHTTPServer::registerWS(const std::string& url,
                                 BellHTTPServer::WSStateHandler stateHandler) {
   server->addWebSocketHandler(url,
                               new WebSocketHandler(dataHandler, stateHandler));
+}
+
+void BellHTTPServer::registerNotFound(HTTPHandler handler) {
+  this->notFoundHandler = handler;
 }
 
 std::unordered_map<std::string, std::string> BellHTTPServer::extractParams(
