@@ -31,9 +31,9 @@ class CentralAudioBuffer {
     size_t trackHash;
 
     // Audio format
-    uint32_t sampleRate;
+    bell::SampleRate sampleRate;
     uint8_t channels;
-    uint8_t bitDepth;
+    bell::BitWidth bitWidth;
 
     // PCM data size
     size_t pcmSize;
@@ -110,13 +110,13 @@ class CentralAudioBuffer {
 
     auto readBytes =
         audioBuffer->read((uint8_t*)&lastReadChunk, sizeof(AudioChunk));
-    currentSampleRate = lastReadChunk.sampleRate;
+    currentSampleRate = static_cast<uint32_t>(lastReadChunk.sampleRate);
     return lastReadChunk;
   }
 
   size_t writePCM(const uint8_t* data, size_t dataSize, size_t hash,
-                  uint32_t sampleRate = 44100, uint8_t channels = 2,
-                  uint8_t bitDepth = 16) {
+                  bell::SampleRate sampleRate = SampleRate::SR_44100, uint8_t channels = 2,
+                  BitWidth bitWidth = BitWidth::BW_16) {
     std::scoped_lock lock(this->dataAccessMutex);
     if (hasChunk && (currentChunk.trackHash != hash ||
                      currentChunk.pcmSize >= PCM_CHUNK_SIZE)) {
@@ -137,7 +137,7 @@ class CentralAudioBuffer {
       currentChunk.trackHash = hash;
       currentChunk.sampleRate = sampleRate;
       currentChunk.channels = channels;
-      currentChunk.bitDepth = bitDepth;
+      currentChunk.bitWidth = bitWidth;
       currentChunk.pcmSize = 0;
       hasChunk = true;
     }

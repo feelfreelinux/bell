@@ -78,7 +78,7 @@ size_t EncodedAudioStream::decodeFrameMp3(uint8_t* dst) {
                     &bytesInBuffer, outputBuffer.data(), 0);
       MP3GetLastFrameInfo(bell::decodersInstance->mp3Decoder, &mp3FrameInfo);
       if (decodeStatus == ERR_MP3_NONE) {
-        decodedSampleRate = mp3FrameInfo.samprate;
+        decodedSampleRate = static_cast<SampleRate>(mp3FrameInfo.samprate);
         writtenBytes =
             (mp3FrameInfo.bitsPerSample / 8) * mp3FrameInfo.outputSamps;
 
@@ -105,6 +105,10 @@ bool EncodedAudioStream::isReadable() {
   return this->codec != AudioCodec::NONE;
 }
 
+SampleRate EncodedAudioStream::getSampleRate() {
+  return this->decodedSampleRate;
+}
+
 size_t EncodedAudioStream::decodeFrameAAC(uint8_t* dst) {
   size_t writtenBytes = 0;
   auto bufSize = AAC_READBUF_SIZE;
@@ -125,7 +129,7 @@ size_t EncodedAudioStream::decodeFrameAAC(uint8_t* dst) {
                     &bytesInBuffer, outputBuffer.data());
       AACGetLastFrameInfo(bell::decodersInstance->aacDecoder, &aacFrameInfo);
       if (decodeStatus == ERR_AAC_NONE) {
-        decodedSampleRate = aacFrameInfo.sampRateOut;
+        decodedSampleRate = static_cast<SampleRate>(aacFrameInfo.sampRateOut);
         writtenBytes =
             (aacFrameInfo.bitsPerSample / 8) * aacFrameInfo.outputSamps;
 
