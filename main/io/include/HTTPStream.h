@@ -2,6 +2,7 @@
 #pragma once
 
 #include <memory>
+
 #include <stdexcept>
 #include <string>
 #include <string_view>

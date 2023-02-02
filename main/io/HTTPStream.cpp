@@ -110,7 +110,8 @@ void HTTPStream::Response::readResponseHeaders() {
   this->bytesRead = 0;
 
   while (1) {
-    size_t rret = socket->read(httpBuffer.data() + httpBufferAvailable, httpBuffer.size() - httpBufferAvailable);
+    size_t rret = socket->read(httpBuffer.data() + httpBufferAvailable,
+                               httpBuffer.size() - httpBufferAvailable);
 
     if (rret <= 0)
       throw std::runtime_error("Cannot read response");
@@ -148,7 +149,8 @@ void HTTPStream::Response::readResponseHeaders() {
                                 phResponseHeaders[headerIndex].value_len)});
   }
 
-  std::string contentLengthValue = std::string(getHeader("Content-Length"));
+  std::string contentLengthValue = std::string(getHeader("content-length"));
+
   if (contentLengthValue.size() > 0) {
     this->hasContentSize = true;
     this->contentSize = std::stoi(contentLengthValue);
@@ -167,7 +169,10 @@ size_t HTTPStream::Response::contentLength() {
 std::string_view HTTPStream::Response::getHeader(
     const std::string& headerName) {
   for (auto& header : this->responseHeaders) {
-    if (header.first == headerName) {
+    std::string headerValue = header.first;
+    std::transform(headerValue.begin(), headerValue.end(), headerValue.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    if (headerName == headerValue) {
       return header.second;
     }
   }
@@ -176,7 +181,7 @@ std::string_view HTTPStream::Response::getHeader(
 }
 
 size_t HTTPStream::Response::fullContentLength() {
-  auto rangeHeader = getHeader("Content-Range");
+  auto rangeHeader = getHeader("content-range");
 
   if (rangeHeader.find("/") != std::string::npos) {
     return std::stoi(
@@ -190,15 +195,13 @@ size_t HTTPStream::Response::readRaw(uint8_t* dst, size_t bytes) {
   if (!socket)
     return 0;
 
-  int32_t cachedAvailable = httpBufferAvailable - initialBytesConsumed - bytesRead;
+  int32_t cachedAvailable =
+      httpBufferAvailable - initialBytesConsumed - bytesRead;
 
   if (cachedAvailable > 0) {
-    size_t headerDataAvailable =
-        httpBufferAvailable - initialBytesConsumed - bytesRead;
-
     size_t toRead = bytes;
-    if (toRead > headerDataAvailable) {
-      toRead = headerDataAvailable;
+    if (toRead > cachedAvailable) {
+      toRead = cachedAvailable;
     }
 
     memcpy(dst, httpBuffer.data() + initialBytesConsumed + bytesRead, toRead);
