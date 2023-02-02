@@ -164,7 +164,7 @@ else()
 endif()
 
 if(NOT BELL_DISABLE_CODECS)
-    file(GLOB EXTRA_SOURCES "main/audio-decoders/*.cpp")
+    file(GLOB EXTRA_SOURCES "main/audio-containers/*.cpp")
 
     list(APPEND SOURCES "${EXTRA_SOURCES}")
     list(APPEND SOURCES "${AUDIO_CODEC_DIR}/DecoderGlobals.cpp")

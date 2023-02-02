@@ -6,7 +6,6 @@
 #include "BellLogger.h"
 #include "ByteStream.h"
 #include "DecoderGlobals.h"
-#include "StreamInfo.h"
 #include "aacdec.h"
 #include "mp3dec.h"
 
@@ -22,7 +21,6 @@ class EncodedAudioStream {
   void openWithStream(std::unique_ptr<bell::ByteStream> byteStream);
   size_t decodeFrame(uint8_t* dst);
   bool isReadable();
-  SampleRate getSampleRate();
 
  private:
   std::shared_ptr<ByteStream> innerStream;
@@ -34,7 +32,7 @@ class EncodedAudioStream {
   int bytesInBuffer = 0;
   size_t offset = 0;
 
-  SampleRate decodedSampleRate = SampleRate::SR_44100;
+  size_t decodedSampleRate = 44100;
 
   AudioCodec codec = AudioCodec::NONE;
 

@@ -46,20 +46,6 @@
 #ifndef _AACCOMMON_H
 #define _AACCOMMON_H
 
-#ifdef ESP8266
-#  include "pgmspace.h"
-#elif defined(ESP_PLATFORM) && __has_include(<pgm_space.h>)
-#  include <pgm_space.h>
-#else
-#  define PROGMEM
-#  define pgm_read_byte(addr) (*(const unsigned char *)(addr))
-#  define pgm_read_word(addr) (*(const unsigned short *)(addr))
-#endif
-// Can't fit in ESP8266 RAM
-#ifndef ESP8266
-  #define AAC_ENABLE_SBR 1 
-#endif
-
 #pragma GCC optimize ("O3")
 
 #include "aacdec.h"

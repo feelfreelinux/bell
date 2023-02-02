@@ -1,6 +1,6 @@
-// Copyright (c) Kuba Szczodrzyński 2022-1-14.
-
 #include "MP3Decoder.h"
+
+using namespace bell;
 
 MP3Decoder::MP3Decoder() {
 	mp3 = MP3InitDecoder();

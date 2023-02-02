@@ -59,19 +59,21 @@ int main() {
     isPaused = !isPaused;
     return dupa->makeJsonResponse("alo");
   });
-  auto url = "https://0n-smoothjazz.radionetz.de/0n-smoothjazz.aac";
+  auto url = "http://193.222.135.71/378";
 
   auto req = bell::HTTPStream::get(url);
   audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
 
   auto audioStream = std::make_shared<bell::EncodedAudioStream>();
   audioStream->openWithStream(std::move(req));
+  return 0;
   auto task = AudioPlayer();
 
   std::vector<uint8_t> frameData(1024 * 10);
 
   while (true) {
     size_t bytes = audioStream->decodeFrame(frameData.data());
+    std::cout << bytes <<std::endl;
 
     size_t toWrite = bytes;
 

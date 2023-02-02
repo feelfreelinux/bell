@@ -60,8 +60,6 @@
 #
 #elif defined(__GNUC__) && defined(__i386__)
 #
-#elif defined(__APPLE__)
-#
 #elif defined(__GNUC__) && defined(__amd64__)
 #
 #elif defined(__GNUC__) && (defined(__powerpc__) || defined(__POWERPC__))
@@ -71,6 +69,10 @@
 #elif defined(_SOLARIS) && !defined(__GNUC__)
 #
 #elif defined(ESP_PLATFORM)
+#
+#elif defined(__APPLE__)
+#
+#elif defined(ARDUINO)
 #
 #else
 #error No platform defined. See valid options in aacdec.h
@@ -102,9 +104,7 @@ extern "C" {
 #define AAC_PROFILE_SSR		2
 
 /* define these to enable decoder features */
-#if defined(HELIX_FEATURE_AUDIO_CODEC_AAC_SBR)
 #define AAC_ENABLE_SBR
-#endif //  HELIX_FEATURE_AUDIO_CODEC_AAC_SBR.
 #define AAC_ENABLE_MPEG4
 
 enum {
