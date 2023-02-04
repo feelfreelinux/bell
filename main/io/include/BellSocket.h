@@ -12,6 +12,7 @@ class Socket {
   virtual size_t poll() = 0;
   virtual size_t write(uint8_t* buf, size_t len) = 0;
   virtual size_t read(uint8_t* buf, size_t len) = 0;
+  virtual bool isOpen() = 0;
   virtual void close() = 0;
 };
 }  // namespace bell

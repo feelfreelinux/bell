@@ -6,12 +6,14 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include "AudioCodecs.h"
+#include "AudioContainers.h"
 #include "BellHTTPServer.h"
 #include "BellTask.h"
 #include "CentralAudioBuffer.h"
 #include "DecoderGlobals.h"
 #include "EncodedAudioStream.h"
-#include "HTTPStream.h"
+#include "HTTPClient.h"
 #include "PortAudioSink.h"
 #include "Compressor.h"
 
@@ -61,18 +63,22 @@ int main() {
   });
   auto url = "http://193.222.135.71/378";
 
-  auto req = bell::HTTPStream::get(url);
+  auto req = bell::HTTPClient::get(url);
+  auto container = AudioContainers::guessAudioContainer(req->stream());
+  auto codec = AudioCodecs::getCodec(container.get());
+  uint32_t dataLen;
+  codec->decode(container.get(), dataLen);
+  std::cout << dataLen << std::endl;
+
   audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
 
-  auto audioStream = std::make_shared<bell::EncodedAudioStream>();
-  audioStream->openWithStream(std::move(req));
   return 0;
   auto task = AudioPlayer();
 
   std::vector<uint8_t> frameData(1024 * 10);
-
+/*
   while (true) {
-    size_t bytes = audioStream->decodeFrame(frameData.data());
+    size_t bytes =audioStream->decodeFrame(frameData.data());
     std::cout << bytes <<std::endl;
 
     size_t toWrite = bytes;
@@ -83,6 +89,6 @@ int main() {
                                          toWrite, 0);
       }
     }
-  }
+  }*/
   return 0;
 }

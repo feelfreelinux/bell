@@ -2,9 +2,9 @@
 
 #include <atomic>
 #include <cmath>
+#include <iostream>
 #include <memory>
 #include <mutex>
-#include <iostream>
 
 #include "BellUtils.h"
 #include "CircularBuffer.h"
@@ -27,20 +27,24 @@ class CentralAudioBuffer {
 
   // Audio marker for track change detection, and DSP autoconfig
   struct AudioChunk {
+    // Timeval
+    int32_t sec;
+    int32_t usec;
+
     // Unique track hash, used for track change detection
     size_t trackHash;
 
     // Audio format
-    bell::SampleRate sampleRate;
+    uint32_t sampleRate;
     uint8_t channels;
-    bell::BitWidth bitWidth;
+    uint8_t bitWidth;
 
     // PCM data size
     size_t pcmSize;
 
     // PCM data
     uint8_t pcmData[PCM_CHUNK_SIZE];
-  };
+  } __attribute__((packed));
 
   CentralAudioBuffer(size_t chunks) {
     audioBuffer = std::make_shared<CircularBuffer>(chunks * sizeof(AudioChunk));
@@ -101,22 +105,23 @@ class CentralAudioBuffer {
 
   AudioChunk lastReadChunk = {.pcmSize = 0};
 
-  AudioChunk readChunk() {
+  AudioChunk* readChunk() {
     std::scoped_lock lock(this->dataAccessMutex);
     if (audioBuffer->size() < sizeof(AudioChunk)) {
       lastReadChunk.pcmSize = 0;
-      return lastReadChunk;
+      return nullptr;
     }
 
     auto readBytes =
         audioBuffer->read((uint8_t*)&lastReadChunk, sizeof(AudioChunk));
     currentSampleRate = static_cast<uint32_t>(lastReadChunk.sampleRate);
-    return lastReadChunk;
+    return &lastReadChunk;
   }
 
   size_t writePCM(const uint8_t* data, size_t dataSize, size_t hash,
-                  bell::SampleRate sampleRate = SampleRate::SR_44100, uint8_t channels = 2,
-                  BitWidth bitWidth = BitWidth::BW_16) {
+                  uint32_t sampleRate, uint8_t channels = 2,
+                  BitWidth bitWidth = BitWidth::BW_16, int32_t sec = 0,
+                  int32_t usec = 0) {
     std::scoped_lock lock(this->dataAccessMutex);
     if (hasChunk && (currentChunk.trackHash != hash ||
                      currentChunk.pcmSize >= PCM_CHUNK_SIZE)) {
@@ -132,24 +137,26 @@ class CentralAudioBuffer {
       // this->chunkReady->give();
     }
 
-		// New chunk requested, initialize
+    // New chunk requested, initialize
     if (!hasChunk) {
       currentChunk.trackHash = hash;
       currentChunk.sampleRate = sampleRate;
       currentChunk.channels = channels;
-      currentChunk.bitWidth = bitWidth;
+      currentChunk.bitWidth = 16;
+      currentChunk.sec = sec;
+      currentChunk.usec = usec;
       currentChunk.pcmSize = 0;
       hasChunk = true;
     }
 
-		// Calculate how much data we can write
+    // Calculate how much data we can write
     size_t toWriteSize = dataSize;
 
     if (currentChunk.pcmSize + toWriteSize > PCM_CHUNK_SIZE) {
       toWriteSize = PCM_CHUNK_SIZE - currentChunk.pcmSize;
     }
 
-		// Copy it over :) 
+    // Copy it over :)
     memcpy(currentChunk.pcmData + currentChunk.pcmSize, data, toWriteSize);
     currentChunk.pcmSize += toWriteSize;
 

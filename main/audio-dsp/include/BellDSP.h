@@ -39,7 +39,7 @@ class BellDSP {
   std::shared_ptr<AudioPipeline> getActivePipeline();
 
   size_t process(uint8_t* data, size_t bytes, int channels,
-                 SampleRate sampleRate, BitWidth bitWidth);
+                 uint32_t sampleRate, BitWidth bitWidth);
 
  private:
   std::shared_ptr<AudioPipeline> activePipeline;

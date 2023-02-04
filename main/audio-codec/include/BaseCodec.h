@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BaseContainer.h"
+#include "AudioContainer.h"
 
 namespace bell {
 
@@ -9,7 +9,7 @@ class BaseCodec {
   /**
 	 * Setup the codec (sample rate, channel count, etc) using the specified container.
 	 */
-  virtual bool setup(BaseContainer* container);
+  virtual bool setup(AudioContainer* container);
   /**
 	 * Setup the codec manually, using the provided values.
 	 */
@@ -32,7 +32,7 @@ class BaseCodec {
 	 * @param [out] outLen size of output PCM data, in bytes
 	 * @return pointer to decoded raw PCM audio data, allocated inside the codec object; nullptr on failure
 	 */
-  uint8_t* decode(BaseContainer* container, uint32_t& outLen);
+  uint8_t* decode(AudioContainer* container, uint32_t& outLen);
   /**
 	 * Last error that occurred, this is a codec-specific value.
 	 * This may be set by a codec upon decoding failure.

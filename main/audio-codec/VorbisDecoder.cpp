@@ -48,7 +48,8 @@ VorbisDecoder::~VorbisDecoder() {
   free(pcmData);
 }
 
-bool VorbisDecoder::setup(BaseContainer* container) {
+bool VorbisDecoder::setup(AudioContainer* container) {
+  /*
   uint32_t setupLen;
   uint8_t* setup = container->getSetupData(setupLen, AudioCodec::VORBIS);
   if (!setup)
@@ -89,6 +90,7 @@ bool VorbisDecoder::setup(BaseContainer* container) {
   else
     vd = vorbis_dsp_create(vi);
   return !lastErrno;
+  */
 }
 
 bool VorbisDecoder::setup(uint32_t sampleRate, uint8_t channelCount,

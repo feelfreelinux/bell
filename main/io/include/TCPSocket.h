@@ -97,6 +97,7 @@ class TCPSocket : public bell::Socket {
 #endif
     return value;
   }
+  bool isOpen() { return sockFd >= 0; }
 
   void close() {
     if (!isClosed) {

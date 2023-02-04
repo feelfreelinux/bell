@@ -11,14 +11,13 @@
 
 #include "BellSocket.h"
 #include "ByteStream.h"
-#include "TCPSocket.h"
-#include "TLSSocket.h"
+#include "SocketStream.h"
 #include "URLParser.h"
 #include "fmt/core.h"
 #include "picohttpparser.h"
 
 namespace bell {
-class HTTPStream {
+class HTTPClient {
  public:
   // most basic header type, represents by a key-val
   typedef std::pair<std::string, std::string> ValueHeader;
@@ -36,9 +35,9 @@ class HTTPStream {
     }
   };
 
-  class Response : public bell::ByteStream {
+  class Response {
    public:
-    Response() {};
+    Response(){};
     ~Response();
 
     /**
@@ -53,37 +52,25 @@ class HTTPStream {
     std::string_view body();
     std::vector<uint8_t> bytes();
 
-    std::string_view getHeader(const std::string& headerName);
+    std::string_view header(const std::string& headerName);
+    bell::SocketStream& stream() { return this->socketStream; }
 
-    size_t readRaw(uint8_t* dst, size_t bytes);
-    size_t readFull(uint8_t* dst, size_t bytes);
     size_t contentLength();
-    size_t fullContentLength();
-
-    // ByteStream implementation ---
-    size_t read(uint8_t* dst, size_t bytes) override;
-    size_t skip(size_t nbytes) override;
-    size_t position() override;
-    size_t size() override;
-    void close() override;
-    //
+    size_t totalLength();
 
    private:
     bell::URLParser urlParser;
-    std::unique_ptr<bell::Socket> socket;
+    bell::SocketStream socketStream;
 
     struct phr_header phResponseHeaders[32];
     const size_t HTTP_BUF_SIZE = 1024;
 
     std::vector<uint8_t> httpBuffer = std::vector<uint8_t>(HTTP_BUF_SIZE);
     std::vector<uint8_t> rawBody = std::vector<uint8_t>();
+    size_t httpBufferAvailable;
 
     size_t contentSize = 0;
-    size_t bytesRead = 0;
-    size_t httpBufferAvailable = 0;
-    size_t initialBytesConsumed = 0;
     bool hasContentSize = false;
-
 
     Headers responseHeaders;
 
@@ -99,12 +86,8 @@ class HTTPStream {
     Headers headers;
   };
 
-  // Per request input buffer
-  static const size_t DEFAULT_USER_BUFFER_LEN = 1024 * 8;
-
-  static std::unique_ptr<Response> get(
-      const std::string& url, Headers headers = {},
-      size_t bufSize = DEFAULT_USER_BUFFER_LEN) {
+  static std::unique_ptr<Response> get(const std::string& url,
+                                       Headers headers = {}) {
     auto response = std::make_unique<Response>();
     response->connect(url);
     response->get(url, headers);

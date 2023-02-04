@@ -4,18 +4,19 @@
 
 using namespace bell;
 
-BellDSP::FadeEffect::FadeEffect(size_t duration, bool isFadeIn, std::function<void()> onFinish) {
+BellDSP::FadeEffect::FadeEffect(size_t duration, bool isFadeIn,
+                                std::function<void()> onFinish) {
   this->duration = duration;
   this->onFinish = onFinish;
   this->isFadeIn = isFadeIn;
 }
 
 void BellDSP::FadeEffect::apply(float* audioData, size_t samples,
-                              size_t relativePosition) {
+                                size_t relativePosition) {
   float effect = (this->duration - relativePosition) / (float)this->duration;
 
   if (isFadeIn) {
-    effect = relativePosition / (float) this->duration;
+    effect = relativePosition / (float)this->duration;
   }
 
   for (int x = 0; x <= samples; x++) {
@@ -26,7 +27,6 @@ void BellDSP::FadeEffect::apply(float* audioData, size_t samples,
     onFinish();
   }
 }
-
 
 BellDSP::BellDSP(std::shared_ptr<CentralAudioBuffer> buffer) {
   this->buffer = buffer;
@@ -43,7 +43,7 @@ void BellDSP::queryInstantEffect(std::unique_ptr<AudioEffect> instantEffect) {
 }
 
 size_t BellDSP::process(uint8_t* data, size_t bytes, int channels,
-                        SampleRate sampleRate, BitWidth bitWidth) {
+                        uint32_t sampleRate, BitWidth bitWidth) {
   if (bytes > 1024 * 2 * channels) {
     return 0;
   }
@@ -55,7 +55,7 @@ size_t BellDSP::process(uint8_t* data, size_t bytes, int channels,
   // Create a StreamInfo object to pass to the pipeline
   auto streamInfo = std::make_unique<StreamInfo>();
   streamInfo->numChannels = channels;
-  streamInfo->sampleRate = sampleRate;
+  streamInfo->sampleRate = static_cast<bell::SampleRate>(sampleRate);
   streamInfo->bitwidth = bitWidth;
   streamInfo->numSamples = bytes / channels / 2;
 
@@ -78,10 +78,12 @@ size_t BellDSP::process(uint8_t* data, size_t bytes, int channels,
   }
 
   if (this->instantEffect != nullptr) {
-    this->instantEffect->apply(dataLeft.data(), length16, samplesSinceInstantQueued);
+    this->instantEffect->apply(dataLeft.data(), length16,
+                               samplesSinceInstantQueued);
 
     if (streamInfo->numSamples > 1) {
-      this->instantEffect->apply(dataRight.data(), length16, samplesSinceInstantQueued);
+      this->instantEffect->apply(dataRight.data(), length16,
+                                 samplesSinceInstantQueued);
     }
 
     samplesSinceInstantQueued += length16;

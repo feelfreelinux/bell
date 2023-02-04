@@ -64,6 +64,9 @@ size_t bell::TLSSocket::write(uint8_t* buf, size_t len) {
 size_t bell::TLSSocket::poll() {
   return mbedtls_ssl_get_bytes_avail(&ssl);
 }
+bool bell::TLSSocket::isOpen() {
+  return server_fd.fd >= 0;
+}
 
 void bell::TLSSocket::close() {
   mbedtls_net_free(&server_fd);
