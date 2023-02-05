@@ -39,7 +39,7 @@ class TLSSocket : public bell::Socket {
   mbedtls_ssl_context ssl;
   mbedtls_ssl_config conf;
 
-  bool isClosed = false;
+  bool isClosed = true;
 
  public:
   TLSSocket();

@@ -110,7 +110,7 @@ bool BellHTTPServer::handleGet(CivetServer* server,
 
   if (handler.first == nullptr) {
     if (this->notFoundHandler != nullptr) {
-      this->notFoundHandler(conn); 
+      this->notFoundHandler(conn);
       return true;
     }
 
@@ -121,7 +121,7 @@ bool BellHTTPServer::handleGet(CivetServer* server,
 
   try {
     auto reply = handler.first(conn);
-    if (reply.body == nullptr) {
+    if (reply->body == nullptr) {
       return true;
     }
 
@@ -129,8 +129,8 @@ bool BellHTTPServer::handleGet(CivetServer* server,
         conn,
         "HTTP/1.1 %d OK\r\nContent-Type: "
         "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
-        reply.status, reply.headers["Content-Type"].c_str());
-    mg_write(conn, reply.body, reply.bodySize);
+        reply->status, reply->headers["Content-Type"].c_str());
+    mg_write(conn, reply->body, reply->bodySize);
 
     return true;
   } catch (std::exception& e) {
@@ -152,7 +152,7 @@ bool BellHTTPServer::handlePost(CivetServer* server,
 
   try {
     auto reply = handler.first(conn);
-    if (reply.body == nullptr) {
+    if (reply->body == nullptr) {
       return true;
     }
 
@@ -160,8 +160,8 @@ bool BellHTTPServer::handlePost(CivetServer* server,
         conn,
         "HTTP/1.1 %d OK\r\nContent-Type: "
         "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
-        reply.status, reply.headers["Content-Type"].c_str());
-    mg_write(conn, reply.body, reply.bodySize);
+        reply->status, reply->headers["Content-Type"].c_str());
+    mg_write(conn, reply->body, reply->bodySize);
 
     return true;
   } catch (std::exception& e) {
@@ -179,21 +179,21 @@ BellHTTPServer::BellHTTPServer(int serverPort) {
   server = std::make_unique<CivetServer>(options);
 }
 
-BellHTTPServer::HTTPResponse BellHTTPServer::makeJsonResponse(
+std::unique_ptr<BellHTTPServer::HTTPResponse> BellHTTPServer::makeJsonResponse(
     const std::string& json, int status) {
-  BellHTTPServer::HTTPResponse response;
+  auto response = std::make_unique<BellHTTPServer::HTTPResponse>();
 
-  response.body = (uint8_t*)malloc(json.size());
-  response.bodySize = json.size();
-  response.headers["Content-Type"] = "application/json";
-  response.status = status;
+  response->body = (uint8_t*)malloc(json.size());
+  response->bodySize = json.size();
+  response->headers["Content-Type"] = "application/json";
+  response->status = status;
 
-  memcpy(response.body, json.c_str(), json.size());
+  memcpy(response->body, json.c_str(), json.size());
   return response;
 }
 
-BellHTTPServer::HTTPResponse BellHTTPServer::makeEmptyResponse() {
-  BellHTTPServer::HTTPResponse response;
+std::unique_ptr<BellHTTPServer::HTTPResponse> BellHTTPServer::makeEmptyResponse() {
+  auto response = std::make_unique<BellHTTPServer::HTTPResponse>();
   return response;
 }
 

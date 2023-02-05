@@ -4,6 +4,7 @@
  * Platform TLSSocket implementation for the mbedtls
  */
 bell::TLSSocket::TLSSocket() {
+  this->isClosed = false;
   mbedtls_net_init(&server_fd);
   mbedtls_ssl_init(&ssl);
   mbedtls_ssl_config_init(&conf);
@@ -65,13 +66,16 @@ size_t bell::TLSSocket::poll() {
   return mbedtls_ssl_get_bytes_avail(&ssl);
 }
 bool bell::TLSSocket::isOpen() {
-  return server_fd.fd >= 0;
+  return !isClosed; 
 }
 
 void bell::TLSSocket::close() {
-  mbedtls_net_free(&server_fd);
-  mbedtls_ssl_free(&ssl);
-  mbedtls_ssl_config_free(&conf);
-  mbedtls_ctr_drbg_free(&ctr_drbg);
-  mbedtls_entropy_free(&entropy);
+  if (!isClosed) {
+    mbedtls_net_free(&server_fd);
+    mbedtls_ssl_free(&ssl);
+    mbedtls_ssl_config_free(&conf);
+    mbedtls_ctr_drbg_free(&ctr_drbg);
+    mbedtls_entropy_free(&entropy);
+    this->isClosed = true;
+  }
 }

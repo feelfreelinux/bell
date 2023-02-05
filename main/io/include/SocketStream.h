@@ -65,7 +65,5 @@ class SocketStream : public std::iostream {
   int close() { return socketBuf.close(); }
 
   bool isOpen() { return socketBuf.isOpen(); }
-
-  virtual ~SocketStream() {}
 };
 }  // namespace bell

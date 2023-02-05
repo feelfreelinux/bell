@@ -119,7 +119,7 @@ class CentralAudioBuffer {
   }
 
   size_t writePCM(const uint8_t* data, size_t dataSize, size_t hash,
-                  uint32_t sampleRate, uint8_t channels = 2,
+                  uint32_t sampleRate = 44100, uint8_t channels = 2,
                   BitWidth bitWidth = BitWidth::BW_16, int32_t sec = 0,
                   int32_t usec = 0) {
     std::scoped_lock lock(this->dataAccessMutex);

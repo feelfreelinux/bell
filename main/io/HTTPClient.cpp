@@ -11,7 +11,9 @@ void HTTPClient::Response::connect(const std::string& url) {
 }
 
 HTTPClient::Response::~Response() {
-  this->socketStream.close();
+  if (this->socketStream.isOpen()) {
+    this->socketStream.close();
+  }
 }
 
 void HTTPClient::Response::rawRequest(const std::string& url,
@@ -134,7 +136,6 @@ size_t HTTPClient::Response::totalLength() {
 
   return this->contentLength();
 }
-
 
 void HTTPClient::Response::readRawBody() {
   if (contentSize > 0 && rawBody.size() == 0) {

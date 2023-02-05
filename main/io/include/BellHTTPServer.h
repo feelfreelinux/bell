@@ -41,10 +41,11 @@ class BellHTTPServer : public CivetHandler {
     ~HTTPResponse() {
       if (body != nullptr) {
         free(body);
+        body = nullptr;
       }
     }
   };
-  typedef std::function<HTTPResponse(struct mg_connection* conn)> HTTPHandler;
+  typedef std::function<std::unique_ptr<HTTPResponse>(struct mg_connection* conn)> HTTPHandler;
   typedef std::function<void(struct mg_connection* conn, WSState)>
       WSStateHandler;
   typedef std::function<void(struct mg_connection* conn, char*, size_t)>
@@ -74,8 +75,8 @@ class BellHTTPServer : public CivetHandler {
     HandlerAndParams find(const std::string& route);
   };
 
-  HTTPResponse makeJsonResponse(const std::string& json, int status = 200);
-  HTTPResponse makeEmptyResponse();
+  std::unique_ptr<HTTPResponse> makeJsonResponse(const std::string& json, int status = 200);
+  std::unique_ptr<HTTPResponse> makeEmptyResponse();
 
   void registerNotFound(HTTPHandler handler);
   void registerGet(const std::string&, HTTPHandler handler);

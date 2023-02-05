@@ -5,6 +5,7 @@
 using namespace bell;
 
 int SocketBuffer::open(const std::string& hostname, int port, bool isSSL) {
+  if (internalSocket != nullptr) { close(); }
   if (isSSL) {
     internalSocket = std::make_unique<bell::TLSSocket>();
   } else {
@@ -16,7 +17,7 @@ int SocketBuffer::open(const std::string& hostname, int port, bool isSSL) {
 }
 
 int SocketBuffer::close() {
-  if (isOpen()) {
+  if (internalSocket != nullptr && isOpen()) {
     pubsync();
     internalSocket->close();
     internalSocket = nullptr;

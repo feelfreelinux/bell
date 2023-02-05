@@ -30,7 +30,7 @@ namespace bell {
 class TCPSocket : public bell::Socket {
  private:
   int sockFd;
-  bool isClosed = false;
+  bool isClosed = true;
 
  public:
   TCPSocket(){};
@@ -77,6 +77,7 @@ class TCPSocket : public bell::Socket {
                sizeof(int)); /* length of option value */
 
     freeaddrinfo(addr);
+    isClosed = false;
   }
 
   size_t read(uint8_t* buf, size_t len) {
@@ -97,11 +98,12 @@ class TCPSocket : public bell::Socket {
 #endif
     return value;
   }
-  bool isOpen() { return sockFd >= 0; }
+  bool isOpen() { return !isClosed; }
 
   void close() {
     if (!isClosed) {
       ::close(sockFd);
+      sockFd = -1;
       isClosed = true;
     }
   }
