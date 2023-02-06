@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <stdexcept>
 #include <BellLogger.h>
 #include <ByteStream.h>
 #include <stdio.h>

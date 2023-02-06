@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <stdexcept>
 
 extern "C" {
 #include "aes.h"

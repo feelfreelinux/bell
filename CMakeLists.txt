@@ -23,11 +23,6 @@ set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, opt
 # disable json tests
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
-if(BELL_EXTERNAL_MBEDTLS)
-    set(MbedTLS_DIR ${BELL_EXTERNAL_MBEDTLS})
-    message(STATUS "Setting local mbedtls ${MbedTLS_DIR}")
-endif()
-
 # Backwards compatibility with deprecated options
 if(BELL_USE_ALSA)
     message(WARNING "Deprecated Bell options used, replace BELL_USE_ALSA with BELL_SINK_ALSA")
@@ -116,7 +111,7 @@ endif()
 if(WIN32)
     file(GLOB WIN32_PLATFORM_SOURCES "main/platform/win32/*.cpp" "main/platform/win32/*.c")
     list(APPEND SOURCES ${WIN32_PLATFORM_SOURCES})
-    list(APPEND EXTRA_INCLUDES "main/platform/include/win32")
+    list(APPEND EXTRA_INCLUDES "main/platform/win32")
 endif()
 
 # A hack to make Opus keep quiet
@@ -137,29 +132,8 @@ else()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     list(APPEND EXTRA_LIBS ${MBEDTLS_LIBRARIES} Threads::Threads)
 
-    # try to handle mbedtls when not system-wide installed
-    if(BELL_EXTERNAL_MBEDTLS)
-        if(MSVC)
-            set(MBEDTLS_RELEASE "RELEASE" CACHE STRING "local mbedtls version")
-        else()
-            set(MBEDTLS_RELEASE "NOCONFIG" CACHE STRING "local mbedtls version")
-        endif()
-
-        message(STATUS "using local mbedtls version ${MBEDTLS_RELEASE}")
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedtls IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedx509 IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedcrypto IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-    else()
-        find_package(MbedTLS REQUIRED)
-        list(APPEND EXTRA_INCLUDES ${MBEDTLS_INCLUDE_DIRS})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_LIBRARIES})
-    endif()
-
     if(MSVC)
-        add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS)
+        add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES)
         add_definitions(/wd4068 /wd4244 /wd4018 /wd4101 /wd4102 /wd4142)
     endif()
 endif()
@@ -264,19 +238,10 @@ if(NOT BELL_DISABLE_SINKS)
 
     # Find PortAudio if required, else remove the sink
     if(BELL_SINK_PORTAUDIO)
-        if(WIN32)
-            list(APPEND EXTRA_INCLUDES "external/portaudio/include")
-
-            if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/portaudio_win32.lib")
-            else()
-                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/portaudio_x64.lib")
-            endif()
-        else()
-            find_package(portaudio REQUIRED)
-            list(APPEND EXTRA_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
-            list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
-        endif()
+        #find_package(portaudio REQUIRED)
+		find_package(Portaudio REQUIRED)
+        list(APPEND EXTRA_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
     else()
         list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/PortAudioSink.cpp")
     endif()
@@ -301,6 +266,11 @@ if (BELL_DISABLE_FMT)
 else()
     list(APPEND EXTRA_INCLUDES "external/fmt/include")
 endif()
+
+if(WIN32)
+    list(APPEND SOURCES "external/mdnssvc/mdns.c" "external/mdnssvc/mdnsd.c")
+    list(APPEND EXTRA_INCLUDES "external/mdnssvc")
+endif()	
 
 file(GLOB CIVET_SRC "external/civetweb/*.c" "external/civetweb/*.inl" "external/civetweb/*.cpp")
 
