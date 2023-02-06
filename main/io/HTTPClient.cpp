@@ -146,7 +146,7 @@ void HTTPClient::Response::readRawBody() {
 
 std::string_view HTTPClient::Response::body() {
   readRawBody();
-  return std::string_view((char*)rawBody.data());
+  return std::string_view((char*)rawBody.data(), rawBody.size());
 }
 
 std::vector<uint8_t> HTTPClient::Response::bytes() {
