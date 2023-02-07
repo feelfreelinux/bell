@@ -1,5 +1,5 @@
 #include "AACContainer.h"
-
+#include "iostream"
 using namespace bell;
 
 #define SYNC_WORLD_LEN 4
@@ -16,45 +16,29 @@ bool AACContainer::fillBuffer() {
 }
 
 std::byte* AACContainer::readSample(uint32_t& len) {
-  // Align the data if previous read was offseted
-  if (dataOffset > 0) {
-    memmove(buffer.data(), buffer.data() + dataOffset,
-            bytesInBuffer - dataOffset);
-    bytesInBuffer = bytesInBuffer - dataOffset;
-    dataOffset = 0;
-  }
-
   if (!this->fillBuffer()) {
     len = 0;
     return nullptr;
+  }
+
+  // Align the data if previous read was offseted
+  if (toConsume > 0 && toConsume <= bytesInBuffer) {
+    memmove(buffer.data(), buffer.data() + toConsume,
+            buffer.size() - toConsume);
+    bytesInBuffer = bytesInBuffer - toConsume;
+    toConsume = 0;
   }
 
   int startOffset =
       AACFindSyncWord((uint8_t*)this->buffer.data(), bytesInBuffer);
 
   if (startOffset < 0) {
-    // Discard buffer
-    this->bytesInBuffer = 0;
-    len = 0;
+    // Discard word
+    toConsume = AAC_MAX_FRAME_SIZE;
     return nullptr;
   }
 
-  dataOffset = AACFindSyncWord(
-      (uint8_t*)this->buffer.data() + startOffset + SYNC_WORLD_LEN,
-      bytesInBuffer - startOffset - SYNC_WORLD_LEN);
-  if (dataOffset < 0) {
-    // Discard buffer
-    this->bytesInBuffer = 0;
-    len = 0;
-    return nullptr;
-  }
-
-  len = dataOffset + SYNC_WORLD_LEN;
-  dataOffset += startOffset + SYNC_WORLD_LEN;
-
-  if (len == 0) {
-    return nullptr;
-  }
+  len = bytesInBuffer - startOffset;
 
   return this->buffer.data() + startOffset;
 }

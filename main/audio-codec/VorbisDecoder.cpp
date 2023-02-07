@@ -99,7 +99,7 @@ bool VorbisDecoder::setup(uint32_t sampleRate, uint8_t channelCount,
   return false;
 }
 
-uint8_t* VorbisDecoder::decode(uint8_t* inData, uint32_t inLen,
+uint8_t* VorbisDecoder::decode(uint8_t* inData, uint32_t& inLen,
                                uint32_t& outLen) {
   if (!inData || !vi)
     return nullptr;
@@ -118,6 +118,7 @@ uint8_t* VorbisDecoder::decode(uint8_t* inData, uint32_t inLen,
       outLen = samples * 2 * vi->channels;
     }
   }
+  inLen = 0;
   return (uint8_t*)pcmData;
 }
 

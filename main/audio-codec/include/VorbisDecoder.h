@@ -17,7 +17,7 @@ class VorbisDecoder : public BaseCodec {
   ~VorbisDecoder();
   bool setup(uint32_t sampleRate, uint8_t channelCount,
              uint8_t bitDepth) override;
-  uint8_t* decode(uint8_t* inData, uint32_t inLen, uint32_t& outLen) override;
+  uint8_t* decode(uint8_t* inData, uint32_t& inLen, uint32_t& outLen) override;
   bool setup(AudioContainer* container) override;
 
  private:

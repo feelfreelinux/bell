@@ -11,11 +11,11 @@
 #include "BellHTTPServer.h"
 #include "BellTask.h"
 #include "CentralAudioBuffer.h"
+#include "Compressor.h"
 #include "DecoderGlobals.h"
 #include "EncodedAudioStream.h"
 #include "HTTPClient.h"
 #include "PortAudioSink.h"
-#include "Compressor.h"
 
 #include <BellDSP.h>
 #include <BellLogger.h>
@@ -40,11 +40,11 @@ class AudioPlayer : bell::Task {
       if (audioBuffer->hasAtLeast(64) || isPaused) {
         auto chunk = audioBuffer->readChunk();
 
-        if (chunk.pcmSize > 0) {
-          this->dsp->process(chunk.pcmData, chunk.pcmSize, 2,
-                             bell::SampleRate::SR_44100, bell::BitWidth::BW_16);
+        if (chunk != nullptr && chunk->pcmSize > 0) {
+          this->dsp->process(chunk->pcmData, chunk->pcmSize, 2, 44100,
+                             bell::BitWidth::BW_16);
 
-          this->audioSink->feedPCMFrames(chunk.pcmData, chunk.pcmSize);
+          this->audioSink->feedPCMFrames(chunk->pcmData, chunk->pcmSize);
         }
       }
     }
@@ -61,14 +61,20 @@ int main() {
     isPaused = !isPaused;
     return dupa->makeJsonResponse("alo");
   });
-  auto url = "http://193.222.135.71/378";
+  auto url = "https://0n-jazz.radionetz.de/0n-jazz.aac";
 
   auto req = bell::HTTPClient::get(url);
   auto container = AudioContainers::guessAudioContainer(req->stream());
   auto codec = AudioCodecs::getCodec(container.get());
+
   uint32_t dataLen;
-  codec->decode(container.get(), dataLen);
-  std::cout << dataLen << std::endl;
+  while (true) {
+    if (!codec->decode(container.get(), dataLen)) {
+      std::cout << "data invalid" << std::endl;
+    }
+
+    std::cout << dataLen << std::endl;
+  }
 
   audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
 
@@ -76,7 +82,7 @@ int main() {
   auto task = AudioPlayer();
 
   std::vector<uint8_t> frameData(1024 * 10);
-/*
+  /*
   while (true) {
     size_t bytes =audioStream->decodeFrame(frameData.data());
     std::cout << bytes <<std::endl;
