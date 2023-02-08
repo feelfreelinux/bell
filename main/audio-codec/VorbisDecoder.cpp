@@ -91,6 +91,7 @@ bool VorbisDecoder::setup(AudioContainer* container) {
     vd = vorbis_dsp_create(vi);
   return !lastErrno;
   */
+  return false;
 }
 
 bool VorbisDecoder::setup(uint32_t sampleRate, uint8_t channelCount,
