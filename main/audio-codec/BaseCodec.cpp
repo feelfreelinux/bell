@@ -14,6 +14,11 @@ uint8_t* BaseCodec::decode(AudioContainer* container, uint32_t& outLen) {
     return nullptr;
   }
 
+  if (lastSampleLen == 0) {
+    outLen = 0;
+    return nullptr;
+  }
+
   availableBytes = lastSampleLen;
   auto* result = decode((uint8_t*)data, availableBytes, outLen);
   if (result == nullptr) {
