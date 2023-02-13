@@ -2172,7 +2172,7 @@ static const struct mg_option config_options[] = {
 
     /* Once for each server */
     {"listening_ports", MG_CONFIG_TYPE_STRING_LIST, "8080"},
-    {"num_threads", MG_CONFIG_TYPE_NUMBER, "2"},
+    {"num_threads", MG_CONFIG_TYPE_NUMBER, "4"},
     {"run_as_user", MG_CONFIG_TYPE_STRING, NULL},
     {"tcp_nodelay", MG_CONFIG_TYPE_NUMBER, "0"},
     {"max_request_size", MG_CONFIG_TYPE_NUMBER, "16384"},
@@ -2191,7 +2191,7 @@ static const struct mg_option config_options[] = {
     {"keep_alive_timeout_ms", MG_CONFIG_TYPE_NUMBER, "500"},
 #if defined(USE_WEBSOCKET)
     {"websocket_timeout_ms", MG_CONFIG_TYPE_NUMBER, NULL},
-    {"enable_websocket_ping_pong", MG_CONFIG_TYPE_BOOLEAN, "no"},
+    {"enable_websocket_ping_pong", MG_CONFIG_TYPE_BOOLEAN, "yes"},
 #endif
     {"decode_url", MG_CONFIG_TYPE_BOOLEAN, "yes"},
     {"decode_query_string", MG_CONFIG_TYPE_BOOLEAN, "no"},

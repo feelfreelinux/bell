@@ -24,7 +24,7 @@ bool MP3Decoder::setup(AudioContainer* container) {
 
 uint8_t* MP3Decoder::decode(uint8_t* inData, uint32_t& inLen,
                             uint32_t& outLen) {
-  if (!inData)
+  if (!inData || inLen == 0)
     return nullptr;
   int status = MP3Decode(mp3, static_cast<unsigned char**>(&inData),
                          reinterpret_cast<int*>(&inLen),
