@@ -1,4 +1,5 @@
 #include "TLSSocket.h"
+#include "X509Bundle.h"
 
 /**
  * Platform TLSSocket implementation for the mbedtls
@@ -8,8 +9,14 @@ bell::TLSSocket::TLSSocket() {
   mbedtls_net_init(&server_fd);
   mbedtls_ssl_init(&ssl);
   mbedtls_ssl_config_init(&conf);
+
+  if (bell::X509Bundle::shouldVerify()) {
+    bell::X509Bundle::attach(&conf);
+  }
+
   mbedtls_ctr_drbg_init(&ctr_drbg);
   mbedtls_entropy_init(&entropy);
+
   const char* pers = "euphonium";
   int ret;
   if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
@@ -37,10 +44,17 @@ void bell::TLSSocket::open(const std::string& hostUrl, uint16_t port) {
     throw std::runtime_error("mbedtls_ssl_config_defaults failed");
   }
 
-  mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_NONE);
+  // Only verify if the X509 bundle is present
+  if (bell::X509Bundle::shouldVerify()) {
+    mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+  } else {
+    mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_NONE);
+  }
+
   mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
   mbedtls_ssl_setup(&ssl, &conf);
-  if ((ret = mbedtls_ssl_set_hostname(&ssl, "Mbed TLS Server 1")) != 0) {
+
+  if ((ret = mbedtls_ssl_set_hostname(&ssl, hostUrl.c_str())) != 0) {
     throw std::runtime_error("mbedtls_ssl_set_hostname failed");
   }
   mbedtls_ssl_set_bio(&ssl, &server_fd, mbedtls_net_send, mbedtls_net_recv,
@@ -66,7 +80,7 @@ size_t bell::TLSSocket::poll() {
   return mbedtls_ssl_get_bytes_avail(&ssl);
 }
 bool bell::TLSSocket::isOpen() {
-  return !isClosed; 
+  return !isClosed;
 }
 
 void bell::TLSSocket::close() {

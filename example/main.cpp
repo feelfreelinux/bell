@@ -9,6 +9,7 @@
 #include "AudioCodecs.h"
 #include "AudioContainers.h"
 #include "BellHTTPServer.h"
+#include "BellTar.h"
 #include "BellTask.h"
 #include "CentralAudioBuffer.h"
 #include "Compressor.h"
@@ -16,6 +17,9 @@
 #include "EncodedAudioStream.h"
 #include "HTTPClient.h"
 #include "PortAudioSink.h"
+#define DEBUG_LEVEL 4
+#include "X509Bundle.h"
+#include "mbedtls/debug.h"
 
 #include <BellDSP.h>
 #include <BellLogger.h>
@@ -53,48 +57,14 @@ class AudioPlayer : bell::Task {
 
 int main() {
   bell::setDefaultLogger();
-  bell::createDecoders();
 
-  auto dupa = std::make_unique<bell::BellHTTPServer>(8080);
-
-  dupa->registerGet("/pause", [&dupa](struct mg_connection* conn) {
-    isPaused = !isPaused;
-    return dupa->makeJsonResponse("alo");
-  });
-  auto url = "https://0n-jazz.radionetz.de/0n-jazz.aac";
-
-  auto req = bell::HTTPClient::get(url);
-  auto container = AudioContainers::guessAudioContainer(req->stream());
-  auto codec = AudioCodecs::getCodec(container.get());
-
-  uint32_t dataLen;
-  while (true) {
-    if (!codec->decode(container.get(), dataLen)) {
-      std::cout << "data invalid" << std::endl;
-    }
-
-    std::cout << dataLen << std::endl;
+  std::fstream file("system.tar", std::ios::in | std::ios::binary);
+  if (!file.is_open()) {
+    std::cout << "file not open" << std::endl;
+    return 1;
   }
 
-  audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
-
-  return 0;
-  auto task = AudioPlayer();
-
-  std::vector<uint8_t> frameData(1024 * 10);
-  /*
-  while (true) {
-    size_t bytes =audioStream->decodeFrame(frameData.data());
-    std::cout << bytes <<std::endl;
-
-    size_t toWrite = bytes;
-
-    if (!isPaused) {
-      while (toWrite > 0) {
-        toWrite -= audioBuffer->writePCM(frameData.data() + bytes - toWrite,
-                                         toWrite, 0);
-      }
-    }
-  }*/
+  BellTar::reader reader(file);
+  reader.extract_all_files("./dupa2");
   return 0;
 }
