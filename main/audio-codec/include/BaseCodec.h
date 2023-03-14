@@ -5,7 +5,14 @@
 namespace bell {
 
 class BaseCodec {
+ private:
+  uint32_t lastSampleLen, availableBytes;
+
  public:
+  uint32_t sampleRate = 44100;
+  uint8_t channelCount = 2;
+  uint8_t bitDepth = 16;
+
   /**
 	 * Setup the codec (sample rate, channel count, etc) using the specified container.
 	 */
@@ -23,7 +30,7 @@ class BaseCodec {
 	 * @param [out] outLen size of output PCM data, in bytes
 	 * @return pointer to decoded raw PCM audio data, allocated inside the codec object; nullptr on failure
 	 */
-  virtual uint8_t* decode(uint8_t* inData, uint32_t inLen,
+  virtual uint8_t* decode(uint8_t* inData, uint32_t& inLen,
                           uint32_t& outLen) = 0;
   /**
 	 * Read a single sample from the container, decode it, and return the result.

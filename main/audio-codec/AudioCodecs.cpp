@@ -1,7 +1,7 @@
 #include "AudioCodecs.h"
 #include <cstring>
-#include <map>
 #include <iostream>
+#include <map>
 
 using namespace bell;
 
@@ -64,9 +64,11 @@ std::shared_ptr<BaseCodec> AudioCodecs::getCodec(AudioCodec type) {
   }
 }
 
-std::shared_ptr<BaseCodec> AudioCodecs::getCodec(AudioContainer *container) {
+std::shared_ptr<BaseCodec> AudioCodecs::getCodec(AudioContainer* container) {
   auto codec = getCodec(container->getCodec());
-  codec->setup(container);
+  if (codec != nullptr) {
+    codec->setup(container);
+  }
   return codec;
 }
 void AudioCodecs::addCodec(AudioCodec type,

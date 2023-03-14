@@ -1,4 +1,5 @@
 #include "BellHTTPServer.h"
+#include <mutex>
 #include <regex>
 #include "CivetServer.h"
 #include "civetweb.h"
@@ -105,6 +106,7 @@ BellHTTPServer::Router::HandlerAndParams BellHTTPServer::Router::find(
 
 bool BellHTTPServer::handleGet(CivetServer* server,
                                struct mg_connection* conn) {
+  std::scoped_lock lock(this->responseMutex);
   auto requestInfo = mg_get_request_info(conn);
   auto handler = getRequestsRouter.find(requestInfo->local_uri);
 
@@ -141,6 +143,7 @@ bool BellHTTPServer::handleGet(CivetServer* server,
 
 bool BellHTTPServer::handlePost(CivetServer* server,
                                 struct mg_connection* conn) {
+  std::scoped_lock lock(this->responseMutex);
   auto requestInfo = mg_get_request_info(conn);
   auto handler = postRequestsRouter.find(requestInfo->local_uri);
 

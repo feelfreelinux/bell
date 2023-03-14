@@ -1,4 +1,5 @@
 #include "AACDecoder.h"
+#include <iostream>
 
 using namespace bell;
 
@@ -14,23 +15,36 @@ AACDecoder::~AACDecoder() {
 
 bool AACDecoder::setup(uint32_t sampleRate, uint8_t channelCount,
                        uint8_t bitDepth) {
-  frame.sampRateCore = (int)sampleRate;
-  frame.nChans = channelCount;
-  frame.bitsPerSample = bitDepth;
-  return AACSetRawBlockParams(aac, 0, &frame) == 0;
+  return true;
 }
 
-uint8_t* AACDecoder::decode(uint8_t* inData, uint32_t inLen, uint32_t& outLen) {
+bool AACDecoder::setup(AudioContainer* container) {
+  return true;
+}
+
+uint8_t* AACDecoder::decode(uint8_t* inData, uint32_t& inLen,
+                            uint32_t& outLen) {
   if (!inData)
     return nullptr;
+
   int status = AACDecode(aac, static_cast<unsigned char**>(&inData),
                          reinterpret_cast<int*>(&inLen),
                          static_cast<short*>(this->pcmData));
+
   AACGetLastFrameInfo(aac, &frame);
   if (status != ERR_AAC_NONE) {
     lastErrno = status;
     return nullptr;
   }
+
+  if (sampleRate != frame.sampRateOut) {
+    this->sampleRate = frame.sampRateOut;
+  }
+
+  if (channelCount != frame.nChans) {
+    this->channelCount = frame.nChans;
+  }
+
   outLen = frame.outputSamps * sizeof(int16_t);
   return (uint8_t*)pcmData;
 }

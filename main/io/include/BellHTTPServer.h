@@ -95,6 +95,7 @@ class BellHTTPServer : public CivetHandler {
 
   Router getRequestsRouter;
   Router postRequestsRouter;
+  std::mutex responseMutex;
   HTTPHandler notFoundHandler;
 
   bool handleGet(CivetServer* server, struct mg_connection* conn);
