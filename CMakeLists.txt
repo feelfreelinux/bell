@@ -185,6 +185,12 @@ if(NOT BELL_DISABLE_CODECS)
 
     list(APPEND SOURCES ${LIBHELIX_SOURCES})
     list(APPEND SOURCES ${ALAC_SOURCES})
+	
+	# Vorbis codec
+    if(BELL_CODEC_VORBIS)
+		list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
+		list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
+	endif()	
     
     # Opus codec
     if(BELL_CODEC_OPUS)
@@ -201,12 +207,6 @@ if(NOT BELL_DISABLE_CODECS)
         list(APPEND CODEC_FLAGS -DBELL_CODEC_OPUS)
     endif()
 	
-	# Vorbis codec
-    if(BELL_CODEC_VORBIS)
-		list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
-		list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
-	endif()	
-
     # Enable global codecs
     string(REPLACE ";" " " CODEC_FLAGS "${CODEC_FLAGS}")
     set_source_files_properties("${AUDIO_CODEC_DIR}/AudioCodecs.cpp" PROPERTIES COMPILE_FLAGS "${CODEC_FLAGS}")
@@ -246,8 +246,7 @@ if(NOT BELL_DISABLE_SINKS)
 
     # Find PortAudio if required, else remove the sink
     if(BELL_SINK_PORTAUDIO)
-        #find_package(portaudio REQUIRED)
-	find_package(Portaudio REQUIRED)
+        find_package(Portaudio REQUIRED)
         list(APPEND EXTRA_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
         list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
     else()
