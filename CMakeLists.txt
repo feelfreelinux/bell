@@ -185,12 +185,12 @@ if(NOT BELL_DISABLE_CODECS)
 
     list(APPEND SOURCES ${LIBHELIX_SOURCES})
     list(APPEND SOURCES ${ALAC_SOURCES})
-	
-	# Vorbis codec
+
+    # Vorbis codec
     if(BELL_CODEC_VORBIS)
-		list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
-		list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
-	endif()	
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
+        list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
+    endif() 
     
     # Opus codec
     if(BELL_CODEC_OPUS)
@@ -206,18 +206,18 @@ if(NOT BELL_DISABLE_CODECS)
         list(APPEND SOURCES "${AUDIO_CODEC_DIR}/OPUSDecoder.cpp")
         list(APPEND CODEC_FLAGS -DBELL_CODEC_OPUS)
     endif()
-	
+    
     # Enable global codecs
     string(REPLACE ";" " " CODEC_FLAGS "${CODEC_FLAGS}")
     set_source_files_properties("${AUDIO_CODEC_DIR}/AudioCodecs.cpp" PROPERTIES COMPILE_FLAGS "${CODEC_FLAGS}")
-else()	
-	list(REMOVE_ITEM SOURCES "${IO_DIR}/EncodedAudioStream.cpp")
-endif()	
+else()  
+    list(REMOVE_ITEM SOURCES "${IO_DIR}/EncodedAudioStream.cpp")
+endif() 
 
 if(BELL_EXTERNAL_VORBIS)
-	message(STATUS "Using external Vorbis codec ${BELL_EXTERNAL_VORBIS}")
-	list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_VORBIS})
-else()	
+    message(STATUS "Using external Vorbis codec ${BELL_EXTERNAL_VORBIS}")
+    list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_VORBIS})
+else()  
     file(GLOB TREMOR_SOURCES "external/tremor/*.c")
     list(REMOVE_ITEM TREMOR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/external/tremor/ivorbisfile_example.c")
     list(APPEND SOURCES ${TREMOR_SOURCES})
@@ -277,7 +277,7 @@ endif()
 if(WIN32)
     list(APPEND SOURCES "external/mdnssvc/mdns.c" "external/mdnssvc/mdnsd.c")
     list(APPEND EXTRA_INCLUDES "external/mdnssvc")
-endif()	
+endif() 
 
 file(GLOB CIVET_SRC "external/civetweb/*.c" "external/civetweb/*.inl" "external/civetweb/*.cpp")
 
@@ -292,12 +292,12 @@ target_include_directories(bell PUBLIC ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_
 target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC FMT_HEADER_ONLY)
 
 if(BELL_DISABLE_CODECS)
-	target_compile_definitions(bell PUBLIC BELL_DISABLE_CODECS)
-endif()	
+    target_compile_definitions(bell PUBLIC BELL_DISABLE_CODECS)
+endif() 
 
 if(BELL_VORBIS_FLOAT)
-	target_compile_definitions(bell PUBLIC BELL_VORBIS_FLOAT)
-endif()	
+    target_compile_definitions(bell PUBLIC BELL_VORBIS_FLOAT)
+endif() 
 
 if(WIN32)
     target_compile_definitions(bell PUBLIC PB_NO_STATIC_ASSERT)
