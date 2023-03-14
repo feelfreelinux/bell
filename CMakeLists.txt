@@ -200,6 +200,12 @@ if(NOT BELL_DISABLE_CODECS)
         list(APPEND SOURCES "${AUDIO_CODEC_DIR}/OPUSDecoder.cpp")
         list(APPEND CODEC_FLAGS -DBELL_CODEC_OPUS)
     endif()
+	
+	# Vorbis codec
+    if(BELL_CODEC_VORBIS)
+		list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
+		list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
+	endif()	
 
     # Enable global codecs
     string(REPLACE ";" " " CODEC_FLAGS "${CODEC_FLAGS}")
@@ -209,20 +215,13 @@ else()
 endif()	
 
 if(BELL_EXTERNAL_VORBIS)
+	message(STATUS "Using external Vorbis codec ${BELL_EXTERNAL_VORBIS}")
 	list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_VORBIS})
-	# use floating point vorbis
-	#if(BELL_VORBIS_FLOAT)
-	#	add_compile_definitions(BELL_VORBIS_FLOAT)
-	#endif()
 else()	
-	list(APPEND EXTRA_INCLUDES "main/audio-containers/include")
-	# Vorbis codec
     file(GLOB TREMOR_SOURCES "external/tremor/*.c")
     list(REMOVE_ITEM TREMOR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/external/tremor/ivorbisfile_example.c")
     list(APPEND SOURCES ${TREMOR_SOURCES})
     list(APPEND EXTRA_INCLUDES "external/tremor")
-    list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
-    list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
 endif()
 
 if(NOT BELL_DISABLE_SINKS)
