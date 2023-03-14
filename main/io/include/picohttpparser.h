@@ -29,7 +29,7 @@
 
 #include <sys/types.h>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(ssize_t)
 #define ssize_t intptr_t
 #endif
 

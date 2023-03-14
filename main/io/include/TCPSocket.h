@@ -102,7 +102,11 @@ class TCPSocket : public bell::Socket {
 
   void close() {
     if (!isClosed) {
+#ifdef _WIN32
+      closesocket(sockFd);
+#else
       ::close(sockFd);
+#endif
       sockFd = -1;
       isClosed = true;
     }

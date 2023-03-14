@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <cassert>
 
 #include "BellSocket.h"
 #include "ByteStream.h"

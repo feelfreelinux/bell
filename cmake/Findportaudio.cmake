@@ -6,27 +6,36 @@ if (PORTAUDIO_LIBRARIES AND PORTAUDIO_INCLUDE_DIRS)
   # in cache already
   set(PORTAUDIO_FOUND TRUE)
 else (PORTAUDIO_LIBRARIES AND PORTAUDIO_INCLUDE_DIRS)
+  if(WIN32)
+	set(PORTAUDIO_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/include")
 
-  find_path(PORTAUDIO_INCLUDE_DIR
-    NAMES
-      portaudio.h
-    PATHS
-      /usr/include
-      /usr/local/include
-      /opt/local/include
-      /sw/include
-  )
+    if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
+	  set(PORTAUDIO_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/portaudio_win32.lib")	  
+    else()
+      set(PORTAUDIO_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/portaudio_x64.lib")
+    endif()
+  else()
+ 	find_path(PORTAUDIO_INCLUDE_DIR
+	  NAMES
+		portaudio.h
+		PATHS
+			/usr/include
+			/usr/local/include
+			/opt/local/include
+			/sw/include
+	)
   
-  find_library(PORTAUDIO_LIBRARY
-    NAMES
-      portaudio
-    PATHS
-      /usr/lib
-      /usr/local/lib
-      /opt/local/lib
-      /sw/lib
-  )
-
+	find_library(PORTAUDIO_LIBRARY
+		NAMES
+		portaudio
+		PATHS
+			/usr/lib
+			/usr/local/lib
+			/opt/local/lib
+			/sw/lib
+	)
+  endif()
+  
   set(PORTAUDIO_INCLUDE_DIRS
     ${PORTAUDIO_INCLUDE_DIR}
   )

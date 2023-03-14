@@ -7,7 +7,7 @@ namespace bell {
 
 class MDNSService {
   public:
-	static void registerService(
+	static void* registerService(
 		const std::string &serviceName,
 		const std::string &serviceType,
 		const std::string &serviceProto,
@@ -15,6 +15,7 @@ class MDNSService {
 		int servicePort,
 		const std::map<std::string, std::string> txtData
 	);
+	static void unregisterService(void* service);
 };
 
 } // namespace bell

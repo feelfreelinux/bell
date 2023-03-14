@@ -23,11 +23,6 @@ set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, opt
 # disable json tests
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
-if(BELL_EXTERNAL_MBEDTLS)
-    set(MbedTLS_DIR ${BELL_EXTERNAL_MBEDTLS})
-    message(STATUS "Setting local mbedtls ${MbedTLS_DIR}")
-endif()
-
 # Backwards compatibility with deprecated options
 if(BELL_USE_ALSA)
     message(WARNING "Deprecated Bell options used, replace BELL_USE_ALSA with BELL_SINK_ALSA")
@@ -37,6 +32,10 @@ endif()
 if(BELL_USE_PORTAUDIO)
     message(WARNING "Deprecated Bell options used, replace BELL_USE_PORTAUDIO with BELL_SINK_PORTAUDIO")
     set(BELL_SINK_PORTAUDIO ${BELL_USE_PORTAUDIO})
+endif()
+
+if(BELL_USE_BONJOUR)
+    add_compile_definitions(BELL_USE_BONJOUR)
 endif()
 
 message(STATUS "Bell options:")
@@ -85,8 +84,6 @@ file(GLOB SOURCES
     "external/nanopb/*.c"
     "main/utilities/*.cpp" "main/utilities/*.c"
     "main/io/*.cpp" "main/io/*.c"
-    "main/audio-codec/*.cpp" "main/audio-codec/*.c"
-    "main/audio-dsp/*.cpp" "main/audio-dsp/*.c"
 )
 
 list(APPEND EXTRA_INCLUDES "main/audio-codec/include")
@@ -116,7 +113,7 @@ endif()
 if(WIN32)
     file(GLOB WIN32_PLATFORM_SOURCES "main/platform/win32/*.cpp" "main/platform/win32/*.c")
     list(APPEND SOURCES ${WIN32_PLATFORM_SOURCES})
-    list(APPEND EXTRA_INCLUDES "main/platform/include/win32")
+    list(APPEND EXTRA_INCLUDES "main/platform/win32")
 endif()
 
 # A hack to make Opus keep quiet
@@ -137,35 +134,14 @@ else()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     list(APPEND EXTRA_LIBS ${MBEDTLS_LIBRARIES} Threads::Threads)
 
-    # try to handle mbedtls when not system-wide installed
-    if(BELL_EXTERNAL_MBEDTLS)
-        if(MSVC)
-            set(MBEDTLS_RELEASE "RELEASE" CACHE STRING "local mbedtls version")
-        else()
-            set(MBEDTLS_RELEASE "NOCONFIG" CACHE STRING "local mbedtls version")
-        endif()
-
-        message(STATUS "using local mbedtls version ${MBEDTLS_RELEASE}")
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedtls IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedx509 IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedcrypto IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-    else()
-        find_package(MbedTLS REQUIRED)
-        list(APPEND EXTRA_INCLUDES ${MBEDTLS_INCLUDE_DIRS})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_LIBRARIES})
-    endif()
-
     if(MSVC)
-        add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS)
+        add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES)
         add_definitions(/wd4068 /wd4244 /wd4018 /wd4101 /wd4102 /wd4142)
     endif()
 endif()
 
 if(NOT BELL_DISABLE_CODECS)
-    file(GLOB EXTRA_SOURCES "main/audio-containers/*.cpp")
+    file(GLOB EXTRA_SOURCES "main/audio-containers/*.cpp" "main/audio-codec/*.cpp" "main/audio-codec/*.c" "main/audio-dsp/*.cpp" "main/audio-dsp/*.c")
 
     list(APPEND SOURCES "${EXTRA_SOURCES}")
     list(APPEND SOURCES "${AUDIO_CODEC_DIR}/DecoderGlobals.cpp")
@@ -209,17 +185,7 @@ if(NOT BELL_DISABLE_CODECS)
 
     list(APPEND SOURCES ${LIBHELIX_SOURCES})
     list(APPEND SOURCES ${ALAC_SOURCES})
-
-    # Vorbis codec
-    if(BELL_CODEC_VORBIS)
-        file(GLOB TREMOR_SOURCES "external/tremor/*.c")
-        list(REMOVE_ITEM TREMOR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/external/tremor/ivorbisfile_example.c")
-        list(APPEND SOURCES ${TREMOR_SOURCES})
-        list(APPEND EXTRA_INCLUDES "external/tremor")
-        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
-        list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
-    endif()
-
+    
     # Opus codec
     if(BELL_CODEC_OPUS)
         set(OPUS_INSTALL_CMAKE_CONFIG_MODULE OFF CACHE BOOL "")
@@ -238,8 +204,25 @@ if(NOT BELL_DISABLE_CODECS)
     # Enable global codecs
     string(REPLACE ";" " " CODEC_FLAGS "${CODEC_FLAGS}")
     set_source_files_properties("${AUDIO_CODEC_DIR}/AudioCodecs.cpp" PROPERTIES COMPILE_FLAGS "${CODEC_FLAGS}")
-elseif(BELL_EXTERNAL_TREMOR)
-    list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_TREMOR})
+else()	
+	list(REMOVE_ITEM SOURCES "${IO_DIR}/EncodedAudioStream.cpp")
+endif()	
+
+if(BELL_EXTERNAL_VORBIS)
+	list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_VORBIS})
+	# use floating point vorbis
+	#if(BELL_VORBIS_FLOAT)
+	#	add_compile_definitions(BELL_VORBIS_FLOAT)
+	#endif()
+else()	
+	list(APPEND EXTRA_INCLUDES "main/audio-containers/include")
+	# Vorbis codec
+    file(GLOB TREMOR_SOURCES "external/tremor/*.c")
+    list(REMOVE_ITEM TREMOR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/external/tremor/ivorbisfile_example.c")
+    list(APPEND SOURCES ${TREMOR_SOURCES})
+    list(APPEND EXTRA_INCLUDES "external/tremor")
+    list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
+    list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
 endif()
 
 if(NOT BELL_DISABLE_SINKS)
@@ -264,19 +247,10 @@ if(NOT BELL_DISABLE_SINKS)
 
     # Find PortAudio if required, else remove the sink
     if(BELL_SINK_PORTAUDIO)
-        if(WIN32)
-            list(APPEND EXTRA_INCLUDES "external/portaudio/include")
-
-            if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/portaudio_win32.lib")
-            else()
-                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/external/portaudio/portaudio_x64.lib")
-            endif()
-        else()
-            find_package(portaudio REQUIRED)
-            list(APPEND EXTRA_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
-            list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
-        endif()
+        #find_package(portaudio REQUIRED)
+	find_package(Portaudio REQUIRED)
+        list(APPEND EXTRA_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
     else()
         list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/PortAudioSink.cpp")
     endif()
@@ -302,11 +276,15 @@ else()
     list(APPEND EXTRA_INCLUDES "external/fmt/include")
 endif()
 
+if(WIN32)
+    list(APPEND SOURCES "external/mdnssvc/mdns.c" "external/mdnssvc/mdnsd.c")
+    list(APPEND EXTRA_INCLUDES "external/mdnssvc")
+endif()	
+
 file(GLOB CIVET_SRC "external/civetweb/*.c" "external/civetweb/*.inl" "external/civetweb/*.cpp")
 
 list(APPEND SOURCES ${CIVET_SRC})
 list(APPEND EXTRA_INCLUDES "external/civetweb/include") 
-
 
 add_library(bell STATIC ${SOURCES})
 
@@ -314,6 +292,14 @@ add_library(bell STATIC ${SOURCES})
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
 target_include_directories(bell PUBLIC ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC FMT_HEADER_ONLY)
+
+if(BELL_DISABLE_CODECS)
+	target_compile_definitions(bell PUBLIC BELL_DISABLE_CODECS)
+endif()	
+
+if(BELL_VORBIS_FLOAT)
+	target_compile_definitions(bell PUBLIC BELL_VORBIS_FLOAT)
+endif()	
 
 if(WIN32)
     target_compile_definitions(bell PUBLIC PB_NO_STATIC_ASSERT)
