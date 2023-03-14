@@ -13,6 +13,7 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <mutex>
 #include <unordered_map>
 #include "CivetServer.h"
 #include "civetweb.h"
