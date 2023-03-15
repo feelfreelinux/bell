@@ -6,11 +6,12 @@
 #include <ifaddrs.h>
 
 #if __has_include("avahi-client/client.h")
-#define BELL_HAS_AVAHI  1
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>
 #include <avahi-common/alternative.h>
 #include <avahi-common/simple-watch.h>
+#elif !defined(BELL_DISABLE_AVAHI)
+#define BELL_DISABLE_AVAHI    
 #endif
 
 #include "mdnssvc.h"
@@ -19,7 +20,7 @@
 
 using namespace bell;
 
-#ifdef BELL_HAS_AVAHI
+#ifndef BELL_DISABLE_AVAHI
 static AvahiClient *avahiClient = NULL;
 static AvahiSimplePoll *avahiPoll = NULL;
 static void groupHandler(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata) { }
@@ -40,7 +41,7 @@ void* MDNSService::registerService(
     int servicePort,
     const std::map<std::string, std::string> txtData
 ) {
-#ifdef BELL_HAS_AVAHI
+#ifndef BELL_DISABLE_AVAHI
     // try avahi first if available
     if (!avahiPoll) {
        avahiPoll = avahi_simple_poll_new();
@@ -149,7 +150,7 @@ void* MDNSService::registerService(
 }
 
 void MDNSService::unregisterService(void* service) {
-#ifdef BELL_HAS_AVAHI
+#ifndef BELL_DISABLE_AVAHI
     if (avahiClient) {
         avahi_entry_group_free((AvahiEntryGroup*)service);
     } else         

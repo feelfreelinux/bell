@@ -282,6 +282,15 @@ list(APPEND EXTRA_INCLUDES "external/civetweb/include")
 
 add_library(bell STATIC ${SOURCES})
 
+# Add Apple Bonjour compatibility library for Linux
+if(UNIX AND NOT APPLE)
+    if (BELL_DISABLE_AVAHI)
+        add_compile_definitions(BELL_DISABLE_AVAHI)
+    else()
+        list(APPEND EXTRA_LIBS avahi-client avahi-common)
+    endif()
+endif()
+
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
 target_include_directories(bell PUBLIC ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
