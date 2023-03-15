@@ -95,7 +95,7 @@ void header_set_checksum(tar_header* header) {
 }
 
 void header_set_filetype(tar_header* header, tar_file_type_t file_type) {
-  std::sprintf(header->typeflag, "%c", file_type);
+  header->typeflag[0] = file_type;
 }
 
 tar_file_type_t header_get_filetype(tar_header* header) {
