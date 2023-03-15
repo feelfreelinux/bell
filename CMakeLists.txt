@@ -34,10 +34,6 @@ if(BELL_USE_PORTAUDIO)
     set(BELL_SINK_PORTAUDIO ${BELL_USE_PORTAUDIO})
 endif()
 
-if(BELL_USE_BONJOUR)
-    add_compile_definitions(BELL_USE_BONJOUR)
-endif()
-
 message(STATUS "Bell options:")
 message(STATUS "    Disable all codecs: ${BELL_DISABLE_CODECS}")
 
@@ -274,7 +270,7 @@ else()
     list(APPEND EXTRA_INCLUDES "external/fmt/include")
 endif()
 
-if(WIN32)
+if(WIN32 OR UNIX)
     list(APPEND SOURCES "external/mdnssvc/mdns.c" "external/mdnssvc/mdnsd.c")
     list(APPEND EXTRA_INCLUDES "external/mdnssvc")
 endif() 

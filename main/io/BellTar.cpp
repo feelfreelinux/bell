@@ -9,7 +9,9 @@ using namespace bell::BellTar;
 #include <cstdlib>  // for rand
 #include <cstring>  // for strlen and memset
 #include <ctime>    // for time
+#ifdef _WIN32
 #include <direct.h>
+#endif
 
 #ifdef ENABLE_LOGGING
 #define LOG printf
