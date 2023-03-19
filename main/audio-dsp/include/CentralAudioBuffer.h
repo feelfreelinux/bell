@@ -5,11 +5,16 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <functional>
 
 #include "BellUtils.h"
 #include "CircularBuffer.h"
 #include "StreamInfo.h"
 #include "WrappedSemaphore.h"
+
+#ifdef _WIN32
+#define __attribute__(X)
+#endif
 
 typedef std::function<void(std::string)> shutdownEventHandler;
 

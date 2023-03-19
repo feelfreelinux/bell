@@ -18,15 +18,27 @@ class BinaryStream {
 
   template <typename T>
   T swap16(T value) {
+#ifdef _WIN32
+    return _byteswap_ushort(value);
+#else
     return __builtin_bswap16(value);
+#endif
   }
   template <typename T>
   T swap32(T value) {
+#ifdef _WIN32
+    return _byteswap_ulong(value);
+#else
     return __builtin_bswap32(value);
+#endif
   }
   template <typename T>
   T swap64(T value) {
+#ifdef _WIN32
+    return _byteswap_uint64(value);
+#else
     return __builtin_bswap64(value);
+#endif
   }
 
  public:

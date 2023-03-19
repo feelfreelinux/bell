@@ -2,7 +2,11 @@
 #define EUPHONIUM_BELL_UTILS
 
 #include <string.h>
+#ifdef _WIN32
+#include <WinSock2.h>
+#else
 #include <sys/time.h>
+#endif
 #include <random>
 #include <vector>
 
@@ -21,10 +25,26 @@ struct tv {
   tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec){};
   static tv now() {
     tv timestampNow;
+#if _WIN32
+    static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
+
+    SYSTEMTIME  system_time;
+    FILETIME    file_time;
+    uint64_t    time;
+
+    GetSystemTime(&system_time);
+    SystemTimeToFileTime(&system_time, &file_time);
+    time = ((uint64_t)file_time.dwLowDateTime);
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    timestampNow.sec = (long)((time - EPOCH) / 10000000L);
+    timestampNow.usec = (long)(system_time.wMilliseconds * 1000);
+#else
     timeval t;
     gettimeofday(&t, NULL);
     timestampNow.sec = t.tv_sec;
     timestampNow.usec = t.tv_usec;
+#endif
     return timestampNow;
   }
   int32_t sec;

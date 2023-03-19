@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <istream>
+#include <cstring>
 #include "CodecType.h"
 #include "StreamInfo.h"
 

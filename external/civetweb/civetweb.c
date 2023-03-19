@@ -358,7 +358,6 @@ static bool cw_is_thread_null(cw_thread_handle_t* handle) {
 static void cw_stop_thread(cw_thread_handle_t* handle) {
   handle->task_handle = NULL;
 }
-
 #endif
 
 
@@ -629,6 +628,7 @@ mg_static_assert(sizeof(size_t) == 4 || sizeof(size_t) == 8,
 #include <windows.h>
 #include <winsock2.h> /* DTL add for SO_EXCLUSIVE */
 #include <ws2tcpip.h>
+#include <stdbool.h>
 
 typedef const char *SOCK_OPT_TYPE;
 
@@ -776,6 +776,7 @@ typedef struct {
 } pthread_mutex_t;
 typedef DWORD pthread_key_t;
 typedef HANDLE pthread_t;
+typedef pthread_t cw_thread_handle_t;
 typedef struct {
 	pthread_mutex_t threadIdSec;
 	struct mg_workerTLS *waiting_thread; /* The chain of threads */
@@ -924,6 +925,13 @@ struct mg_file;
 
 static const char *mg_fgets(char *buf, size_t size, struct mg_file *filep);
 
+static bool cw_is_thread_null(cw_thread_handle_t* handle) {
+	return *handle == 0;
+}
+
+static void cw_stop_thread(cw_thread_handle_t* handle) {
+	*handle = 0;
+}
 
 /* POSIX dirent interface */
 struct dirent {

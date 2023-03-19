@@ -9,11 +9,18 @@ using namespace bell::BellTar;
 #include <cstdlib>  // for rand
 #include <cstring>  // for strlen and memset
 #include <ctime>    // for time
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 #ifdef ENABLE_LOGGING
 #define LOG printf
 #else
+#ifdef _WIN32
+#define LOG(fmt, ...) ((void)0)
+#else
 #define LOG(fmt, args...) ((void)0)
+#endif
 #endif
 
 const char FILL_CHAR = '\0';
@@ -52,7 +59,7 @@ void header_set_metadata(tar_header* header) {
   std::memset(header, 0, sizeof(tar_header));
 
   std::sprintf(header->magic, "ustar");
-  std::sprintf(header->mtime, "%011lo", std::time(NULL));
+  std::sprintf(header->mtime, "%011lo", (unsigned long) std::time(NULL));
   std::sprintf(header->mode, "%07o", 0644);
   std::sprintf(header->uname, "unkown");  // ... a bit random
   std::sprintf(header->gname, "users");
@@ -88,7 +95,7 @@ void header_set_checksum(tar_header* header) {
 }
 
 void header_set_filetype(tar_header* header, tar_file_type_t file_type) {
-  std::sprintf(header->typeflag, "%c", file_type);
+  header->typeflag[0] = file_type;
 }
 
 tar_file_type_t header_get_filetype(tar_header* header) {
@@ -284,7 +291,11 @@ void reader::extract_all_files(std::string dest_directory) {
       while ((pos = path.find('/', pos)) != std::string::npos) {
         std::string dir = path.substr(0, pos);
         // Create the directory if it doesn't exist
+#ifdef _WIN32
+        mkdir(dir.c_str());
+#else
         mkdir(dir.c_str(), 0777);
+#endif
         pos++;
       }
 

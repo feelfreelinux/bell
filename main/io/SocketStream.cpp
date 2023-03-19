@@ -1,7 +1,5 @@
 #include "SocketStream.h"
 
-#define closesocket (::close)
-
 using namespace bell;
 
 int SocketBuffer::open(const std::string& hostname, int port, bool isSSL) {

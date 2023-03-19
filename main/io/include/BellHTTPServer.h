@@ -13,6 +13,7 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <mutex>
 #include <unordered_map>
 #include "CivetServer.h"
 #include "civetweb.h"
@@ -74,6 +75,9 @@ class BellHTTPServer : public CivetHandler {
 
     HandlerAndParams find(const std::string& route);
   };
+
+  std::vector<int> getListeningPorts() { return server->getListeningPorts(); };
+  void close() { server->close(); }
 
   std::unique_ptr<HTTPResponse> makeJsonResponse(const std::string& json, int status = 200);
   std::unique_ptr<HTTPResponse> makeEmptyResponse();
