@@ -39,3 +39,7 @@ void* MDNSService::registerService(
     TXTRecordDeallocate(&txtRecord);
     return ref;
 }
+
+void MDNSService::unregisterService(void* ref) {
+    DNSServiceRefDeallocate((DNSServiceRef)ref);
+}
