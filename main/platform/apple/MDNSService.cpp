@@ -8,7 +8,7 @@ using namespace bell;
  * MacOS implementation of MDNSService.
  * @see https://developer.apple.com/documentation/dnssd/1804733-dnsserviceregister
  **/
-void MDNSService::registerService(
+void* MDNSService::registerService(
     const std::string& serviceName,
     const std::string& serviceType,
     const std::string& serviceProto,
@@ -16,14 +16,14 @@ void MDNSService::registerService(
     int servicePort,
     const std::map<std::string, std::string> txtData
 ) {
-    DNSServiceRef ref = NULL;
+    DNSServiceRef* ref = new DNSServiceRef();
     TXTRecordRef txtRecord;
     TXTRecordCreate(&txtRecord, 0, NULL);
     for (auto& data : txtData) {
         TXTRecordSetValue(&txtRecord, data.first.c_str(), data.second.size(), data.second.c_str());
     }
     DNSServiceRegister(
-        &ref, /* sdRef */
+        ref, /* sdRef */
         0, /* flags */
         0, /* interfaceIndex */
         serviceName.c_str(), /* name */
@@ -37,4 +37,5 @@ void MDNSService::registerService(
         NULL /* context */
     );
     TXTRecordDeallocate(&txtRecord);
+    return ref;
 }
