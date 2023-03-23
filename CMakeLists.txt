@@ -304,6 +304,6 @@ if(BELL_VORBIS_FLOAT)
     target_compile_definitions(bell PUBLIC BELL_VORBIS_FLOAT)
 endif() 
 
-if(WIN32)
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     target_compile_definitions(bell PUBLIC PB_NO_STATIC_ASSERT)
 endif()
