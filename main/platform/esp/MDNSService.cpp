@@ -9,7 +9,7 @@ using namespace bell;
  * ESP32 implementation of MDNSService
  * @see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mdns.html
  **/
-void MDNSService::registerService(
+void* MDNSService::registerService(
     const std::string& serviceName,
     const std::string& serviceType,
     const std::string& serviceProto,
@@ -34,4 +34,5 @@ void MDNSService::registerService(
         txtItems.data(), /* txt */
         txtItems.size() /* num_items */
     );
+    return nullptr;
 }
