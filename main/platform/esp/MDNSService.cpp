@@ -19,6 +19,7 @@ public:
  * ESP32 implementation of MDNSService
  * @see https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/mdns.html
  **/
+
 std::unique_ptr<MDNSService> MDNSService::registerService(
     const std::string& serviceName,
     const std::string& serviceType,
