@@ -11,7 +11,7 @@
 #include <avahi-common/alternative.h>
 #include <avahi-common/simple-watch.h>
 #elif !defined(BELL_DISABLE_AVAHI)
-#define BELL_DISABLE_AVAHI    
+#define BELL_DISABLE_AVAHI
 #endif
 
 #include "mdnssvc.h"
@@ -21,19 +21,55 @@
 using namespace bell;
 
 #ifndef BELL_DISABLE_AVAHI
-static AvahiClient *avahiClient = NULL;
-static AvahiSimplePoll *avahiPoll = NULL;
 static void groupHandler(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata) { }
 #endif
 
-static in_addr_t host = INADDR_ANY;
-static struct mdnsd *mdnsServer;
+class implMDNSService : public MDNSService {
+private:
+#ifndef BELL_DISABLE_AVAHI
+    AvahiEntryGroup *avahiGroup;
+#endif
+    struct mdns_service* service;
+
+public:
+#ifndef BELL_DISABLE_AVAHI
+    static AvahiClient *avahiClient;
+    static AvahiSimplePoll *avahiPoll;
+#endif
+    static struct mdnsd* mdnsServer;
+    static in_addr_t host;
+
+    implMDNSService(struct mdns_service* service) : service(service) { };
+#ifndef BELL_DISABLE_AVAHI    
+    implMDNSService(AvahiEntryGroup *avahiGroup) : avahiGroup(avahiGroup) { };
+#endif    
+    void unregisterService();
+};
+
+struct mdnsd* implMDNSService::mdnsServer = NULL;
+in_addr_t implMDNSService::host = INADDR_ANY;
+#ifndef BELL_DISABLE_AVAHI
+AvahiClient* implMDNSService::avahiClient = NULL;
+AvahiSimplePoll* implMDNSService::avahiPoll = NULL;
+#endif
 
 /**
  * Linux implementation of MDNSService using avahi.
  * @see https://www.avahi.org/doxygen/html/
  **/
-void* MDNSService::registerService(
+
+void implMDNSService::unregisterService() {
+#ifndef BELL_DISABLE_AVAHI
+    if (avahiGroup) {
+        avahi_entry_group_free(avahiGroup);
+    } else
+#endif
+    {
+        mdns_service_remove(implMDNSService::mdnsServer, service);
+    }
+}
+
+std::unique_ptr<MDNSService> MDNSService::registerService(
     const std::string& serviceName,
     const std::string& serviceType,
     const std::string& serviceProto,
@@ -43,22 +79,22 @@ void* MDNSService::registerService(
 ) {
 #ifndef BELL_DISABLE_AVAHI
     // try avahi first if available
-    if (!avahiPoll) {
-       avahiPoll = avahi_simple_poll_new();
+    if (!implMDNSService::avahiPoll) {
+       implMDNSService::avahiPoll = avahi_simple_poll_new();
     }
 
-    if (avahiPoll && !avahiClient) {
-       avahiClient = avahi_client_new(avahi_simple_poll_get(avahiPoll),
+    if (implMDNSService::avahiPoll && !implMDNSService::avahiClient) {
+       implMDNSService::avahiClient = avahi_client_new(avahi_simple_poll_get(implMDNSService::avahiPoll),
                                       AvahiClientFlags(0), NULL, NULL, NULL);
     }
-
+    
     AvahiEntryGroup *avahiGroup;
 
-    if (avahiClient &&
-        (avahiGroup = avahi_entry_group_new(avahiClient, groupHandler, NULL)) == NULL) {
+    if (implMDNSService::avahiClient &&
+        (avahiGroup = avahi_entry_group_new(implMDNSService::avahiClient, groupHandler, NULL)) == NULL) {
         BELL_LOG(error, "MDNS", "cannot create service %s", serviceName.c_str());
     }
-
+    
     if (avahiGroup) {
         AvahiStringList* avahiTxt = NULL;
 
@@ -80,7 +116,7 @@ void* MDNSService::registerService(
             avahi_entry_group_free(avahiGroup);
         } else {
             BELL_LOG(info, "MDNS", "using avahi for %s", serviceName.c_str());
-            return avahiGroup;
+            return std::make_unique<implMDNSService>(avahiGroup);
         }
     }
 #endif
@@ -92,39 +128,39 @@ void* MDNSService::registerService(
     if (serviceHost.size()) {
         struct hostent *h = gethostbyname(serviceHost.c_str());
         if (h) {
-            memcpy(&host, h->h_addr_list[0], 4);
+            memcpy(&implMDNSService::host, h->h_addr_list[0], 4);
         }
     }
 
     // try go guess ifaddr if we have nothing as listening to INADDR_ANY usually does not work
-	if (host == INADDR_ANY && getifaddrs(&ifaddr) != -1) {
+	if (implMDNSService::host == INADDR_ANY && getifaddrs(&ifaddr) != -1) {
         for (struct ifaddrs* ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
             if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET ||
                 !(ifa->ifa_flags & IFF_UP) || !(ifa->ifa_flags & IFF_MULTICAST) ||
                 (ifa->ifa_flags & IFF_LOOPBACK)) continue;
 
-            host = ((struct sockaddr_in*)ifa->ifa_addr)->sin_addr.s_addr;
+            implMDNSService::host = ((struct sockaddr_in*)ifa->ifa_addr)->sin_addr.s_addr;
             break;
         }
         freeifaddrs(ifaddr);
 	}
 
-    if (!mdnsServer) {
+    if (!implMDNSService::mdnsServer) {
         char hostname[256];
         struct in_addr addr;
 
         // it's the same, but who knows..
-        addr.s_addr = host;
+        addr.s_addr = implMDNSService::host;
         gethostname(hostname, sizeof(hostname));
 
-        mdnsServer = mdnsd_start(addr, false);
+        implMDNSService::mdnsServer = mdnsd_start(addr, false);
 
-        if (mdnsServer) {
-            mdnsd_set_hostname(mdnsServer, hostname, addr);
+        if (implMDNSService::mdnsServer) {
+            mdnsd_set_hostname(implMDNSService::mdnsServer, hostname, addr);
         }
     }
 
-    if (mdnsServer) {
+    if (implMDNSService::mdnsServer) {
         std::vector<const char*> txt;
         std::vector<std::unique_ptr<std::string>> txtStr;
 
@@ -138,24 +174,16 @@ void* MDNSService::registerService(
         std::string type(serviceType + "." + serviceProto + ".local");
 
         BELL_LOG(info, "MDNS", "using build-in mDNS for %s", serviceName.c_str());
-        struct mdns_service* mdnsService = mdnsd_register_svc(mdnsServer, serviceName.c_str(),
+        struct mdns_service* mdnsService = mdnsd_register_svc(implMDNSService::mdnsServer, serviceName.c_str(),
                                                               type.c_str(), servicePort, NULL, txt.data());
         if (mdnsService) {
-            return mdnsService;
+            auto service = mdnsd_register_svc(implMDNSService::mdnsServer, serviceName.c_str(),
+                                      type.c_str(), servicePort, NULL, txt.data());
+
+            return std::make_unique<implMDNSService>(service);
         }
     }
 
     BELL_LOG(error, "MDNS", "cannot start any mDNS listener for %s", serviceName.c_str());
     return NULL;
-}
-
-void MDNSService::unregisterService(void* service) {
-#ifndef BELL_DISABLE_AVAHI
-    if (avahiClient) {
-        avahi_entry_group_free((AvahiEntryGroup*)service);
-    } else         
-#endif
-    {
-        mdns_service_remove(mdnsServer, (mdns_service*)service);
-    }
 }

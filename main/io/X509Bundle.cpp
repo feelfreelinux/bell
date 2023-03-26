@@ -5,6 +5,10 @@ using namespace bell::X509Bundle;
 static mbedtls_x509_crt s_dummy_crt;
 static bool s_should_verify_certs = false;
 
+#ifndef MBEDTLS_PRIVATE
+#define MBEDTLS_PRIVATE(member) member
+#endif
+
 int bell::X509Bundle::crtCheckCertificate(mbedtls_x509_crt* child,
                                           const uint8_t* pub_key_buf,
                                           size_t pub_key_len) {
