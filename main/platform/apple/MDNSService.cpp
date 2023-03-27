@@ -10,7 +10,7 @@ private:
 
 public:
    implMDNSService(DNSServiceRef* service) : service(service) { }
-   void unregisterService() { DNSServiceRefDeallocate(service); }
+   void unregisterService() { DNSServiceRefDeallocate(*service); }
 };
 
 /**
