@@ -173,7 +173,7 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
         txt.push_back(NULL);
         std::string type(serviceType + "." + serviceProto + ".local");
 
-        BELL_LOG(info, "MDNS", "using build-in mDNS for %s", serviceName.c_str());
+        BELL_LOG(info, "MDNS", "using built-in mDNS for %s", serviceName.c_str());
         struct mdns_service* mdnsService = mdnsd_register_svc(implMDNSService::mdnsServer, serviceName.c_str(),
                                                               type.c_str(), servicePort, NULL, txt.data());
         if (mdnsService) {
