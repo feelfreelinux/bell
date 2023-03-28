@@ -58,16 +58,23 @@ class URLParser {
 
   std::string schema = "http";
   std::string path;
-  std::regex urlParseRegex = std::regex(
-      "^(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(\\?(?:[^#]*))?(#(?:.*))?");
+#ifdef BELL_DISABLE_REGEX
+  void parse(const char* url, std::vector<std::string>& match);
+#else  
+  static const std::regex urlParseRegex;
+#endif
 
   static URLParser parse(const std::string& url) {
     URLParser parser;
 
     // apply parser.urlParseRegex to url
+#ifdef BELL_DISABLE_REGEX
+    std::vector<std::string> match(6);
+    parser.parse(url.c_str(), match);
+#else    
     std::cmatch match;
-
     std::regex_match(url.c_str(), match, parser.urlParseRegex);
+#endif    
 
     if (match.size() < 3) {
       throw std::invalid_argument("Invalid URL");
