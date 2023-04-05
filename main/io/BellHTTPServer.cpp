@@ -1,6 +1,7 @@
 #include "BellHTTPServer.h"
 #include <mutex>
 #include <regex>
+#include <cassert>
 #include "CivetServer.h"
 #include "civetweb.h"
 
@@ -195,7 +196,8 @@ std::unique_ptr<BellHTTPServer::HTTPResponse> BellHTTPServer::makeJsonResponse(
   return response;
 }
 
-std::unique_ptr<BellHTTPServer::HTTPResponse> BellHTTPServer::makeEmptyResponse() {
+std::unique_ptr<BellHTTPServer::HTTPResponse>
+BellHTTPServer::makeEmptyResponse() {
   auto response = std::make_unique<BellHTTPServer::HTTPResponse>();
   return response;
 }
@@ -225,8 +227,10 @@ void BellHTTPServer::registerNotFound(HTTPHandler handler) {
 
 std::unordered_map<std::string, std::string> BellHTTPServer::extractParams(
     struct mg_connection* conn) {
+  void* data = mg_get_user_connection_data(conn);
+  assert(data != nullptr);
   std::unordered_map<std::string, std::string>& params =
-      *(std::unordered_map<std::string, std::string>*)
-          mg_get_user_connection_data(conn);
+      *(std::unordered_map<std::string, std::string>*)data;
+
   return params;
 }
