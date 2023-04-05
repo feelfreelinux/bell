@@ -51,15 +51,14 @@ void* MDNSService::registerService(
        avahiClient = avahi_client_new(avahi_simple_poll_get(avahiPoll),
                                       AvahiClientFlags(0), NULL, NULL, NULL);
     }
-
-    AvahiEntryGroup *avahiGroup;
+    AvahiEntryGroup *avahiGroup = NULL;
 
     if (avahiClient &&
         (avahiGroup = avahi_entry_group_new(avahiClient, groupHandler, NULL)) == NULL) {
         BELL_LOG(error, "MDNS", "cannot create service %s", serviceName.c_str());
     }
 
-    if (avahiGroup) {
+    if (avahiGroup != NULL) {
         AvahiStringList* avahiTxt = NULL;
 
         for (auto& [key, value] : txtData) {
