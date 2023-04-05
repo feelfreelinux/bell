@@ -7,6 +7,7 @@ project(bell)
 option(BELL_DISABLE_CODECS "Disable the entire audio codec wrapper" OFF)
 option(BELL_CODEC_AAC "Support libhelix-aac codec" ON)
 option(BELL_CODEC_MP3 "Support libhelix-mp3 codec" ON)
+option(BELL_DISABLE_MQTT "Disable the built-in MQTT wrapper" OFF)
 option(BELL_CODEC_VORBIS "Support tremor Vorbis codec" ON)
 option(BELL_CODEC_ALAC "Support Apple ALAC codec" ON)
 option(BELL_CODEC_OPUS "Support Opus codec" ON)
@@ -53,6 +54,7 @@ if(NOT BELL_DISABLE_SINKS)
 endif()
 
 message(STATUS "    Disable cJSON and JSONObject: ${BELL_DISABLE_CJSON}")
+message(STATUS "    Disable MQTT: ${BELL_DISABLE_MQTT}")
 
 # Include nanoPB library
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/nanopb/extra")
@@ -134,6 +136,12 @@ else()
         add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES)
         add_definitions(/wd4068 /wd4244 /wd4018 /wd4101 /wd4102 /wd4142)
     endif()
+endif()
+
+if (NOT BELL_DISABLE_MQTT)        
+    file(GLOB MQTT_SOURCES "external/mqtt/*.c")
+    list(APPEND SOURCES ${MQTT_SOURCES})
+    list(APPEND EXTRA_INCLUDES "external/mqtt/include")
 endif()
 
 if(NOT BELL_DISABLE_CODECS)

@@ -9,8 +9,10 @@
 #include "AudioCodecs.h"
 #include "AudioContainers.h"
 #include "BellHTTPServer.h"
+#include "BellMQTTClient.h"
 #include "BellTar.h"
 #include "BellTask.h"
+#include "BellUtils.h"
 #include "CentralAudioBuffer.h"
 #include "Compressor.h"
 #include "DecoderGlobals.h"
@@ -58,13 +60,16 @@ class AudioPlayer : bell::Task {
 int main() {
   bell::setDefaultLogger();
 
-  std::fstream file("system.tar", std::ios::in | std::ios::binary);
-  if (!file.is_open()) {
-    std::cout << "file not open" << std::endl;
-    return 1;
-  }
+  MQTTClient client;
 
-  BellTar::reader reader(file);
-  reader.extract_all_files("./dupa2");
+  BELL_LOG(info, "cock", "Starting MQTT client");
+  client.connect("192.168.1.17", 1883);
+  client.sync();
+
+  BELL_LOG(info, "cock", "Connected");
+  client.publish("dupa", "czorna");
+  client.sync();
+  BELL_LOG(info, "cock", "Published?");
+
   return 0;
 }

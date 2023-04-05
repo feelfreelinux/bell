@@ -14,6 +14,7 @@ class Socket {
   virtual size_t read(uint8_t* buf, size_t len) = 0;
   virtual bool isOpen() = 0;
   virtual void close() = 0;
+  virtual int getFd() = 0;
 };
 }  // namespace bell
 
