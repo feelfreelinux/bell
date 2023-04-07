@@ -29,7 +29,6 @@ void bell::MQTTClient::connect(const std::string& host, uint16_t port,
   // Pass pointer to this object to the publish callback
   client.publish_response_callback_state = this;
 
-  BELL_LOG(debug, "mqtt", "Connecting to MQTT broker");
   if (mqtt_init(&client, socket.getFd(), sendbuf, sizeof(sendbuf), recvbuf,
                 sizeof(recvbuf), cPublishCallback) != MQTT_OK) {
     throw std::runtime_error("Cannot initialize MQTT structure");

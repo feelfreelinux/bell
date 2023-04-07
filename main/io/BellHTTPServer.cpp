@@ -2,6 +2,7 @@
 #include <mutex>
 #include <regex>
 #include <cassert>
+#include "BellLogger.h"
 #include "CivetServer.h"
 #include "civetweb.h"
 
