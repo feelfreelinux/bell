@@ -105,10 +105,10 @@ class CentralAudioBuffer {
     }
   }
 
-  AudioChunk currentChunk = {.pcmSize = 0};
+  AudioChunk currentChunk = { };
   bool hasChunk = false;
 
-  AudioChunk lastReadChunk = {.pcmSize = 0};
+  AudioChunk lastReadChunk = { };
 
   AudioChunk* readChunk() {
     std::scoped_lock lock(this->dataAccessMutex);

@@ -21,6 +21,9 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#ifdef __sun
+#include <sys/filio.h>
+#endif
 #endif
 #include <BellLogger.h>
 #include <fstream>
