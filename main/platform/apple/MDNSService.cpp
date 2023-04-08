@@ -4,11 +4,20 @@
 
 using namespace bell;
 
+class implMDNSService : public MDNSService {
+private:
+   DNSServiceRef* service;
+
+public:
+   implMDNSService(DNSServiceRef* service) : service(service) { }
+   void unregisterService() { DNSServiceRefDeallocate(*service); }
+};
+
 /**
  * MacOS implementation of MDNSService.
  * @see https://developer.apple.com/documentation/dnssd/1804733-dnsserviceregister
  **/
-void* MDNSService::registerService(
+std::unique_ptr<MDNSService> MDNSService::registerService(
     const std::string& serviceName,
     const std::string& serviceType,
     const std::string& serviceProto,
@@ -37,9 +46,5 @@ void* MDNSService::registerService(
         NULL /* context */
     );
     TXTRecordDeallocate(&txtRecord);
-    return ref;
-}
-
-void MDNSService::unregisterService(void* ref) {
-    DNSServiceRefDeallocate((DNSServiceRef)ref);
+    return std::make_unique<implMDNSService>(ref);
 }

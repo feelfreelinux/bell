@@ -15,7 +15,9 @@
 #include "ByteStream.h"
 #include "SocketStream.h"
 #include "URLParser.h"
+#ifndef BELL_DISABLE_FMT
 #include "fmt/core.h"
+#endif
 #include "picohttpparser.h"
 
 namespace bell {
@@ -29,11 +31,19 @@ class HTTPClient {
   // Helper over ValueHeader, formatting a HTTP bytes range
   struct RangeHeader {
     static ValueHeader range(int32_t from, int32_t to) {
+#ifndef BELL_DISABLE_FMT        
       return ValueHeader{"Range", fmt::format("bytes={}-{}", from, to)};
+#else      
+      return ValueHeader{"Range", "bytes=" + std::to_string(from) + "-" + std::to_string(to)};
+#endif  
     }
 
     static ValueHeader last(int32_t nbytes) {
+#ifndef BELL_DISABLE_FMT        
       return ValueHeader{"Range", fmt::format("bytes=-{}", nbytes)};
+#else      
+      return ValueHeader{"Range", "bytes=-" + std::to_string(nbytes)};
+#endif  
     }
   };
 

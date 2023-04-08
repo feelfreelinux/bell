@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef ESP_PLATFORM
 #include <bit>
+#endif
 #include <iostream>
 #include <vector>
 

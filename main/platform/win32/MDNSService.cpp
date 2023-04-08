@@ -17,13 +17,23 @@
 
 using namespace bell;
 
-static struct mdnsd *mdnsService;
+class implMDNSService : public MDNSService {
+private:
+    struct mdns_service* service;
+    void unregisterService(void) { mdns_service_remove(implMDNSService::mdnsServer, service); };
+    
+public:
+    static struct mdnsd* mdnsServer;
+    implMDNSService(struct mdns_service* service) : service(service) { };
+};
 
 /**
  * Win32 implementation of MDNSService
  **/
 
-void* MDNSService::registerService(
+struct mdnsd* implMDNSService::mdnsServer = NULL;
+
+std::unique_ptr<MDNSService> MDNSService::registerService(
     const std::string& serviceName,
     const std::string& serviceType,
     const std::string& serviceProto,
@@ -31,7 +41,7 @@ void* MDNSService::registerService(
     int servicePort,
     const std::map<std::string, std::string> txtData
 ) {
-    if (!mdnsService) {
+    if (!implMDNSService::mdnsServer) {
         char hostname[128];
         gethostname(hostname, sizeof(hostname));
 
@@ -49,14 +59,14 @@ void* MDNSService::registerService(
                 if (adapter->FirstGatewayAddress && unicast->Address.lpSockaddr->sa_family == AF_INET) {
                     host = (struct sockaddr_in*)unicast->Address.lpSockaddr;
                     BELL_LOG(info, "mdns", "mDNS on interface %s", inet_ntoa(host->sin_addr));
-                    mdnsService = mdnsd_start(host->sin_addr, false);
+                    implMDNSService::mdnsServer = mdnsd_start(host->sin_addr, false);
                     break;
                 }
             }
         }
 
-        assert(mdnsService);
-        mdnsd_set_hostname(mdnsService, hostname, host->sin_addr);
+        assert(implMDNSService::mdnsServer);
+        mdnsd_set_hostname(implMDNSService::mdnsServer, hostname, host->sin_addr);
         free(adapters);
     }
 
@@ -71,9 +81,9 @@ void* MDNSService::registerService(
     txt.push_back(NULL);
 
     std::string type(serviceType + "." + serviceProto + ".local");
-    return mdnsd_register_svc(mdnsService, serviceName.c_str(), type.c_str(), servicePort, NULL, txt.data());
-}
 
-void MDNSService::unregisterService(void* service) {
-    mdns_service_remove(mdnsService, (mdns_service*)service);
+    auto service = mdnsd_register_svc(implMDNSService::mdnsServer, serviceName.c_str(), 
+                                      type.c_str(), servicePort, NULL, txt.data());
+
+    return std::make_unique<implMDNSService>(service);
 }

@@ -18,8 +18,16 @@ option(BELL_SINK_ALSA "Enable ALSA audio sink" OFF)
 option(BELL_SINK_PORTAUDIO "Enable PortAudio sink" OFF)
 
 # cJSON wrapper
-option(BELL_DISABLE_CJSON "Disable cJSON and JSONObject completely" OFF)
+option(BELL_ONLY_CJSON "Use only cJSON, not Nlohmann")
 set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, optional")
+
+# vorbis
+set(BELL_EXTERNAL_VORBIS "" CACHE STRING "External Vorbis library target name, optional")
+option(BELL_VORBIS_FLOAT "Use floating point Vorbis API" OFF)
+
+# fmt & regex
+option(BELL_DISABLE_FMT "Don't use std::fmt (saves space)" OFF)
+option(BELL_DISABLE_REGEX "Don't use std::regex (saves space)" OFF)
 
 # disable json tests
 set(JSON_BuildTests OFF CACHE INTERNAL "")
@@ -47,14 +55,17 @@ if(NOT BELL_DISABLE_CODECS)
 endif()
 
 message(STATUS "    Disable built-in audio sinks: ${BELL_DISABLE_SINKS}")
+message(STATUS "    Use Vorbis float version: ${BELL_VORBIS_FLOAT}")
 
 if(NOT BELL_DISABLE_SINKS)
     message(STATUS "    - ALSA sink: ${BELL_SINK_ALSA}")
     message(STATUS "    - PortAudio sink: ${BELL_SINK_PORTAUDIO}")
 endif()
 
-message(STATUS "    Disable cJSON and JSONObject: ${BELL_DISABLE_CJSON}")
-message(STATUS "    Disable MQTT: ${BELL_DISABLE_MQTT}")
+message(STATUS "    Use cJSON only: ${BELL_ONLY_CJSON}")
+message(STATUS "    Disable Fmt: ${BELL_DISABLE_FMT}")
+message(STATUS "    Disable Mqtt: ${BELL_DISABLE_MQTT}")
+message(STATUS "    Disable Regex: ${BELL_DISABLE_REGEX}")
 
 # Include nanoPB library
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/nanopb/extra")
@@ -218,7 +229,7 @@ else()
     list(REMOVE_ITEM SOURCES "${IO_DIR}/EncodedAudioStream.cpp")
 endif() 
 
-if(BELL_EXTERNAL_VORBIS)
+if(NOT BELL_EXTERNAL_VORBIS STREQUAL "")
     message(STATUS "Using external Vorbis codec ${BELL_EXTERNAL_VORBIS}")
     list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_VORBIS})
 else()  
@@ -260,21 +271,19 @@ if(NOT BELL_DISABLE_SINKS)
     list(APPEND SOURCES ${SINK_SOURCES})
 endif()
 
-if(BELL_DISABLE_CJSON)
-    list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/main/io/JSONObject.cpp")
-else()
+if(NOT BELL_ONLY_CJSON)
     add_subdirectory(external/nlohmann_json)
     list(APPEND EXTRA_LIBS nlohmann_json::nlohmann_json)
-    if(BELL_EXTERNAL_CJSON)
-        list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_CJSON})
-    else()
-        list(APPEND SOURCES "external/cJSON/cJSON.c")
-        list(APPEND EXTRA_INCLUDES "external/cJSON")
-    endif()
-endif()
+endif()	
 
-if (BELL_DISABLE_FMT)
-else()
+if(BELL_EXTERNAL_CJSON)
+	list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_CJSON})
+else()	
+	list(APPEND SOURCES "external/cJSON/cJSON.c")
+    list(APPEND EXTRA_INCLUDES "external/cJSON")
+endif()	
+
+if (NOT BELL_DISABLE_FMT)
     list(APPEND EXTRA_INCLUDES "external/fmt/include")
 endif()
 
@@ -312,6 +321,18 @@ if(BELL_VORBIS_FLOAT)
     target_compile_definitions(bell PUBLIC BELL_VORBIS_FLOAT)
 endif() 
 
-if(WIN32)
+if(BELL_DISABLE_FMT)
+	target_compile_definitions(bell PUBLIC BELL_DISABLE_FMT)
+endif()
+
+if(BELL_DISABLE_REGEX)
+    target_compile_definitions(bell PUBLIC BELL_DISABLE_REGEX)
+endif()	
+
+if(BELL_ONLY_CJSON)
+    target_compile_definitions(bell PUBLIC BELL_ONLY_CJSON)
+endif()	
+
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     target_compile_definitions(bell PUBLIC PB_NO_STATIC_ASSERT)
 endif()

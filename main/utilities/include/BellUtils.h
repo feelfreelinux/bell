@@ -11,7 +11,7 @@
 #include <vector>
 
 #ifdef ESP_PLATFORM
-#include "esp_mac.h"
+#include "esp_system.h"
 #endif
 
 namespace bell {
