@@ -1,26 +1,20 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <variant>
-#include <vector>
-#include <cassert>
-#include <cstdint>
-#include <utility>
+#include <stddef.h>          // for size_t
+#include <cstdint>           // for uint8_t, int32_t
+#include <memory>            // for make_unique, unique_ptr
+#include <string>            // for string
+#include <string_view>       // for string_view
+#include <utility>           // for pair
+#include <vector>            // for vector
 
-#include "BellSocket.h"
-#include "ByteStream.h"
-#include "SocketStream.h"
-#include "URLParser.h"
+#include "SocketStream.h"    // for SocketStream
+#include "URLParser.h"       // for URLParser
 #ifndef BELL_DISABLE_FMT
-#include "fmt/core.h"
+#include "fmt/core.h"        // for format
 #endif
-#include "picohttpparser.h"
+#include "picohttpparser.h"  // for phr_header
 
 namespace bell {
 class HTTPClient {

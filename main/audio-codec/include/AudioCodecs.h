@@ -1,10 +1,8 @@
 #pragma once
 
-#include <memory>
+#include <memory>       // for shared_ptr
 
-#include "BaseCodec.h"
-#include "AudioContainer.h"
-#include "CodecType.h"
+#include "CodecType.h"  // for AudioCodec
 
 namespace bell {
 class AudioContainer;

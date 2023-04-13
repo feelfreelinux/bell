@@ -1,12 +1,10 @@
 #pragma once
 
-#include <iostream>
-#include <memory>
-#include <string>
+#include <iostream>      // for streamsize, basic_streambuf<>::int_type, ios...
+#include <memory>        // for unique_ptr, operator!=
+#include <string>        // for char_traits, string
 
-#include "TCPSocket.h"
-#include "TLSSocket.h"
-#include "BellSocket.h"
+#include "BellSocket.h"  // for Socket
 
 namespace bell {
 class SocketBuffer : public std::streambuf {

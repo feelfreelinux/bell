@@ -1,12 +1,10 @@
 #include "BellDSP.h"
 
-#include <type_traits>
-#include <utility>
+#include <type_traits>  // for remove_extent_t
+#include <utility>      // for move
 
-namespace bell {
-class AudioPipeline;
-class CentralAudioBuffer;
-}  // namespace bell
+#include "AudioPipeline.h"       // for CentralAudioBuffer
+#include "CentralAudioBuffer.h"  // for CentralAudioBuffer
 
 using namespace bell;
 

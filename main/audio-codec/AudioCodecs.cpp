@@ -1,9 +1,9 @@
 #include "AudioCodecs.h"
 
-#include <map>
-#include <type_traits>
+#include <map>               // for map, operator!=, map<>::iterator, map<>:...
+#include <type_traits>       // for remove_extent_t
 
-#include "AudioContainer.h"
+#include "AudioContainer.h"  // for AudioContainer
 
 namespace bell {
 class BaseCodec;
@@ -12,25 +12,25 @@ class BaseCodec;
 using namespace bell;
 
 #ifdef BELL_CODEC_AAC
-#include "AACDecoder.h"
+#include "AACDecoder.h"      // for AACDecoder
 
 static std::shared_ptr<AACDecoder> codecAac;
 #endif
 
 #ifdef BELL_CODEC_MP3
-#include "MP3Decoder.h"
+#include "MP3Decoder.h"      // for MP3Decoder
 
 static std::shared_ptr<MP3Decoder> codecMp3;
 #endif
 
 #ifdef BELL_CODEC_VORBIS
-#include "VorbisDecoder.h"
+#include "VorbisDecoder.h"   // for VorbisDecoder
 
 static std::shared_ptr<VorbisDecoder> codecVorbis;
 #endif
 
 #ifdef BELL_CODEC_OPUS
-#include "OPUSDecoder.h"
+#include "OPUSDecoder.h"     // for OPUSDecoder
 
 static std::shared_ptr<OPUSDecoder> codecOpus;
 #endif

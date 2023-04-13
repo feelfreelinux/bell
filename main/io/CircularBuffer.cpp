@@ -1,6 +1,6 @@
 #include "CircularBuffer.h"
 
-#include <algorithm>
+#include <algorithm>  // for min
 
 using namespace bell;
 

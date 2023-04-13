@@ -1,13 +1,12 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdio.h>
-#include <vector>
-#include <string>
+#include <stdint.h>     // for uint8_t
+#include <stdio.h>      // for printf
+#include <string>       // for string
+#include <vector>       // for vector
 
-#include "pb_encode.h"
-#include "pb_decode.h"
-#include "pb.h"
+#include "pb.h"         // for pb_msgdesc_t, pb_bytes_array_t, PB_GET_ERROR
+#include "pb_decode.h"  // for pb_istream_from_buffer, pb_decode, pb_istream_s
 
 std::vector<uint8_t> pbEncode(const pb_msgdesc_t *fields, const void *src_struct);
 

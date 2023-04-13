@@ -1,18 +1,18 @@
 #include "BellTar.h"
 
-#include <sys/stat.h>
+#include <sys/stat.h>  // for mkdir
 
 using namespace bell::BellTar;
 
-#include <cassert>
-#include <cstdio>   // for sprintf, snprintf and sscanf
-#include <cstdlib>  // for rand
-#include <cstring>  // for strlen and memset
-#include <ctime>    // for time
-#include <algorithm>
-#include <cstdint>
-#include <vector>
-#include <fstream>
+#include <algorithm>   // for min
+#include <cassert>     // for assert
+#include <cstdint>     // for uint8_t
+#include <cstdio>      // for sprintf, size_t, sscanf, EOF, NULL
+#include <cstdlib>     // for rand
+#include <cstring>     // for memset, strlen
+#include <ctime>       // for time
+#include <fstream>     // for ofstream
+#include <vector>      // for vector
 #ifdef _WIN32
 #include <direct.h>
 #endif

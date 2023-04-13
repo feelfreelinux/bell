@@ -1,11 +1,11 @@
 #include "AudioContainers.h"
 
-#include <string.h>
-#include <cstddef>
+#include <string.h>        // for memcmp
+#include <cstddef>         // for byte
 
-#include "AACContainer.h"
-#include "CodecType.h"
-#include "MP3Container.h"
+#include "AACContainer.h"  // for AACContainer
+#include "CodecType.h"     // for bell
+#include "MP3Container.h"  // for MP3Container
 
 namespace bell {
 class AudioContainer;

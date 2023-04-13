@@ -1,9 +1,9 @@
 #include "OPUSDecoder.h"
 
-#include <stdlib.h>
+#include <stdlib.h>     // for free, malloc
 
-#include "opus.h"
-#include "CodecType.h"
+#include "CodecType.h"  // for bell
+#include "opus.h"       // for opus_decoder_destroy, opus_decode, opus_decod...
 
 using namespace bell;
 

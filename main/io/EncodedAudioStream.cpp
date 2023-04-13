@@ -1,13 +1,13 @@
 #include "EncodedAudioStream.h"
 
-#include <string.h>
-#include <stdexcept>
-#include <type_traits>
-#include <utility>
+#include <string.h>          // for memcpy, memmove
+#include <stdexcept>         // for runtime_error
+#include <type_traits>       // for remove_extent_t
+#include <utility>           // for move
 
-#include "BellLogger.h"
-#include "ByteStream.h"
-#include "DecoderGlobals.h"
+#include "BellLogger.h"      // for AbstractLogger, BELL_LOG, bell
+#include "ByteStream.h"      // for ByteStream
+#include "DecoderGlobals.h"  // for DecodersInstance, decodersInstance, AAC_...
 
 using namespace bell;
 

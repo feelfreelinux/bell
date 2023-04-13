@@ -1,13 +1,12 @@
 #pragma once
 
-#include <algorithm>
-#include <memory>
-#include <cstring>
-#include <mutex>
-#include <vector>
-#include <cstdint>
+#include <cstdint>             // for uint8_t
+#include <cstring>             // for size_t
+#include <memory>              // for unique_ptr
+#include <mutex>               // for mutex
+#include <vector>              // for vector
 
-#include "WrappedSemaphore.h"
+#include "WrappedSemaphore.h"  // for WrappedSemaphore
 
 
 namespace bell {

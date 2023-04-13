@@ -5,12 +5,10 @@
 #define AAC_READBUF_SIZE (4 * AAC_MAINBUF_SIZE * AAC_MAX_NCHANS)
 #define MP3_READBUF_SIZE (2 * 1024);
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory>
+#include <stdio.h>   // for NULL
 
-#include "aacdec.h"
-#include "mp3dec.h"
+#include "aacdec.h"  // for AACFreeDecoder, AACInitDecoder, HAACDecoder
+#include "mp3dec.h"  // for MP3FreeDecoder, MP3InitDecoder, HMP3Decoder
 
 namespace bell
 {

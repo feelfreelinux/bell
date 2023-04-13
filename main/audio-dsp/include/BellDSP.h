@@ -1,15 +1,13 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-#include <memory>
-#include <mutex>
-#include <vector>
-#include <functional>
+#include <stddef.h>      // for size_t
+#include <stdint.h>      // for uint32_t, uint8_t
+#include <functional>    // for function
+#include <memory>        // for shared_ptr, unique_ptr
+#include <mutex>         // for mutex
+#include <vector>        // for vector
 
-#include "AudioPipeline.h"
-#include "CentralAudioBuffer.h"
-#include "StreamInfo.h"
+#include "StreamInfo.h"  // for BitWidth
 
 namespace bell {
 class AudioPipeline;

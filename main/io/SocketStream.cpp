@@ -1,10 +1,10 @@
 #include "SocketStream.h"
 
-#include <stdint.h>
-#include <cstdio>
+#include <stdint.h>     // for uint8_t
+#include <cstdio>       // for NULL, ssize_t
 
-#include "TCPSocket.h"
-#include "TLSSocket.h"
+#include "TCPSocket.h"  // for TCPSocket
+#include "TLSSocket.h"  // for TLSSocket
 
 using namespace bell;
 

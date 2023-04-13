@@ -1,6 +1,6 @@
 #include "Compressor.h"
 
-#include <cstdlib>
+#include <cstdlib>  // for abs
 
 using namespace bell;
 

@@ -1,10 +1,9 @@
 #pragma once
 
-#include <iostream>
-#include <regex>
-#include <stdexcept>
-#include <string>
-#include <cstdlib>
+#include <cstdlib>    // for strtol, size_t
+#include <regex>      // for match_results, match_results<>::value_type, sub...
+#include <stdexcept>  // for invalid_argument
+#include <string>     // for string, allocator, operator+, char_traits, oper...
 
 namespace bell {
 class URLParser {

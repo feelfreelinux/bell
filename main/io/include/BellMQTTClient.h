@@ -1,10 +1,10 @@
 #pragma once
-#include <stdint.h>
-#include <string>
-#include <functional>
+#include <stdint.h>     // for uint8_t, uint16_t
+#include <functional>   // for function
+#include <string>       // for string
 
-#include "TCPSocket.h"
-#include "mqtt.h"
+#include "TCPSocket.h"  // for TCPSocket
+#include "mqtt.h"       // for MQTT_PUBLISH_QOS_0, MQTT_PUBLISH_QOS_1, MQTT_...
 
 namespace bell {
 /// MQTTClient is a thin wrapper around the MQTT client library.

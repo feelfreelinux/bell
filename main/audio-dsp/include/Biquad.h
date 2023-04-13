@@ -1,19 +1,18 @@
 #pragma once
 
-#include <stdint.h>
-#include <cmath>
-#include <mutex>
-#include <map>
-#include <unordered_map>
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <utility>
-#include <vector>
+#include <stdint.h>           // for uint32_t
+#include <map>                // for map
+#include <memory>             // for unique_ptr, allocator
+#include <mutex>              // for scoped_lock
+#include <stdexcept>          // for invalid_argument
+#include <string>             // for string, operator<, hash, operator==
+#include <unordered_map>      // for operator!=, unordered_map, __hash_map_c...
+#include <utility>            // for pair
+#include <vector>             // for vector
 
-#include "AudioTransform.h"
-#include "StreamInfo.h"
-#include "TransformConfig.h"
+#include "AudioTransform.h"   // for AudioTransform
+#include "StreamInfo.h"       // for StreamInfo
+#include "TransformConfig.h"  // for TransformConfig
 
 extern "C" int dsps_biquad_f32_ae32(const float *input, float *output, int len, float *coef, float *w);
 

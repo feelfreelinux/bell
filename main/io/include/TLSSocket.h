@@ -1,36 +1,21 @@
 #ifndef BELL_TLS_SOCKET_H
 #define BELL_TLS_SOCKET_H
 
-#include <ctype.h>
-#include <stdint.h>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <memory>
+#include <stdint.h>               // for uint8_t, uint16_t
 
-#include "BellLogger.h"
-#include "BellSocket.h"
+#include "BellSocket.h"           // for Socket
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <sys/socket.h>
-#include <unistd.h>
 #endif
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sstream>
-#include <string>
-#include <vector>
+#include <stdlib.h>               // for size_t
+#include <string>                 // for string
 
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/debug.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/net_sockets.h"
-#include "mbedtls/ssl.h"
+#include "mbedtls/ctr_drbg.h"     // for mbedtls_ctr_drbg_context
+#include "mbedtls/entropy.h"      // for mbedtls_entropy_context
+#include "mbedtls/net_sockets.h"  // for mbedtls_net_context
+#include "mbedtls/ssl.h"          // for mbedtls_ssl_config, mbedtls_ssl_con...
 
 namespace bell {
 class TLSSocket : public bell::Socket {

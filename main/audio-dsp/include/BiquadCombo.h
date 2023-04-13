@@ -1,18 +1,17 @@
 #pragma once
 
-#include <stdint.h>
-#include <vector>
-#include <memory>
-#include <cmath>
-#include <mutex>
-#include <map>
-#include <stdexcept>
-#include <string>
+#include <stdint.h>           // for uint32_t
+#include <map>                // for map
+#include <memory>             // for unique_ptr, allocator
+#include <mutex>              // for scoped_lock
+#include <stdexcept>          // for invalid_argument
+#include <string>             // for string, operator==, char_traits, basic_...
+#include <vector>             // for vector
 
-#include "Biquad.h"
-#include "AudioTransform.h"
-#include "StreamInfo.h"
-#include "TransformConfig.h"
+#include "AudioTransform.h"   // for AudioTransform
+#include "Biquad.h"           // for Biquad
+#include "StreamInfo.h"       // for StreamInfo
+#include "TransformConfig.h"  // for TransformConfig
 
 namespace bell
 {

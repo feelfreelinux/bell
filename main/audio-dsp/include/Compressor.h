@@ -1,20 +1,16 @@
 #pragma once
 
-#include <math.h>
-#include <stdint.h>
-#include <vector>
-#include <memory>
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <mutex>
-#include <map>
-#include <string>
+#include <math.h>             // for expf
+#include <stdint.h>           // for uint32_t
+#include <map>                // for map
+#include <memory>             // for unique_ptr
+#include <mutex>              // for scoped_lock
+#include <string>             // for string, operator<
+#include <vector>             // for vector
 
-#include "Biquad.h"
-#include "AudioTransform.h"
-#include "StreamInfo.h"
-#include "TransformConfig.h"
+#include "AudioTransform.h"   // for AudioTransform
+#include "StreamInfo.h"       // for StreamInfo
+#include "TransformConfig.h"  // for TransformConfig
 
 #define pow10f(x) expf(2.302585092994046f*x)  
 

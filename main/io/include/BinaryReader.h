@@ -1,14 +1,9 @@
 #pragma once
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <cstring>
-#include <memory>
-
-#include "ByteStream.h"
+#include <stdint.h>  // for uint8_t, int16_t, int32_t, uint32_t
+#include <stdlib.h>  // for size_t
+#include <memory>    // for shared_ptr
+#include <vector>    // for vector
 
 namespace bell
 {

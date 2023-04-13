@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #elif __APPLE__
-#include <dispatch/dispatch.h>
+#include <dispatch/dispatch.h>  // for dispatch_semaphore_t
 #elif _WIN32
 #include <winsock2.h>
 #else

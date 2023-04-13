@@ -1,25 +1,18 @@
 #pragma once
 
-#include <BellLogger.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <stdint.h>
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <utility>
-#include <optional>
-#include <regex>
-#include <sstream>
-#include <string>
-#include <mutex>
-#include <unordered_map>
-#include <vector>
+#include <BellLogger.h>   // for bell
+#include <stdint.h>       // for uint8_t
+#include <stdlib.h>       // for free, size_t
+#include <functional>     // for function
+#include <map>            // for map
+#include <memory>         // for unique_ptr
+#include <mutex>          // for mutex
+#include <string>         // for string, hash, operator==, operator<
+#include <unordered_map>  // for unordered_map
+#include <utility>        // for pair
+#include <vector>         // for vector
 
-#include "CivetServer.h"
-#include "civetweb.h"
+#include "CivetServer.h"  // for CivetServer, CivetHandler
 
 using namespace bell;
 namespace bell {

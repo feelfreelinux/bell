@@ -1,9 +1,9 @@
 #include "AACContainer.h"
 
-#include <cstring>
+#include <cstring>       // for memmove
 
-#include "StreamInfo.h"
-#include "aacdec.h"
+#include "StreamInfo.h"  // for BitWidth, BitWidth::BW_16, SampleRate, Sampl...
+#include "aacdec.h"      // for AACFindSyncWord
 
 using namespace bell;
 

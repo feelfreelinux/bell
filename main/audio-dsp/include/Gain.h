@@ -1,14 +1,12 @@
 #pragma once
 
-#include <cmath>
-#include <mutex>
-#include <iostream>
-#include <memory>
-#include <vector>
+#include <memory>             // for unique_ptr
+#include <mutex>              // for scoped_lock
+#include <vector>             // for vector
 
-#include "AudioTransform.h"
-#include "StreamInfo.h"
-#include "TransformConfig.h"
+#include "AudioTransform.h"   // for AudioTransform
+#include "StreamInfo.h"       // for StreamInfo
+#include "TransformConfig.h"  // for TransformConfig
 
 namespace bell
 {

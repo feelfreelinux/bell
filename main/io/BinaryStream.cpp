@@ -1,5 +1,5 @@
 #include <BinaryStream.h>
-#include <stdexcept>
+#include <stdexcept>  // for runtime_error
 
 using namespace bell;
 

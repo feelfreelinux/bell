@@ -1,6 +1,6 @@
 #include "Biquad.h"
 
-#include <cmath>
+#include <cmath>  // for pow, cosf, sinf, M_PI, sqrtf, tanf, logf, sinh
 
 using namespace bell;
 

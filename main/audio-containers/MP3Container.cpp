@@ -1,9 +1,9 @@
 #include "MP3Container.h"
 
-#include <cstring>
+#include <cstring>       // for memmove
 
-#include "StreamInfo.h"
-#include "mp3dec.h"
+#include "StreamInfo.h"  // for BitWidth, BitWidth::BW_16, SampleRate, Sampl...
+#include "mp3dec.h"      // for MP3FindSyncWord
 
 using namespace bell;
 

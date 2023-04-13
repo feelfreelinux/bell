@@ -1,10 +1,10 @@
 #include "MDNSService.h"
 
-#include <stddef.h>
-#include <utility>
+#include <stddef.h>       // for NULL
+#include <utility>        // for pair
 
-#include "dns_sd.h"
-#include "i386/endian.h"
+#include "dns_sd.h"       // for DNSServiceRef, DNSServiceRefDeallocate, DNS...
+#include "i386/endian.h"  // for htons
 
 using namespace bell;
 

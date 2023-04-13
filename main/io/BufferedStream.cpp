@@ -1,10 +1,10 @@
 #include "BufferedStream.h"
 
-#include <stdlib.h>
-#include <cstring>
-#include <algorithm>
-#include <cstdint>
-#include <type_traits>
+#include <stdlib.h>     // for free, malloc
+#include <algorithm>    // for min
+#include <cstdint>      // for uint32_t
+#include <cstring>      // for memcpy
+#include <type_traits>  // for remove_extent_t
 
 BufferedStream::BufferedStream(
 	const std::string &taskName,

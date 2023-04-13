@@ -1,7 +1,7 @@
 #include "Gain.h"
 
-#include <cmath>
-#include <string>
+#include <cmath>   // for pow
+#include <string>  // for string
 
 using namespace bell;
 

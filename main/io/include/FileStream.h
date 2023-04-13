@@ -1,11 +1,9 @@
 #pragma once
 
-#include <BellLogger.h>
-#include <ByteStream.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string>
-#include <stdexcept>
+#include <ByteStream.h>  // for ByteStream
+#include <stdint.h>      // for uint8_t
+#include <stdio.h>       // for size_t, FILE
+#include <string>        // for string
 
 /*
 * FileStream

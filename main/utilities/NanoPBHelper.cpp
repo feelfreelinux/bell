@@ -1,11 +1,11 @@
 #include "NanoPBHelper.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <algorithm>
-#include <cstdint>
+#include <stdlib.h>     // for malloc
+#include <string.h>     // for strcpy, memcpy, strlen
+#include <algorithm>    // for copy
+#include <cstdint>      // for uint8_t
 
-#include "pb_encode.h"
+#include "pb_encode.h"  // for pb_ostream_s, pb_encode, pb_get_encoded_size
 
 static bool vectorWrite(pb_ostream_t *stream, const pb_byte_t *buf, size_t count)
 {

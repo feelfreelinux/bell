@@ -1,11 +1,9 @@
 #ifndef BELL_LOGGER_H
 #define BELL_LOGGER_H
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <string>
-#include <memory>
+#include <stdarg.h>  // for va_end, va_list, va_start
+#include <stdio.h>   // for printf, vprintf
+#include <string>    // for string, basic_string
 
 namespace bell
 {

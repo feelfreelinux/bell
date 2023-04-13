@@ -24,10 +24,10 @@
  * IN THE SOFTWARE.
  */
 
-#include <assert.h>
-#include <stddef.h>
-#include <string.h>
-#include <sys/types.h>
+#include <assert.h>          // for assert
+#include <stddef.h>          // for NULL, size_t
+#include <string.h>          // for memmove
+#include <sys/types.h>       // for ssize_t
 #ifdef __SSE4_2__
 #ifdef _MSC_VER
 #include <nmmintrin.h>
@@ -35,7 +35,7 @@
 #include <x86intrin.h>
 #endif
 #endif
-#include "picohttpparser.h"
+#include "picohttpparser.h"  // for phr_chunked_decoder, phr_header, phr_dec...
 
 #if __GNUC__ >= 3
 #define likely(x) __builtin_expect(!!(x), 1)

@@ -1,17 +1,15 @@
 #ifndef EUPHONIUM_BELL_UTILS
 #define EUPHONIUM_BELL_UTILS
 
-#include <string.h>
-#include <stdint.h>
+#include <stdint.h>    // for int32_t, int64_t
+#include <string.h>    // for NULL
 #ifdef _WIN32
 #include <WinSock2.h>
 #else
-#include <sys/time.h>
+#include <sys/time.h>  // for timeval, gettimeofday
 #endif
-#include <random>
-#include <vector>
-#include <cmath>
-#include <string>
+#include <cmath>       // for floor
+#include <string>      // for string
 
 #ifdef ESP_PLATFORM
 #include "esp_system.h"
@@ -98,7 +96,6 @@ struct tv {
 #define BELL_SLEEP_MS(ms) Sleep(ms)
 #define BELL_YIELD() ;
 #else
-#include <unistd.h>
 
 #define BELL_SLEEP_MS(ms) usleep(ms * 1000)
 #define BELL_YIELD() ;

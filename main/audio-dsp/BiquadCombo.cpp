@@ -1,8 +1,8 @@
 #include "BiquadCombo.h"
 
-#include <stdio.h>
-#include <cmath>
-#include <utility>
+#include <stdio.h>  // for printf
+#include <cmath>    // for sinf, M_PI
+#include <utility>  // for move
 
 using namespace bell;
 

@@ -1,14 +1,11 @@
 #include "AudioPipeline.h"
 
-#include <type_traits>
-#include <utility>
+#include <type_traits>        // for remove_extent_t
+#include <utility>            // for move
 
-#include "BellLogger.h"
-#include "TransformConfig.h"
-
-namespace bell {
-class AudioTransform;
-}  // namespace bell
+#include "BellLogger.h"       // for AbstractLogger, BELL_LOG
+#include "TransformConfig.h"  // for TransformConfig
+#include "AudioTransform.h"   // for AudioTransform
 
 using namespace bell;
 

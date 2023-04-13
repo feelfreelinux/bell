@@ -1,15 +1,15 @@
 #pragma once
 
-#include <cJSON.h>
-#include <stddef.h>
-#include <vector>
-#include <algorithm>
-#include <cstdint>
-#include <memory>
-#include <stdexcept>
+#include <cJSON.h>           // for cJSON_GetObjectItem, cJSON, cJSON_IsArray
+#include <stddef.h>          // for NULL
+#include <algorithm>         // for find
+#include <cstdint>           // for uint8_t
+#include <memory>            // for unique_ptr
+#include <stdexcept>         // for invalid_argument
+#include <vector>            // for vector
 
-#include "AudioTransform.h"
-#include "StreamInfo.h"
+#include "AudioTransform.h"  // for AudioTransform
+#include "StreamInfo.h"      // for StreamInfo
 
 namespace bell
 {

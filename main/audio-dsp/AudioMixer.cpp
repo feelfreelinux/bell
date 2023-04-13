@@ -1,6 +1,6 @@
 #include "AudioMixer.h"
 
-#include <mutex>
+#include <mutex>  // for scoped_lock
 
 using namespace bell;
 

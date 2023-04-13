@@ -3,23 +3,15 @@
 
 #define Crypto CryptoMbedTLS
 
-#include <vector>
-#include <string>
-#include <memory>
-#include <stdexcept>
+#include <string>         // for string
+#include <vector>         // for vector
 
 extern "C" {
-#include "aes.h"
 }
-#include <mbedtls/base64.h>
-#include <mbedtls/bignum.h>
-#include <mbedtls/md.h>
-#include <mbedtls/aes.h>
-#include <mbedtls/pkcs5.h>
-#include <mbedtls/entropy.h>
-#include <mbedtls/ctr_drbg.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <mbedtls/aes.h>  // for mbedtls_aes_context
+#include <mbedtls/md.h>   // for mbedtls_md_context_t
+#include <stddef.h>       // for size_t
+#include <stdint.h>       // for uint8_t
 
 
 #define DH_KEY_SIZE 96

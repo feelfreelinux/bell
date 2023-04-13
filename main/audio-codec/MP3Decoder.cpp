@@ -1,8 +1,8 @@
 #include "MP3Decoder.h"
 
-#include <stdlib.h>
+#include <stdlib.h>     // for free, malloc
 
-#include "CodecType.h"
+#include "CodecType.h"  // for bell
 
 namespace bell {
 class AudioContainer;

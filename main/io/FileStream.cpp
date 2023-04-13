@@ -1,8 +1,8 @@
 #include "FileStream.h"
 
-#include <stdexcept>
+#include <stdexcept>     // for runtime_error
 
-#include "BellLogger.h"
+#include "BellLogger.h"  // for bell
 
 using namespace bell;
 

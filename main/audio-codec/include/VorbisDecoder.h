@@ -1,10 +1,10 @@
 #pragma once
 
-#include <stdint.h>
+#include <stdint.h>        // for uint8_t, uint32_t, int16_t
 
-#include "BaseCodec.h"
-#include "ivorbiscodec.h"
-#include "ogg.h"
+#include "BaseCodec.h"     // for BaseCodec
+#include "ivorbiscodec.h"  // for vorbis_comment, vorbis_dsp_state, vorbis_info
+#include "ogg.h"           // for ogg_packet
 
 namespace bell {
 class AudioContainer;

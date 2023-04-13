@@ -32,13 +32,13 @@ NOTE:   String length must be evenly divisible by 16byte (str_len % 16 == 0)
 */
 
 
+#include <stdint.h>  // for uint8_t
 /*****************************************************************************/
 /* Includes:                                                                 */
 /*****************************************************************************/
-#include <string.h> // CBC mode, for memset
-#include <stdint.h>
+#include <string.h>  // for memcpy, size_t
 
-#include "aes.h"
+#include "aes.h"     // for AES_ctx, AES_BLOCKLEN, CBC, ECB, CTR, AES192
 
 /*****************************************************************************/
 /* Defines:                                                                  */

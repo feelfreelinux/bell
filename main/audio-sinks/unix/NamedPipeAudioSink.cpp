@@ -1,6 +1,6 @@
 #include "NamedPipeAudioSink.h"
 
-#include <stdio.h>
+#include <stdio.h>  // for printf
 
 NamedPipeAudioSink::NamedPipeAudioSink()
 {
