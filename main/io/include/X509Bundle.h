@@ -1,7 +1,11 @@
 #pragma once
 
+#include <mbedtls/x509_crt.h>
+#include <stddef.h>
 #include <stdexcept>
 #include <vector>
+#include <cstdint>
+
 #include "BellLogger.h"
 #include "mbedtls/ssl.h"
 

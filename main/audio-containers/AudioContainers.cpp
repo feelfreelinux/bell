@@ -1,5 +1,16 @@
 #include "AudioContainers.h"
 
+#include <string.h>
+#include <cstddef>
+
+#include "AACContainer.h"
+#include "CodecType.h"
+#include "MP3Container.h"
+
+namespace bell {
+class AudioContainer;
+}  // namespace bell
+
 using namespace bell;
 
 std::unique_ptr<bell::AudioContainer> AudioContainers::guessAudioContainer(

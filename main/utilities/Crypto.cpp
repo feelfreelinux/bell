@@ -1,5 +1,15 @@
 #include "Crypto.h"
 
+#include <mbedtls/base64.h>
+#include <mbedtls/bignum.h>
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/pkcs5.h>
+#include <cstdint>
+#include <stdexcept>
+
+#include "aes.h"
+
 CryptoMbedTLS::CryptoMbedTLS() {}
 
 CryptoMbedTLS::~CryptoMbedTLS() {

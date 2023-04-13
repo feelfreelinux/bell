@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include <sys/types.h>
 #ifdef __SSE4_2__
 #ifdef _MSC_VER
 #include <nmmintrin.h>

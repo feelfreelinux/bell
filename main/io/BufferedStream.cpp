@@ -1,5 +1,10 @@
 #include "BufferedStream.h"
+
+#include <stdlib.h>
 #include <cstring>
+#include <algorithm>
+#include <cstdint>
+#include <type_traits>
 
 BufferedStream::BufferedStream(
 	const std::string &taskName,

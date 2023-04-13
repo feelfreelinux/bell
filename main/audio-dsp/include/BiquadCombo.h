@@ -1,13 +1,18 @@
 #pragma once
 
+#include <stdint.h>
 #include <vector>
 #include <memory>
 #include <cmath>
 #include <mutex>
 #include <map>
+#include <stdexcept>
+#include <string>
 
 #include "Biquad.h"
 #include "AudioTransform.h"
+#include "StreamInfo.h"
+#include "TransformConfig.h"
 
 namespace bell
 {

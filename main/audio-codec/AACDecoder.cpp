@@ -1,5 +1,12 @@
 #include "AACDecoder.h"
-#include <iostream>
+
+#include <stdlib.h>
+
+#include "CodecType.h"
+
+namespace bell {
+class AudioContainer;
+}  // namespace bell
 
 using namespace bell;
 

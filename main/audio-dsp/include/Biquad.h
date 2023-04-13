@@ -1,11 +1,20 @@
 #pragma once
 
+#include <stdint.h>
 #include <cmath>
 #include <mutex>
 #include <map>
 #include <unordered_map>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "AudioTransform.h"
+#include "StreamInfo.h"
+#include "TransformConfig.h"
+
 extern "C" int dsps_biquad_f32_ae32(const float *input, float *output, int len, float *coef, float *w);
 
 namespace bell

@@ -1,5 +1,9 @@
 #include "BiquadCombo.h"
 
+#include <stdio.h>
+#include <cmath>
+#include <utility>
+
 using namespace bell;
 
 BiquadCombo::BiquadCombo()

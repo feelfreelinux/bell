@@ -18,6 +18,8 @@ extern "C" {
 #include <mbedtls/pkcs5.h>
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
+#include <stddef.h>
+#include <stdint.h>
 
 
 #define DH_KEY_SIZE 96

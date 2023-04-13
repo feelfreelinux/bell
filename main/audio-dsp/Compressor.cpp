@@ -1,5 +1,7 @@
 #include "Compressor.h"
 
+#include <cstdlib>
+
 using namespace bell;
 
 float log2f_approx(float X) {

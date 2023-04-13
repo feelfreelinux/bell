@@ -3,8 +3,12 @@
 #include <cmath>
 #include <mutex>
 #include <iostream>
+#include <memory>
+#include <vector>
 
 #include "AudioTransform.h"
+#include "StreamInfo.h"
+#include "TransformConfig.h"
 
 namespace bell
 {

@@ -1,7 +1,10 @@
 #pragma once
 
+#include <stddef.h>
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <memory>
 
 #include "BellLogger.h"
 #include "ByteStream.h"
@@ -10,6 +13,8 @@
 #include "mp3dec.h"
 
 namespace bell {
+class ByteStream;
+
 class EncodedAudioStream {
  public:
   EncodedAudioStream();

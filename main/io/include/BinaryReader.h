@@ -1,15 +1,19 @@
 #pragma once
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <cstring>
 #include <memory>
+
 #include "ByteStream.h"
 
 namespace bell
 {
+class ByteStream;
+
     class BinaryReader
     {
         std::shared_ptr<ByteStream> stream;

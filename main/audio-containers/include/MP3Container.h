@@ -1,10 +1,14 @@
 #pragma once
 
+#include <stdint.h>
 #include <cstring>
 #include <cstddef>
 #include <vector>
+#include <istream>
+
 #include "AudioContainer.h"
 #include "mp3dec.h"
+#include "CodecType.h"
 
 namespace bell {
 class MP3Container : public AudioContainer {

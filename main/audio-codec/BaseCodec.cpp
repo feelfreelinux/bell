@@ -1,5 +1,7 @@
 #include "BaseCodec.h"
-#include <iostream>
+
+#include "AudioContainer.h"
+#include "CodecType.h"
 
 using namespace bell;
 

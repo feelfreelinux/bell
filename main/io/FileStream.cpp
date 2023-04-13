@@ -1,5 +1,9 @@
 #include "FileStream.h"
 
+#include <stdexcept>
+
+#include "BellLogger.h"
+
 using namespace bell;
 
 FileStream::FileStream(const std::string& path, std::string read)

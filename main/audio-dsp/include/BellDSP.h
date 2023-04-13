@@ -1,12 +1,20 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <functional>
+
 #include "AudioPipeline.h"
 #include "CentralAudioBuffer.h"
+#include "StreamInfo.h"
 
 namespace bell {
+class AudioPipeline;
+class CentralAudioBuffer;
+
 #define MAX_INT16 32767
 
 class BellDSP {

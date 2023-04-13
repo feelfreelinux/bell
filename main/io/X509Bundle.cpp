@@ -1,5 +1,15 @@
 #include "X509Bundle.h"
-#include "mbedtls/error.h"
+
+#include <mbedtls/md.h>
+#include <mbedtls/pk.h>
+#include <mbedtls/private_access.h>
+#include <mbedtls/ssl.h>
+#include <mbedtls/x509.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdexcept>
+
+#include "BellLogger.h"
 
 using namespace bell::X509Bundle;
 

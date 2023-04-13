@@ -1,12 +1,16 @@
 #pragma once
 
-#include "ByteStream.h"
-#include "BellTask.h"
-#include "WrappedSemaphore.h"
+#include <stddef.h>
+#include <stdint.h>
 #include <atomic>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <string>
+
+#include "ByteStream.h"
+#include "BellTask.h"
+#include "WrappedSemaphore.h"
 
 /**
  * This class implements a wrapper around an arbitrary bell::ByteStream,

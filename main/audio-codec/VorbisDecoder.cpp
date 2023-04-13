@@ -1,5 +1,13 @@
 #include "VorbisDecoder.h"
-#include "AudioCodecs.h"
+
+#include <stdlib.h>
+
+#include "CodecType.h"
+#include "config_types.h"
+
+namespace bell {
+class AudioContainer;
+}  // namespace bell
 
 using namespace bell;
 

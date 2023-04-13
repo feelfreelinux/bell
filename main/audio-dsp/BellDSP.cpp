@@ -1,6 +1,12 @@
 #include "BellDSP.h"
-#include <iostream>
-#include "CentralAudioBuffer.h"
+
+#include <type_traits>
+#include <utility>
+
+namespace bell {
+class AudioPipeline;
+class CentralAudioBuffer;
+}  // namespace bell
 
 using namespace bell;
 

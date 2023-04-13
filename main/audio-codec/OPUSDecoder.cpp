@@ -1,5 +1,9 @@
 #include "OPUSDecoder.h"
+
+#include <stdlib.h>
+
 #include "opus.h"
+#include "CodecType.h"
 
 using namespace bell;
 

@@ -1,5 +1,8 @@
 #include "Gain.h"
 
+#include <cmath>
+#include <string>
+
 using namespace bell;
 
 Gain::Gain() : AudioTransform()

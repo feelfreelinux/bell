@@ -1,5 +1,10 @@
 #include "MP3Container.h"
 
+#include <cstring>
+
+#include "StreamInfo.h"
+#include "mp3dec.h"
+
 using namespace bell;
 
 MP3Container::MP3Container(std::istream& istr) : bell::AudioContainer(istr) {}

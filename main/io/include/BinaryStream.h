@@ -3,8 +3,10 @@
 #ifndef ESP_PLATFORM
 #include <bit>
 #endif
+#include <stdint.h>
 #include <iostream>
 #include <vector>
+#include <cstddef>
 
 namespace bell {
 class BinaryStream {

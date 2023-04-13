@@ -1,6 +1,6 @@
 #include "BellTar.h"
+
 #include <sys/stat.h>
-#include <fstream>
 
 using namespace bell::BellTar;
 
@@ -9,6 +9,10 @@ using namespace bell::BellTar;
 #include <cstdlib>  // for rand
 #include <cstring>  // for strlen and memset
 #include <ctime>    // for time
+#include <algorithm>
+#include <cstdint>
+#include <vector>
+#include <fstream>
 #ifdef _WIN32
 #include <direct.h>
 #endif

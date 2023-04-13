@@ -1,10 +1,11 @@
 #pragma once
 
-#include <string>
-#include <stdexcept>
 #include <BellLogger.h>
 #include <ByteStream.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <string>
+#include <stdexcept>
 
 /*
 * FileStream

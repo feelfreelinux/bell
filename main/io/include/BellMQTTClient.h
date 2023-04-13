@@ -1,6 +1,8 @@
 #pragma once
+#include <stdint.h>
 #include <string>
 #include <functional>
+
 #include "TCPSocket.h"
 #include "mqtt.h"
 

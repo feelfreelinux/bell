@@ -1,7 +1,10 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
 #include <vector>
 #include <fstream>
+
 #include "AudioSink.h"
 
 class NamedPipeAudioSink : public AudioSink

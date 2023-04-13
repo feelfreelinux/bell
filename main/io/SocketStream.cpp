@@ -1,5 +1,11 @@
 #include "SocketStream.h"
 
+#include <stdint.h>
+#include <cstdio>
+
+#include "TCPSocket.h"
+#include "TLSSocket.h"
+
 using namespace bell;
 
 int SocketBuffer::open(const std::string& hostname, int port, bool isSSL) {

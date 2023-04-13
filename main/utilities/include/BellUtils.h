@@ -2,6 +2,7 @@
 #define EUPHONIUM_BELL_UTILS
 
 #include <string.h>
+#include <stdint.h>
 #ifdef _WIN32
 #include <WinSock2.h>
 #else
@@ -9,6 +10,8 @@
 #endif
 #include <random>
 #include <vector>
+#include <cmath>
+#include <string>
 
 #ifdef ESP_PLATFORM
 #include "esp_system.h"

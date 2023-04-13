@@ -1,8 +1,8 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <memory>
-
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -10,6 +10,8 @@
 #include <variant>
 #include <vector>
 #include <cassert>
+#include <cstdint>
+#include <utility>
 
 #include "BellSocket.h"
 #include "ByteStream.h"

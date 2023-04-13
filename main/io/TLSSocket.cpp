@@ -1,5 +1,14 @@
 #include "TLSSocket.h"
+
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/net_sockets.h>
+#include <mbedtls/ssl.h>
+#include <cstring>
+#include <stdexcept>
+
 #include "X509Bundle.h"
+#include "BellLogger.h"
 
 /**
  * Platform TLSSocket implementation for the mbedtls

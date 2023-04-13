@@ -1,10 +1,15 @@
 #pragma once
 
+#include <cJSON.h>
+#include <stddef.h>
 #include <vector>
 #include <algorithm>
-#include <cJSON.h>
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
 
 #include "AudioTransform.h"
+#include "StreamInfo.h"
 
 namespace bell
 {

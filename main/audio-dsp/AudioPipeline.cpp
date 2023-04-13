@@ -1,6 +1,14 @@
 #include "AudioPipeline.h"
-#include <iostream>
+
+#include <type_traits>
+#include <utility>
+
 #include "BellLogger.h"
+#include "TransformConfig.h"
+
+namespace bell {
+class AudioTransform;
+}  // namespace bell
 
 using namespace bell;
 

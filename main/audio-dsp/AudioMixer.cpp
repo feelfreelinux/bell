@@ -1,5 +1,7 @@
 #include "AudioMixer.h"
 
+#include <mutex>
+
 using namespace bell;
 
 AudioMixer::AudioMixer() {

@@ -1,5 +1,8 @@
 #include "BellUtils.h"
 
+#include <stdlib.h>
+#include <random>
+
 std::string bell::generateRandomUUID() {
   static std::random_device dev;
   static std::mt19937 rng(dev());

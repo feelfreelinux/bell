@@ -1,6 +1,10 @@
 #include "MDNSService.h"
+
+#include <stddef.h>
+#include <utility>
+
 #include "dns_sd.h"
-#include <arpa/inet.h>
+#include "i386/endian.h"
 
 using namespace bell;
 

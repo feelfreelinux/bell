@@ -1,13 +1,18 @@
 #pragma once
 
+#include <memory>
+#include <mutex>
+#include <vector>
+
 #include "AudioTransform.h"
 #include "StreamInfo.h"
-#include <memory>
 #include "Gain.h"
-#include <mutex>
 
 namespace bell
 {
+class AudioTransform;
+class Gain;
+
   class AudioPipeline
   {
   private:

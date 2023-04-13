@@ -1,8 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
+#include <string>
+
 #include "TCPSocket.h"
 #include "TLSSocket.h"
+#include "BellSocket.h"
 
 namespace bell {
 class SocketBuffer : public std::streambuf {

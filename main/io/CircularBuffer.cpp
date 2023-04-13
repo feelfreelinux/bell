@@ -1,5 +1,7 @@
 #include "CircularBuffer.h"
 
+#include <algorithm>
+
 using namespace bell;
 
 CircularBuffer::CircularBuffer(size_t dataCapacity)

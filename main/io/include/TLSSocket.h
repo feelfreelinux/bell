@@ -2,10 +2,12 @@
 #define BELL_TLS_SOCKET_H
 
 #include <ctype.h>
+#include <stdint.h>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
+
 #include "BellLogger.h"
 #include "BellSocket.h"
 #ifdef _WIN32

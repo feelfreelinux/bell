@@ -1,28 +1,14 @@
-#include <memory.h>
 #include <atomic>
-#include <cmath>
-#include <fstream>
-#include <iostream>
-#include <map>
 #include <memory>
-#include <vector>
-#include "AudioCodecs.h"
-#include "AudioContainers.h"
-#include "BellHTTPServer.h"
-#include "BellMQTTClient.h"
-#include "BellTar.h"
-#include "BellTask.h"
-#include "BellUtils.h"
-#include "CentralAudioBuffer.h"
-#include "Compressor.h"
-#include "DecoderGlobals.h"
-#include "EncodedAudioStream.h"
-#include "HTTPClient.h"
-#include "PortAudioSink.h"
-#define DEBUG_LEVEL 4
-#include "X509Bundle.h"
-#include "mbedtls/debug.h"
+#include <string>
+#include <type_traits>
 
+#include "BellTask.h"
+#include "CentralAudioBuffer.h"
+#include "PortAudioSink.h"
+#include "StreamInfo.h"
+
+#define DEBUG_LEVEL 4
 #include <BellDSP.h>
 #include <BellLogger.h>
 
@@ -60,15 +46,7 @@ class AudioPlayer : bell::Task {
 int main() {
   bell::setDefaultLogger();
 
-  MQTTClient client;
 
-  BELL_LOG(info, "cock", "Starting MQTT client");
-  client.connect("192.168.1.17", 1883);
-  client.sync();
-
-  BELL_LOG(info, "cock", "Connected");
-  client.publish("dupa", "czorna");
-  client.sync();
   BELL_LOG(info, "cock", "Published?");
 
   return 0;

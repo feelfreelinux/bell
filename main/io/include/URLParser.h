@@ -4,6 +4,7 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <cstdlib>
 
 namespace bell {
 class URLParser {

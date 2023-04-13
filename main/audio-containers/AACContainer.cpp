@@ -1,5 +1,10 @@
 #include "AACContainer.h"
-#include "iostream"
+
+#include <cstring>
+
+#include "StreamInfo.h"
+#include "aacdec.h"
+
 using namespace bell;
 
 #define SYNC_WORLD_LEN 4

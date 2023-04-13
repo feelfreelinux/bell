@@ -1,9 +1,13 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdio.h>
 #include <vector>
+#include <string>
+
 #include "pb_encode.h"
 #include "pb_decode.h"
-#include <string>
+#include "pb.h"
 
 std::vector<uint8_t> pbEncode(const pb_msgdesc_t *fields, const void *src_struct);
 

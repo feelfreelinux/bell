@@ -1,5 +1,7 @@
 #include "Biquad.h"
 
+#include <cmath>
+
 using namespace bell;
 
 Biquad::Biquad()

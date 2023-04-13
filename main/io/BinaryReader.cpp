@@ -1,5 +1,12 @@
 #include "BinaryReader.h"
+
 #include <stdlib.h>
+#include <cstdint>
+#include <type_traits>
+
+namespace bell {
+class ByteStream;
+}  // namespace bell
 
 bell::BinaryReader::BinaryReader(std::shared_ptr<ByteStream> stream) {
     this->stream = stream;

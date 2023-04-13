@@ -5,6 +5,8 @@
 #include <cstring>
 #include <mutex>
 #include <vector>
+#include <cstdint>
+
 #include "WrappedSemaphore.h"
 
 

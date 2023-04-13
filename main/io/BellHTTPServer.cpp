@@ -1,7 +1,11 @@
 #include "BellHTTPServer.h"
+
+#include <string.h>
 #include <mutex>
 #include <regex>
 #include <cassert>
+#include <exception>
+
 #include "BellLogger.h"
 #include "CivetServer.h"
 #include "civetweb.h"

@@ -1,6 +1,14 @@
 #include "EncodedAudioStream.h"
 
-#include <iostream>
+#include <string.h>
+#include <stdexcept>
+#include <type_traits>
+#include <utility>
+
+#include "BellLogger.h"
+#include "ByteStream.h"
+#include "DecoderGlobals.h"
+
 using namespace bell;
 
 EncodedAudioStream::EncodedAudioStream() {

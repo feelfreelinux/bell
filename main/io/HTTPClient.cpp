@@ -1,5 +1,14 @@
 #include "HTTPClient.h"
 
+#include <string.h>
+#include <algorithm>
+#include <cassert>
+#include <cctype>
+#include <ostream>
+#include <stdexcept>
+
+#include "BellSocket.h"
+
 using namespace bell;
 
 void HTTPClient::Response::connect(const std::string& url) {

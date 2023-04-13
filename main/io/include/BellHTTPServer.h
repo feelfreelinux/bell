@@ -3,6 +3,7 @@
 #include <BellLogger.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <stdint.h>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -15,6 +16,8 @@
 #include <string>
 #include <mutex>
 #include <unordered_map>
+#include <vector>
+
 #include "CivetServer.h"
 #include "civetweb.h"
 

@@ -1,27 +1,37 @@
 #include "AudioCodecs.h"
-#include <cstring>
-#include <iostream>
+
 #include <map>
+#include <type_traits>
+
+#include "AudioContainer.h"
+
+namespace bell {
+class BaseCodec;
+}  // namespace bell
 
 using namespace bell;
 
 #ifdef BELL_CODEC_AAC
 #include "AACDecoder.h"
+
 static std::shared_ptr<AACDecoder> codecAac;
 #endif
 
 #ifdef BELL_CODEC_MP3
 #include "MP3Decoder.h"
+
 static std::shared_ptr<MP3Decoder> codecMp3;
 #endif
 
 #ifdef BELL_CODEC_VORBIS
 #include "VorbisDecoder.h"
+
 static std::shared_ptr<VorbisDecoder> codecVorbis;
 #endif
 
 #ifdef BELL_CODEC_OPUS
 #include "OPUSDecoder.h"
+
 static std::shared_ptr<OPUSDecoder> codecOpus;
 #endif
 

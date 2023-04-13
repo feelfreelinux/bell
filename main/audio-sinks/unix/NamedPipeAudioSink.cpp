@@ -1,5 +1,7 @@
 #include "NamedPipeAudioSink.h"
 
+#include <stdio.h>
+
 NamedPipeAudioSink::NamedPipeAudioSink()
 {
     printf("Start\n");

@@ -1,10 +1,14 @@
 #pragma once
 
 #include <memory>
+
 #include "BaseCodec.h"
 #include "AudioContainer.h"
+#include "CodecType.h"
 
 namespace bell {
+class AudioContainer;
+class BaseCodec;
 
 class AudioCodecs {
  public:
