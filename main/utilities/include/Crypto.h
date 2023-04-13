@@ -6,8 +6,6 @@
 #include <string>         // for string
 #include <vector>         // for vector
 
-extern "C" {
-}
 #include <mbedtls/aes.h>  // for mbedtls_aes_context
 #include <mbedtls/md.h>   // for mbedtls_md_context_t
 #include <stddef.h>       // for size_t

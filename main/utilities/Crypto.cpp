@@ -8,7 +8,9 @@
 #include <cstdint>             // for uint8_t
 #include <stdexcept>           // for runtime_error
 
-#include "aes.h"               // for AES_ECB_decrypt, AES_init_ctx, AES_ctx
+extern "C" {
+#include "aes.h"  // for AES_ECB_decrypt, AES_init_ctx, AES_ctx
+}
 
 CryptoMbedTLS::CryptoMbedTLS() {}
 

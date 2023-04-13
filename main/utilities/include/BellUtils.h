@@ -1,15 +1,16 @@
 #ifndef EUPHONIUM_BELL_UTILS
 #define EUPHONIUM_BELL_UTILS
 
-#include <stdint.h>    // for int32_t, int64_t
-#include <string.h>    // for NULL
+#include <stdint.h>  // for int32_t, int64_t
+#include <string.h>  // for NULL
 #ifdef _WIN32
 #include <WinSock2.h>
 #else
 #include <sys/time.h>  // for timeval, gettimeofday
+#include <unistd.h>    // for usleep
 #endif
-#include <cmath>       // for floor
-#include <string>      // for string
+#include <cmath>   // for floor
+#include <string>  // for string
 
 #ifdef ESP_PLATFORM
 #include "esp_system.h"
@@ -29,9 +30,9 @@ struct tv {
 #if _WIN32
     static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
 
-    SYSTEMTIME  system_time;
-    FILETIME    file_time;
-    uint64_t    time;
+    SYSTEMTIME system_time;
+    FILETIME file_time;
+    uint64_t time;
 
     GetSystemTime(&system_time);
     SystemTimeToFileTime(&system_time, &file_time);
