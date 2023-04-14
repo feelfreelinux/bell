@@ -7,27 +7,37 @@ project(bell)
 option(BELL_DISABLE_CODECS "Disable the entire audio codec wrapper" OFF)
 option(BELL_CODEC_AAC "Support libhelix-aac codec" ON)
 option(BELL_CODEC_MP3 "Support libhelix-mp3 codec" ON)
+option(BELL_DISABLE_MQTT "Disable the built-in MQTT wrapper" OFF)
 option(BELL_CODEC_VORBIS "Support tremor Vorbis codec" ON)
 option(BELL_CODEC_ALAC "Support Apple ALAC codec" ON)
 option(BELL_CODEC_OPUS "Support Opus codec" ON)
 option(BELL_DISABLE_SINKS "Disable all built-in audio sink implementations" OFF)
+
 # These are default OFF, as they're OS-dependent (ESP32 sinks are always enabled - no external deps)
 option(BELL_SINK_ALSA "Enable ALSA audio sink" OFF)
 option(BELL_SINK_PORTAUDIO "Enable PortAudio sink" OFF)
+
 # cJSON wrapper
-option(BELL_DISABLE_CJSON "Disable cJSON and JSONObject completely" OFF)
+option(BELL_ONLY_CJSON "Use only cJSON, not Nlohmann")
 set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, optional")
 
-if(BELL_EXTERNAL_MBEDTLS)
-    set(MbedTLS_DIR ${BELL_EXTERNAL_MBEDTLS})
-    message(STATUS "Setting local mbedtls ${MbedTLS_DIR}")
-endif()
+# vorbis
+set(BELL_EXTERNAL_VORBIS "" CACHE STRING "External Vorbis library target name, optional")
+option(BELL_VORBIS_FLOAT "Use floating point Vorbis API" OFF)
+
+# fmt & regex
+option(BELL_DISABLE_FMT "Don't use std::fmt (saves space)" OFF)
+option(BELL_DISABLE_REGEX "Don't use std::regex (saves space)" OFF)
+
+# disable json tests
+set(JSON_BuildTests OFF CACHE INTERNAL "")
 
 # Backwards compatibility with deprecated options
 if(BELL_USE_ALSA)
     message(WARNING "Deprecated Bell options used, replace BELL_USE_ALSA with BELL_SINK_ALSA")
     set(BELL_SINK_ALSA ${BELL_USE_ALSA})
 endif()
+
 if(BELL_USE_PORTAUDIO)
     message(WARNING "Deprecated Bell options used, replace BELL_USE_PORTAUDIO with BELL_SINK_PORTAUDIO")
     set(BELL_SINK_PORTAUDIO ${BELL_USE_PORTAUDIO})
@@ -35,6 +45,7 @@ endif()
 
 message(STATUS "Bell options:")
 message(STATUS "    Disable all codecs: ${BELL_DISABLE_CODECS}")
+
 if(NOT BELL_DISABLE_CODECS)
     message(STATUS "    - AAC audio codec: ${BELL_CODEC_AAC}")
     message(STATUS "    - MP3 audio codec: ${BELL_CODEC_MP3}")
@@ -42,51 +53,76 @@ if(NOT BELL_DISABLE_CODECS)
     message(STATUS "    - Opus audio codec: ${BELL_CODEC_OPUS}")
     message(STATUS "    - ALAC audio codec: ${BELL_CODEC_ALAC}")
 endif()
+
 message(STATUS "    Disable built-in audio sinks: ${BELL_DISABLE_SINKS}")
+message(STATUS "    Use Vorbis float version: ${BELL_VORBIS_FLOAT}")
+
 if(NOT BELL_DISABLE_SINKS)
     message(STATUS "    - ALSA sink: ${BELL_SINK_ALSA}")
     message(STATUS "    - PortAudio sink: ${BELL_SINK_PORTAUDIO}")
 endif()
-message(STATUS "    Disable cJSON and JSONObject: ${BELL_DISABLE_CJSON}")
+
+message(STATUS "    Use cJSON only: ${BELL_ONLY_CJSON}")
+message(STATUS "    Disable Fmt: ${BELL_DISABLE_FMT}")
+message(STATUS "    Disable Mqtt: ${BELL_DISABLE_MQTT}")
+message(STATUS "    Disable Regex: ${BELL_DISABLE_REGEX}")
 
 # Include nanoPB library
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/nanopb/extra")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/nanopb/extra")
 find_package(Nanopb REQUIRED)
-list(APPEND EXTRA_INCLUDES ${NANOPB_INCLUDE_DIRS})
+message(${NANOPB_INCLUDE_DIRS})
+list(APPEND EXTERNAL_INCLUDES ${NANOPB_INCLUDE_DIRS})
 
 # CMake options
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED 20)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-set(AUDIO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/audio")
-add_definitions("-DUSE_DEFAULT_STDLIB=1")
+
+set(AUDIO_CODEC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/audio-codec")
+set(AUDIO_CONTAINERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/audio-containers")
+set(AUDIO_DSP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/audio-dsp")
+set(AUDIO_SINKS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/audio-sinks")
+set(IO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/io")
+set(PLATFORM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/platform")
+set(UTILITIES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main/utilities")
+
+add_definitions("-DUSE_DEFAULT_STDLIB=1 -DTARGET_OS_IPHONE=0")
 
 # Main library sources
-file(GLOB SOURCES "src/*.cpp" "src/*.c" "nanopb/*.c")
-list(APPEND EXTRA_INCLUDES "include/platform")
-list(APPEND EXTRA_INCLUDES "include/audio/container")
+file(GLOB SOURCES
+    "external/nanopb/*.c"
+    "main/utilities/*.cpp" "main/utilities/*.c"
+    "main/io/*.cpp" "main/io/*.c"
+)
+
+list(APPEND EXTRA_INCLUDES "main/audio-codec/include")
+list(APPEND EXTRA_INCLUDES "main/audio-dsp/include")
+list(APPEND EXTRA_INCLUDES "main/audio-sinks/include")
+list(APPEND EXTRA_INCLUDES "main/io/include")
+list(APPEND EXTRA_INCLUDES "main/utilities/include")
+list(APPEND EXTRA_INCLUDES "main/platform")
 
 # Add platform specific sources
 if(ESP_PLATFORM)
-    file(GLOB ESP_PLATFORM_SOURCES "src/platform/esp/*.cpp" "src/platform/esp/*.c" "src/asm/biquad_f32_ae32.S")
+    file(GLOB ESP_PLATFORM_SOURCES "main/platform/esp/*.cpp" "main/platform/esp/*.c" "main/asm/biquad_f32_ae32.S")
     list(APPEND SOURCES ${ESP_PLATFORM_SOURCES})
 endif()
-if(UNIX)
-    file(GLOB UNIX_PLATFORM_SOURCES "src/platform/unix/*.cpp" "src/platform/unix/*.c")
-    list(APPEND SOURCES ${UNIX_PLATFORM_SOURCES})
-endif()
+
 if(APPLE)
-    file(GLOB APPLE_PLATFORM_SOURCES "src/platform/apple/*.cpp" "src/platform/apple/*.c")
+    file(GLOB APPLE_PLATFORM_SOURCES "main/platform/apple/*.cpp" "main/platform/apple/*.c")
     list(APPEND SOURCES ${APPLE_PLATFORM_SOURCES})
-    list(APPEND EXTRA_INCLUDES "/usr/local/opt/mbedtls@3/include")
+    list(APPEND EXTERNAL_INCLUDES "/usr/local/opt/mbedtls@3/include")
 endif()
+
 if(UNIX AND NOT APPLE)
-    file(GLOB LINUX_PLATFORM_SOURCES "src/platform/linux/*.cpp" "src/platform/linux/*.c")
+    file(GLOB LINUX_PLATFORM_SOURCES "main/platform/linux/*.cpp" "main/platform/linux/*.c")
     list(APPEND SOURCES ${LINUX_PLATFORM_SOURCES})
 endif()
+
 if(WIN32)
-    file(GLOB WIN32_PLATFORM_SOURCES "src/platform/win32/*.cpp" "src/platform/win32/*.c")
+    file(GLOB WIN32_PLATFORM_SOURCES "main/platform/win32/*.cpp" "main/platform/win32/*.c")
     list(APPEND SOURCES ${WIN32_PLATFORM_SOURCES})
-    list(APPEND EXTRA_INCLUDES "include/platform/win32")    
+    list(APPEND EXTERNAL_INCLUDES "main/platform/win32")
 endif()
 
 # A hack to make Opus keep quiet
@@ -96,90 +132,81 @@ function(message)
     endif()
 endfunction()
 
+
 if(ESP_PLATFORM)
-    list(APPEND EXTRA_LIBS idf::mbedtls idf::pthread idf::mdns)
-    add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation)
+    list(APPEND EXTRA_LIBS idf::espressif__mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
+    add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation -Wno-stringop-overflow -Wno-error=format -Wno-format -Wno-stringop-overread -Wno-stringop-overflow)
 else()
     find_package(Threads REQUIRED)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    list(APPEND EXTRA_LIBS Threads::Threads)
-    
     find_package(MbedTLS REQUIRED)
-    get_target_property(MBEDTLS_INFO MbedTLS::mbedtls INTERFACE_INCLUDE_DIRECTORIES)
-    list(APPEND EXTRA_INCLUDES ${MBEDTLS_INFO})
+    list(APPEND EXTERNAL_INCLUDES ${MBEDTLS_INCLUDE_DIRS})
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    list(APPEND EXTRA_LIBS ${MBEDTLS_LIBRARIES} Threads::Threads)
 
-    # try to handle mbedtls when not system-wide installed      
-    if(BELL_EXTERNAL_MBEDTLS)
-        if(MSVC)
-            set(MBEDTLS_RELEASE "RELEASE" CACHE STRING "local mbedtls version")
-        else()
-            set(MBEDTLS_RELEASE "NOCONFIG" CACHE STRING "local mbedtls version")
-        endif()
-        message(STATUS "using local mbedtls version ${MBEDTLS_RELEASE}")        
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedtls IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedx509 IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-        get_target_property(MBEDTLS_INFO MbedTLS::mbedcrypto IMPORTED_LOCATION_${MBEDTLS_RELEASE})
-        list(APPEND EXTRA_LIBS ${MBEDTLS_INFO})
-    else()  
-        list(APPEND EXTRA_LIBS mbedtls mbedcrypto mbedx509)
-    endif() 
-    
     if(MSVC)
-        add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS)
+        add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES)
         add_definitions(/wd4068 /wd4244 /wd4018 /wd4101 /wd4102 /wd4142)
-    endif() 
+    endif()
+endif()
+
+if (NOT BELL_DISABLE_MQTT)        
+    file(GLOB MQTT_SOURCES "external/mqtt/*.c")
+    list(APPEND SOURCES ${MQTT_SOURCES})
+    list(APPEND EXTERNAL_INCLUDES "external/mqtt/include")
 endif()
 
 if(NOT BELL_DISABLE_CODECS)
-    file(GLOB EXTRA_SOURCES "src/audio/container/*.cpp")
+    file(GLOB EXTRA_SOURCES "main/audio-containers/*.cpp" "main/audio-codec/*.cpp" "main/audio-codec/*.c" "main/audio-dsp/*.cpp" "main/audio-dsp/*.c")
+
     list(APPEND SOURCES "${EXTRA_SOURCES}")
-    list(APPEND SOURCES "${AUDIO_DIR}/codec/DecoderGlobals.cpp")
-    list(APPEND SOURCES "${AUDIO_DIR}/codec/BaseCodec.cpp")
-    list(APPEND SOURCES "${AUDIO_DIR}/codec/AudioCodecs.cpp")
-    list(APPEND EXTRA_INCLUDES "include/audio/codec")
+    list(APPEND SOURCES "${AUDIO_CODEC_DIR}/DecoderGlobals.cpp")
+    list(APPEND SOURCES "${AUDIO_CODEC_DIR}/BaseCodec.cpp")
+    list(APPEND SOURCES "${AUDIO_CODEC_DIR}/AudioCodecs.cpp")
+    list(APPEND EXTRA_INCLUDES "main/audio-containers/include")
+
     # AAC-LC codec
     if(BELL_CODEC_AAC)
-        file(GLOB LIBHELIX_AAC_SOURCES "libhelix-aac/*.c")
+        file(GLOB LIBHELIX_AAC_SOURCES "external/libhelix-aac/*.c")
         list(APPEND LIBHELIX_SOURCES ${LIBHELIX_AAC_SOURCES})
-        list(APPEND EXTRA_INCLUDES "libhelix-aac")
-        list(APPEND SOURCES "${AUDIO_DIR}/codec/AACDecoder.cpp")
+        list(APPEND EXTERNAL_INCLUDES "external/libhelix-aac")
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/AACDecoder.cpp")
         list(APPEND CODEC_FLAGS "-DBELL_CODEC_AAC")
     endif()
+
     # MP3 codec
     if(BELL_CODEC_MP3)
-        file(GLOB LIBHELIX_MP3_SOURCES "libhelix-mp3/*.c")
+        file(GLOB LIBHELIX_MP3_SOURCES "external/libhelix-mp3/*.c")
         list(APPEND LIBHELIX_SOURCES ${LIBHELIX_MP3_SOURCES})
-        list(APPEND EXTRA_INCLUDES "libhelix-mp3")
-        list(APPEND SOURCES "${AUDIO_DIR}/codec/MP3Decoder.cpp")
+        list(APPEND EXTERNAL_INCLUDES "external/libhelix-mp3")
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/MP3Decoder.cpp")
         list(APPEND CODEC_FLAGS "-DBELL_CODEC_MP3")
     endif()
 
     # MP3 codec
-    if(BELL_CODEC_ALAC)
-        file(GLOB ALAC_SOURCES "alac/*.c" "alac/*.cpp")
-        list(APPEND ALAC_SOURCES ${ALAC_SOURCES})
-        list(APPEND EXTRA_INCLUDES "alac")
-        # list(APPEND SOURCES "${AUDIO_DIR}/codec/ALACDecoder.cpp")
-        list(APPEND CODEC_FLAGS "-DBELL_CODEC_ALAC")
-    endif()
+    # if(BELL_CODEC_ALAC)
+    #     file(GLOB ALAC_SOURCES "external/alac/*.c" "external/alac/*.cpp")
+    #     list(APPEND ALAC_SOURCES ${ALAC_SOURCES})
+    #     list(APPEND EXTRA_INCLUDES "external/alac")
+
+    #     # list(APPEND SOURCES "${AUDIO_DIR}/codec/ALACDecoder.cpp")
+    #     list(APPEND CODEC_FLAGS "-DBELL_CODEC_ALAC")
+    # endif()
+
     # libhelix Cygwin workaround
     if(CYGWIN)
         # Both Cygwin and ESP are Unix-like so this seems to work (or, at least, compile)
-        set_source_files_properties("${AUDIO_DIR}/codec/DecoderGlobals.cpp" ${LIBHELIX_SOURCES} PROPERTIES COMPILE_FLAGS "-DESP_PLATFORM")
+        set_source_files_properties("${AUDIO_CODEC_DIR}/DecoderGlobals.cpp" ${LIBHELIX_SOURCES} PROPERTIES COMPILE_FLAGS "-DESP_PLATFORM")
     endif()
+
     list(APPEND SOURCES ${LIBHELIX_SOURCES})
     list(APPEND SOURCES ${ALAC_SOURCES})
+
     # Vorbis codec
     if(BELL_CODEC_VORBIS)
-        file(GLOB TREMOR_SOURCES "tremor/*.c")
-        list(REMOVE_ITEM TREMOR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tremor/ivorbisfile_example.c")
-        list(APPEND SOURCES ${TREMOR_SOURCES})
-        list(APPEND EXTRA_INCLUDES "tremor")
-        list(APPEND SOURCES "${AUDIO_DIR}/codec/VorbisDecoder.cpp")
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/VorbisDecoder.cpp")
         list(APPEND CODEC_FLAGS "-DBELL_CODEC_VORBIS")
-    endif()
+    endif() 
+    
     # Opus codec
     if(BELL_CODEC_OPUS)
         set(OPUS_INSTALL_CMAKE_CONFIG_MODULE OFF CACHE BOOL "")
@@ -187,72 +214,127 @@ if(NOT BELL_DISABLE_CODECS)
         set(OPUS_INSTALL_PKG_CONFIG_MODULE OFF CACHE BOOL "")
         set(OPUS_INSTALL_PKG_CONFIG_MODULE OFF)
         set(MESSAGE_QUIET ON)
-        add_subdirectory("opus")
+        add_subdirectory("external/opus")
         unset(MESSAGE_QUIET)
         target_compile_options(opus PRIVATE "-O3")
         list(APPEND EXTRA_LIBS Opus::opus)
-        list(APPEND SOURCES "${AUDIO_DIR}/codec/OPUSDecoder.cpp")
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/OPUSDecoder.cpp")
         list(APPEND CODEC_FLAGS -DBELL_CODEC_OPUS)
     endif()
+    
     # Enable global codecs
     string(REPLACE ";" " " CODEC_FLAGS "${CODEC_FLAGS}")
-    set_source_files_properties("${AUDIO_DIR}/codec/AudioCodecs.cpp" PROPERTIES COMPILE_FLAGS "${CODEC_FLAGS}")
-elseif(BELL_EXTERNAL_TREMOR) 	
-    list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_TREMOR})
+    set_source_files_properties("${AUDIO_CODEC_DIR}/AudioCodecs.cpp" PROPERTIES COMPILE_FLAGS "${CODEC_FLAGS}")
+else()  
+    list(REMOVE_ITEM SOURCES "${IO_DIR}/EncodedAudioStream.cpp")
+endif() 
+
+if(NOT BELL_EXTERNAL_VORBIS STREQUAL "")
+    message(STATUS "Using external Vorbis codec ${BELL_EXTERNAL_VORBIS}")
+    list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_VORBIS})
+else()  
+    file(GLOB TREMOR_SOURCES "external/tremor/*.c")
+    list(REMOVE_ITEM TREMOR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/external/tremor/ivorbisfile_example.c")
+    list(APPEND SOURCES ${TREMOR_SOURCES})
+    list(APPEND EXTERNAL_INCLUDES "external/tremor")
 endif()
 
 if(NOT BELL_DISABLE_SINKS)
     set(PLATFORM "unix")
+
     if(ESP_PLATFORM)
         set(PLATFORM "esp")
     endif()
+
     # Add all built-in audio sinks
-    file(GLOB SINK_SOURCES "${AUDIO_DIR}/sinks/${PLATFORM}/*.cpp" "${AUDIO_DIR}/sinks/${PLATFORM}/*.c")
-    list(APPEND EXTRA_INCLUDES "include/audio/sinks/${PLATFORM}")
+    file(GLOB SINK_SOURCES "${AUDIO_SINKS_DIR}/${PLATFORM}/*.cpp" "${AUDIO_SINKS_DIR}/${PLATFORM}/*.c")
+    list(APPEND EXTRA_INCLUDES "main/audio-sinks/include/${PLATFORM}")
+
     # Find ALSA if required, else remove the sink
     if(BELL_SINK_ALSA)
         find_package(ALSA REQUIRED)
-        list(APPEND EXTRA_INCLUDES ${ALSA_INCLUDE_DIRS})
+        list(APPEND EXTERNAL_INCLUDES ${ALSA_INCLUDE_DIRS})
         list(APPEND EXTRA_LIBS ${ALSA_LIBRARIES})
     else()
-        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_DIR}/sinks/unix/ALSAAudioSink.cpp")
+        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/ALSAAudioSink.cpp")
     endif()
+
     # Find PortAudio if required, else remove the sink
     if(BELL_SINK_PORTAUDIO)
-        if(WIN32)
-            list(APPEND EXTRA_INCLUDES "portaudio/include")
-            if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/portaudio/portaudio_win32.lib")
-            else()
-                list(APPEND EXTRA_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/portaudio/portaudio_x64.lib")
-            endif()
-        else()
-            find_package(portaudio REQUIRED)
-            list(APPEND EXTRA_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
-            list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
-        endif()
+        find_package(Portaudio REQUIRED)
+        list(APPEND EXTERNAL_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
+        list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
     else()
-        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_DIR}/sinks/unix/PortAudioSink.cpp")
+        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/PortAudioSink.cpp")
     endif()
+
     list(APPEND SOURCES ${SINK_SOURCES})
 endif()
 
-if(BELL_DISABLE_CJSON)
-    list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/JSONObject.cpp")
-else()
-    if(BELL_EXTERNAL_CJSON)
-        list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_CJSON})
+if(NOT BELL_ONLY_CJSON)
+    set(JSON_SystemInclude ON CACHE INTERNAL "")
+    add_subdirectory(external/nlohmann_json)
+    list(APPEND EXTRA_LIBS nlohmann_json::nlohmann_json)
+endif()	
+
+if(BELL_EXTERNAL_CJSON)
+	list(APPEND EXTRA_LIBS ${BELL_EXTERNAL_CJSON})
+else()	
+	list(APPEND SOURCES "external/cJSON/cJSON.c")
+  list(APPEND EXTERNAL_INCLUDES "external/cJSON")
+endif()	
+
+if (NOT BELL_DISABLE_FMT)
+  list(APPEND EXTERNAL_INCLUDES "external/fmt/include")
+endif()
+
+if(WIN32 OR UNIX)
+    list(APPEND SOURCES "external/mdnssvc/mdns.c" "external/mdnssvc/mdnsd.c")
+    list(APPEND EXTERNAL_INCLUDES "external/mdnssvc")
+endif() 
+
+file(GLOB CIVET_SRC "external/civetweb/*.c" "external/civetweb/*.inl" "external/civetweb/*.cpp")
+
+list(APPEND SOURCES ${CIVET_SRC})
+list(APPEND EXTERNAL_INCLUDES "external/civetweb/include") 
+
+add_library(bell STATIC ${SOURCES})
+
+# Add Apple Bonjour compatibility library for Linux
+if(UNIX AND NOT APPLE)
+    if (BELL_DISABLE_AVAHI)
+        add_compile_definitions(BELL_DISABLE_AVAHI)
     else()
-        list(APPEND SOURCES "cJSON/cJSON.c")
-        list(APPEND EXTRA_INCLUDES "cJSON")
+        list(APPEND EXTRA_LIBS avahi-client avahi-common)
     endif()
 endif()
 
-add_library(bell STATIC ${SOURCES})
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
-target_include_directories(bell PUBLIC "include" ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
-target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC)
-if(WIN32)
-    target_compile_definitions(bell PUBLIC PB_NO_STATIC_ASSERT)
+target_include_directories(bell PUBLIC ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(bell SYSTEM PUBLIC ${EXTERNAL_INCLUDES})
+target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC FMT_HEADER_ONLY)
+
+if(BELL_DISABLE_CODECS)
+    target_compile_definitions(bell PUBLIC BELL_DISABLE_CODECS)
 endif() 
+
+if(BELL_VORBIS_FLOAT)
+    target_compile_definitions(bell PUBLIC BELL_VORBIS_FLOAT)
+endif() 
+
+if(BELL_DISABLE_FMT)
+	target_compile_definitions(bell PUBLIC BELL_DISABLE_FMT)
+endif()
+
+if(BELL_DISABLE_REGEX)
+    target_compile_definitions(bell PUBLIC BELL_DISABLE_REGEX)
+endif()	
+
+if(BELL_ONLY_CJSON)
+    target_compile_definitions(bell PUBLIC BELL_ONLY_CJSON)
+endif()	
+
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+    target_compile_definitions(bell PUBLIC PB_NO_STATIC_ASSERT)
+endif()
