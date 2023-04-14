@@ -34,7 +34,7 @@
             name = "bell";
             src = ./.;
             nativeBuildInputs = with pkgs; [ cmake ninja ];
-            buildInputs = with pkgs; [ unstable.mbedtls ];
+            buildInputs = with pkgs; [ unstable.mbedtls avahi avahi-compat ];
             enableParallelBuilding = true;
           };
         };
