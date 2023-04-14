@@ -2,7 +2,6 @@
 
 bell::DecodersInstance* bell::decodersInstance;
 
-void bell::createDecoders()
-{
-    bell::decodersInstance = new bell::DecodersInstance();
+void bell::createDecoders() {
+  bell::decodersInstance = new bell::DecodersInstance();
 }

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stdint.h>          // for uint32_t
-#include <cstddef>           // for byte, size_t
-#include <istream>           // for istream
-#include <vector>            // for vector
+#include <stdint.h>  // for uint32_t
+#include <cstddef>   // for byte, size_t
+#include <istream>   // for istream
+#include <vector>    // for vector
 
 #include "AudioContainer.h"  // for AudioContainer
 #include "CodecType.h"       // for AudioCodec, AudioCodec::MP3

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <stddef.h>      // for size_t
-#include <stdint.h>      // for uint32_t, uint8_t
-#include <functional>    // for function
-#include <memory>        // for shared_ptr, unique_ptr
-#include <mutex>         // for mutex
-#include <vector>        // for vector
+#include <stddef.h>    // for size_t
+#include <stdint.h>    // for uint32_t, uint8_t
+#include <functional>  // for function
+#include <memory>      // for shared_ptr, unique_ptr
+#include <mutex>       // for mutex
+#include <vector>      // for vector
 
 #include "StreamInfo.h"  // for BitWidth
 
@@ -18,23 +18,26 @@ class CentralAudioBuffer;
 class BellDSP {
  public:
   BellDSP(std::shared_ptr<CentralAudioBuffer> centralAudioBuffer);
-  ~BellDSP() {};
+  ~BellDSP(){};
 
   class AudioEffect {
    public:
     AudioEffect() = default;
     ~AudioEffect() = default;
     size_t duration;
-    virtual void apply(float* sampleData, size_t samples, size_t relativePosition) = 0;
+    virtual void apply(float* sampleData, size_t samples,
+                       size_t relativePosition) = 0;
   };
 
-  class FadeEffect: public AudioEffect {
-  private:
+  class FadeEffect : public AudioEffect {
+   private:
     std::function<void()> onFinish;
     bool isFadeIn;
-  public:
-    FadeEffect(size_t duration, bool isFadeIn, std::function<void()> onFinish = nullptr);
-    ~FadeEffect() {};
+
+   public:
+    FadeEffect(size_t duration, bool isFadeIn,
+               std::function<void()> onFinish = nullptr);
+    ~FadeEffect(){};
 
     void apply(float* sampleData, size_t samples, size_t relativePosition);
   };
@@ -44,8 +47,8 @@ class BellDSP {
 
   std::shared_ptr<AudioPipeline> getActivePipeline();
 
-  size_t process(uint8_t* data, size_t bytes, int channels,
-                 uint32_t sampleRate, BitWidth bitWidth);
+  size_t process(uint8_t* data, size_t bytes, int channels, uint32_t sampleRate,
+                 BitWidth bitWidth);
 
  private:
   std::shared_ptr<AudioPipeline> activePipeline;
@@ -53,7 +56,6 @@ class BellDSP {
   std::mutex accessMutex;
   std::vector<float> dataLeft = std::vector<float>(1024);
   std::vector<float> dataRight = std::vector<float>(1024);
-
 
   std::unique_ptr<AudioEffect> underflowEffect = nullptr;
   std::unique_ptr<AudioEffect> startEffect = nullptr;

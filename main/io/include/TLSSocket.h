@@ -1,16 +1,16 @@
 #ifndef BELL_TLS_SOCKET_H
 #define BELL_TLS_SOCKET_H
 
-#include <stdint.h>               // for uint8_t, uint16_t
+#include <stdint.h>  // for uint8_t, uint16_t
 
-#include "BellSocket.h"           // for Socket
+#include "BellSocket.h"  // for Socket
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
 #endif
-#include <stdlib.h>               // for size_t
-#include <string>                 // for string
+#include <stdlib.h>  // for size_t
+#include <string>    // for string
 
 #include "mbedtls/ctr_drbg.h"     // for mbedtls_ctr_drbg_context
 #include "mbedtls/entropy.h"      // for mbedtls_entropy_context

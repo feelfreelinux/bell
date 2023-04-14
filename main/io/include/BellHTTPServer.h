@@ -42,7 +42,9 @@ class BellHTTPServer : public CivetHandler {
       }
     }
   };
-  typedef std::function<std::unique_ptr<HTTPResponse>(struct mg_connection* conn)> HTTPHandler;
+  typedef std::function<std::unique_ptr<HTTPResponse>(
+      struct mg_connection* conn)>
+      HTTPHandler;
   typedef std::function<void(struct mg_connection* conn, WSState)>
       WSStateHandler;
   typedef std::function<void(struct mg_connection* conn, char*, size_t)>
@@ -75,7 +77,8 @@ class BellHTTPServer : public CivetHandler {
   std::vector<int> getListeningPorts() { return server->getListeningPorts(); };
   void close() { server->close(); }
 
-  std::unique_ptr<HTTPResponse> makeJsonResponse(const std::string& json, int status = 200);
+  std::unique_ptr<HTTPResponse> makeJsonResponse(const std::string& json,
+                                                 int status = 200);
   std::unique_ptr<HTTPResponse> makeEmptyResponse();
 
   void registerNotFound(HTTPHandler handler);
@@ -84,7 +87,8 @@ class BellHTTPServer : public CivetHandler {
   void registerWS(const std::string&, WSDataHandler dataHandler,
                   WSStateHandler stateHandler);
 
-  static std::unordered_map<std::string, std::string> extractParams(struct mg_connection* conn);
+  static std::unordered_map<std::string, std::string> extractParams(
+      struct mg_connection* conn);
 
  private:
   std::unique_ptr<CivetServer> server;

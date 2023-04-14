@@ -1,7 +1,7 @@
 #pragma once
-#include <stdint.h>     // for uint8_t, uint16_t
-#include <functional>   // for function
-#include <string>       // for string
+#include <stdint.h>    // for uint8_t, uint16_t
+#include <functional>  // for function
+#include <string>      // for string
 
 #include "TCPSocket.h"  // for TCPSocket
 #include "mqtt.h"       // for MQTT_PUBLISH_QOS_0, MQTT_PUBLISH_QOS_1, MQTT_...
@@ -23,7 +23,8 @@ class MQTTClient {
   // @param topic The topic the message was published to.
   // @param message The message that was published.
   typedef std::function<void(const std::string& topic,
-                             const std::string& message)> PublishCallback;
+                             const std::string& message)>
+      PublishCallback;
 
   // @brief Set the publish callback
   void setPublishCallback(PublishCallback callback) {

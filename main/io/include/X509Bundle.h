@@ -5,7 +5,7 @@
 #include <cstdint>             // for uint8_t, uint16_t, uint32_t
 #include <vector>              // for vector
 
-#include "mbedtls/ssl.h"       // for mbedtls_ssl_config
+#include "mbedtls/ssl.h"  // for mbedtls_ssl_config
 
 namespace bell::X509Bundle {
 

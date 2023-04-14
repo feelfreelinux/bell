@@ -2,10 +2,10 @@
 
 #include <atomic>
 #include <cmath>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <functional>
 
 #include "BellUtils.h"
 #include "CircularBuffer.h"
@@ -105,10 +105,10 @@ class CentralAudioBuffer {
     }
   }
 
-  AudioChunk currentChunk = { };
+  AudioChunk currentChunk = {};
   bool hasChunk = false;
 
-  AudioChunk lastReadChunk = { };
+  AudioChunk lastReadChunk = {};
 
   AudioChunk* readChunk() {
     std::scoped_lock lock(this->dataAccessMutex);

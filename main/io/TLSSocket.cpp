@@ -7,8 +7,8 @@
 #include <cstring>                // for strlen, NULL
 #include <stdexcept>              // for runtime_error
 
-#include "BellLogger.h"           // for AbstractLogger, BELL_LOG
-#include "X509Bundle.h"           // for shouldVerify, attach
+#include "BellLogger.h"  // for AbstractLogger, BELL_LOG
+#include "X509Bundle.h"  // for shouldVerify, attach
 
 /**
  * Platform TLSSocket implementation for the mbedtls

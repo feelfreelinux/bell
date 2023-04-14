@@ -52,7 +52,9 @@ struct tv {
   int32_t sec;
   int32_t usec;
 
-  int64_t ms() { return (sec * (int64_t)1000) + (usec / 1000); }
+  int64_t ms() {
+    return (sec * (int64_t)1000) + (usec / 1000);
+  }
 
   tv operator+(const tv& other) const {
     tv result(*this);

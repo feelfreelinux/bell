@@ -1,11 +1,11 @@
 #include "HTTPClient.h"
 
-#include <string.h>      // for memcpy
-#include <algorithm>     // for transform
-#include <cassert>       // for assert
-#include <cctype>        // for tolower
-#include <ostream>       // for operator<<, basic_ostream
-#include <stdexcept>     // for runtime_error
+#include <string.h>   // for memcpy
+#include <algorithm>  // for transform
+#include <cassert>    // for assert
+#include <cctype>     // for tolower
+#include <ostream>    // for operator<<, basic_ostream
+#include <stdexcept>  // for runtime_error
 
 #include "BellSocket.h"  // for bell
 

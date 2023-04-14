@@ -1,8 +1,8 @@
 #pragma once
 
-#include <iostream>      // for streamsize, basic_streambuf<>::int_type, ios...
-#include <memory>        // for unique_ptr, operator!=
-#include <string>        // for char_traits, string
+#include <iostream>  // for streamsize, basic_streambuf<>::int_type, ios...
+#include <memory>    // for unique_ptr, operator!=
+#include <string>    // for char_traits, string
 
 #include "BellSocket.h"  // for Socket
 

@@ -1,10 +1,10 @@
 #include "BellHTTPServer.h"
 
-#include <string.h>       // for memcpy
-#include <cassert>        // for assert
-#include <exception>      // for exception
-#include <mutex>          // for scoped_lock
-#include <regex>          // for sregex_token_iterator, regex
+#include <string.h>   // for memcpy
+#include <cassert>    // for assert
+#include <exception>  // for exception
+#include <mutex>      // for scoped_lock
+#include <regex>      // for sregex_token_iterator, regex
 
 #include "BellLogger.h"   // for AbstractLogger, BELL_LOG, bell
 #include "CivetServer.h"  // for CivetServer, CivetWebSocketHandler

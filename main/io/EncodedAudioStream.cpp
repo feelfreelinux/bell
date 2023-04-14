@@ -1,9 +1,9 @@
 #include "EncodedAudioStream.h"
 
-#include <string.h>          // for memcpy, memmove
-#include <stdexcept>         // for runtime_error
-#include <type_traits>       // for remove_extent_t
-#include <utility>           // for move
+#include <string.h>     // for memcpy, memmove
+#include <stdexcept>    // for runtime_error
+#include <type_traits>  // for remove_extent_t
+#include <utility>      // for move
 
 #include "BellLogger.h"      // for AbstractLogger, BELL_LOG, bell
 #include "ByteStream.h"      // for ByteStream
@@ -179,5 +179,4 @@ void EncodedAudioStream::guessDataFormat() {
   }
 }
 
-void EncodedAudioStream::readFully(uint8_t* dst, size_t nbytes) {
-}
+void EncodedAudioStream::readFully(uint8_t* dst, size_t nbytes) {}

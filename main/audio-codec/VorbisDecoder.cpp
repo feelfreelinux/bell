@@ -1,6 +1,6 @@
 #include "VorbisDecoder.h"
 
-#include <stdlib.h>        // for free, malloc
+#include <stdlib.h>  // for free, malloc
 
 #include "CodecType.h"     // for bell
 #include "config_types.h"  // for ogg_int16_t

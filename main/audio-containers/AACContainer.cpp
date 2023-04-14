@@ -1,6 +1,6 @@
 #include "AACContainer.h"
 
-#include <cstring>       // for memmove
+#include <cstring>  // for memmove
 
 #include "StreamInfo.h"  // for BitWidth, BitWidth::BW_16, SampleRate, Sampl...
 #include "aacdec.h"      // for AACFindSyncWord

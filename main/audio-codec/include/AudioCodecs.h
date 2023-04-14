@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory>       // for shared_ptr
+#include <memory>  // for shared_ptr
 
 #include "CodecType.h"  // for AudioCodec
 

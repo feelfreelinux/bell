@@ -1,6 +1,6 @@
 #include "MP3Container.h"
 
-#include <cstring>       // for memmove
+#include <cstring>  // for memmove
 
 #include "StreamInfo.h"  // for BitWidth, BitWidth::BW_16, SampleRate, Sampl...
 #include "mp3dec.h"      // for MP3FindSyncWord

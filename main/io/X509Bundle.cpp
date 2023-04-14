@@ -9,7 +9,7 @@
 #include <string.h>                  // for memcmp, memcpy
 #include <stdexcept>                 // for runtime_error
 
-#include "BellLogger.h"              // for AbstractLogger, BELL_LOG
+#include "BellLogger.h"  // for AbstractLogger, BELL_LOG
 
 using namespace bell::X509Bundle;
 

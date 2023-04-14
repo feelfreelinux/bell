@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>     // for uint8_t, uint32_t, int16_t
+#include <stdint.h>  // for uint8_t, uint32_t, int16_t
 
 #include "BaseCodec.h"  // for BaseCodec
 
