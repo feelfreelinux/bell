@@ -5,9 +5,10 @@
     nixpkgs.url = "nixpkgs/nixos-22.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, flake-utils }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, flake-utils, pre-commit-hooks }:
     let
       overlay = final: prev: {
         unstable = nixpkgs-unstable.legacyPackages.${prev.system};
@@ -22,12 +23,12 @@
           overlays = [ overlay ];
         };
 
+
         llvm = pkgs.llvmPackages_14;
 
         clang-tools = pkgs.clang-tools.override { llvmPackages = llvm; };
 
-        apps = {
-        };
+        apps = { };
 
         packages = {
           lib = llvm.stdenv.mkDerivation {
@@ -37,11 +38,19 @@
             buildInputs = with pkgs; [ unstable.mbedtls avahi avahi-compat ];
             enableParallelBuilding = true;
           };
+
+          pre-commit-check = pre-commit-hooks.lib.${system}.run {
+            src = ./main/.;
+            hooks = {
+              clang-format.enable = true;
+            };
+          };
         };
 
         devShells = {
           default = pkgs.mkShell {
             packages = with pkgs; [ cmake unstable.mbedtls ninja python3 ] ++ [ clang-tools llvm.clang ];
+            inherit (self.checks.${system}.pre-commit-check) shellHook;
           };
         };
 

@@ -6,6 +6,8 @@
 # Prerequisites
 *.d
 
+/.pre-commit-config.yaml
+
 # Object files
 *.o
 *.ko
