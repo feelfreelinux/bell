@@ -4,6 +4,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <vector>
+#include <cstring>
 
 #if __has_include("avahi-client/client.h")
 #include <avahi-client/client.h>
