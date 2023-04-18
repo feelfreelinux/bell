@@ -1,5 +1,4 @@
 #include "X509Bundle.h"
-#include "mbedtls/error.h"
 
 using namespace bell::X509Bundle;
 
