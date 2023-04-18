@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #elif __APPLE__
-#include <dispatch/dispatch.h>
+#include <dispatch/dispatch.h>  // for dispatch_semaphore_t
 #elif _WIN32
 #include <winsock2.h>
 #else
@@ -15,24 +15,24 @@
 namespace bell {
 
 class WrappedSemaphore {
-  private:
+ private:
 #ifdef ESP_PLATFORM
-	SemaphoreHandle_t semaphoreHandle;
+  SemaphoreHandle_t semaphoreHandle;
 #elif __APPLE__
-	dispatch_semaphore_t semaphoreHandle;
+  dispatch_semaphore_t semaphoreHandle;
 #elif _WIN32
-	HANDLE semaphoreHandle;
+  HANDLE semaphoreHandle;
 #else
-	sem_t semaphoreHandle;
+  sem_t semaphoreHandle;
 #endif
 
-  public:
-	WrappedSemaphore(int maxVal = 200);
-	~WrappedSemaphore();
+ public:
+  WrappedSemaphore(int maxVal = 200);
+  ~WrappedSemaphore();
 
-	int wait();
-	int twait(long milliseconds = 10);
-	void give();
+  int wait();
+  int twait(long milliseconds = 10);
+  void give();
 };
 
-} // namespace bell
+}  // namespace bell

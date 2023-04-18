@@ -1,5 +1,13 @@
 #include "VorbisDecoder.h"
-#include "AudioCodecs.h"
+
+#include <stdlib.h>  // for free, malloc
+
+#include "CodecType.h"     // for bell
+#include "config_types.h"  // for ogg_int16_t
+
+namespace bell {
+class AudioContainer;
+}  // namespace bell
 
 using namespace bell;
 

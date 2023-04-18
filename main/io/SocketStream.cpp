@@ -1,9 +1,17 @@
 #include "SocketStream.h"
 
+#include <stdint.h>  // for uint8_t
+#include <cstdio>    // for NULL, ssize_t
+
+#include "TCPSocket.h"  // for TCPSocket
+#include "TLSSocket.h"  // for TLSSocket
+
 using namespace bell;
 
 int SocketBuffer::open(const std::string& hostname, int port, bool isSSL) {
-  if (internalSocket != nullptr) { close(); }
+  if (internalSocket != nullptr) {
+    close();
+  }
   if (isSSL) {
     internalSocket = std::make_unique<bell::TLSSocket>();
   } else {

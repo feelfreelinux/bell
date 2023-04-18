@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstddef>
-#include <istream>
 #include <cstring>
+#include <istream>
 #include "CodecType.h"
 #include "StreamInfo.h"
 

@@ -15,8 +15,8 @@
 #include <pthread.h>
 #endif
 
-#include <string>
 #include <iostream>
+#include <string>
 
 namespace bell {
 class Task {

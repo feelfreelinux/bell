@@ -1,8 +1,7 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <vector>
+#include <iostream>  // for istream, ostream
+#include <string>    // for string
 
 namespace bell::BellTar {
 typedef long long unsigned file_size_t;

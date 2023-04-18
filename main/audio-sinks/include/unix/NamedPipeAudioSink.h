@@ -1,16 +1,17 @@
 #pragma once
 
-#include <vector>
-#include <fstream>
-#include "AudioSink.h"
+#include <stddef.h>  // for size_t
+#include <stdint.h>  // for uint8_t
+#include <fstream>   // for ofstream
 
-class NamedPipeAudioSink : public AudioSink
-{
-public:
-    NamedPipeAudioSink();
-    ~NamedPipeAudioSink();
-    void feedPCMFrames(const uint8_t *buffer, size_t bytes);
-    
-private:
-    std::ofstream namedPipeFile;
+#include "AudioSink.h"  // for AudioSink
+
+class NamedPipeAudioSink : public AudioSink {
+ public:
+  NamedPipeAudioSink();
+  ~NamedPipeAudioSink();
+  void feedPCMFrames(const uint8_t* buffer, size_t bytes);
+
+ private:
+  std::ofstream namedPipeFile;
 };

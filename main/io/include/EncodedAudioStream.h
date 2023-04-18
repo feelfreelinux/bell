@@ -1,15 +1,17 @@
 #pragma once
 
-#include <string>
-#include <vector>
+#include <stddef.h>  // for size_t
+#include <cstdint>   // for uint8_t
+#include <memory>    // for shared_ptr, unique_ptr
+#include <string>    // for basic_string, string
+#include <vector>    // for vector
 
-#include "BellLogger.h"
-#include "ByteStream.h"
-#include "DecoderGlobals.h"
-#include "aacdec.h"
-#include "mp3dec.h"
+#include "aacdec.h"  // for AACFrameInfo
+#include "mp3dec.h"  // for MP3FrameInfo
 
 namespace bell {
+class ByteStream;
+
 class EncodedAudioStream {
  public:
   EncodedAudioStream();

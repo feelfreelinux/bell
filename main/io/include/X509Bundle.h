@@ -1,9 +1,11 @@
 #pragma once
 
-#include <stdexcept>
-#include <vector>
-#include "BellLogger.h"
-#include "mbedtls/ssl.h"
+#include <mbedtls/x509_crt.h>  // for mbedtls_x509_crt
+#include <stddef.h>            // for size_t
+#include <cstdint>             // for uint8_t, uint16_t, uint32_t
+#include <vector>              // for vector
+
+#include "mbedtls/ssl.h"  // for mbedtls_ssl_config
 
 namespace bell::X509Bundle {
 

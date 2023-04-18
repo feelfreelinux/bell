@@ -1,24 +1,20 @@
 
 #pragma once
 
-#include <memory>
+#include <stddef.h>     // for size_t
+#include <cstdint>      // for uint8_t, int32_t
+#include <memory>       // for make_unique, unique_ptr
+#include <string>       // for string
+#include <string_view>  // for string_view
+#include <utility>      // for pair
+#include <vector>       // for vector
 
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <variant>
-#include <vector>
-#include <cassert>
-
-#include "BellSocket.h"
-#include "ByteStream.h"
-#include "SocketStream.h"
-#include "URLParser.h"
+#include "SocketStream.h"  // for SocketStream
+#include "URLParser.h"     // for URLParser
 #ifndef BELL_DISABLE_FMT
-#include "fmt/core.h"
+#include "fmt/core.h"  // for format
 #endif
-#include "picohttpparser.h"
+#include "picohttpparser.h"  // for phr_header
 
 namespace bell {
 class HTTPClient {
@@ -31,19 +27,20 @@ class HTTPClient {
   // Helper over ValueHeader, formatting a HTTP bytes range
   struct RangeHeader {
     static ValueHeader range(int32_t from, int32_t to) {
-#ifndef BELL_DISABLE_FMT        
+#ifndef BELL_DISABLE_FMT
       return ValueHeader{"Range", fmt::format("bytes={}-{}", from, to)};
-#else      
-      return ValueHeader{"Range", "bytes=" + std::to_string(from) + "-" + std::to_string(to)};
-#endif  
+#else
+      return ValueHeader{
+          "Range", "bytes=" + std::to_string(from) + "-" + std::to_string(to)};
+#endif
     }
 
     static ValueHeader last(int32_t nbytes) {
-#ifndef BELL_DISABLE_FMT        
+#ifndef BELL_DISABLE_FMT
       return ValueHeader{"Range", fmt::format("bytes=-{}", nbytes)};
-#else      
+#else
       return ValueHeader{"Range", "bytes=-" + std::to_string(nbytes)};
-#endif  
+#endif
     }
   };
 

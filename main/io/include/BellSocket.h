@@ -17,4 +17,3 @@ class Socket {
   virtual int getFd() = 0;
 };
 }  // namespace bell
-

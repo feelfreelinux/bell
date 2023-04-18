@@ -1,8 +1,12 @@
 #include "BellMQTTClient.h"
-#include <sys/fcntl.h>
-#include <stdexcept>
-#include "BellLogger.h"
-#include "TCPSocket.h"
+
+#include <stddef.h>     // for NULL
+#include <sys/fcntl.h>  // for fcntl, F_GETFL, F_SETFL, O_NONBLOCK
+#include <stdexcept>    // for runtime_error
+
+#include "BellLogger.h"  // for AbstractLogger, BELL_LOG
+#include "BellSocket.h"  // for bell
+#include "TCPSocket.h"   // for TCPSocket
 
 using namespace bell;
 

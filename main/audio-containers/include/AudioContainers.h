@@ -1,10 +1,11 @@
 #pragma once
 
-#include <iostream>
-#include <memory>
-#include "AACContainer.h"
-#include "AudioContainer.h"
-#include "MP3Container.h"
+#include <iostream>  // for istream
+#include <memory>    // for unique_ptr
+
+namespace bell {
+class AudioContainer;
+}  // namespace bell
 
 namespace bell::AudioContainers {
 std::unique_ptr<bell::AudioContainer> guessAudioContainer(std::istream& istr);

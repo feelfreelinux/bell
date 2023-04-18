@@ -1,9 +1,13 @@
 #pragma once
 
-#include "BaseCodec.h"
-#include "mp3dec.h"
+#include <stdint.h>  // for uint8_t, uint32_t, int16_t
+
+#include "BaseCodec.h"  // for BaseCodec
+#include "mp3dec.h"     // for HMP3Decoder, MP3FrameInfo
 
 namespace bell {
+class AudioContainer;
+
 class MP3Decoder : public BaseCodec {
  private:
   HMP3Decoder mp3;

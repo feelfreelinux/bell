@@ -1,5 +1,17 @@
 #include "Crypto.h"
 
+#include <mbedtls/base64.h>    // for mbedtls_base64_encode, mbedtls_base64_...
+#include <mbedtls/bignum.h>    // for mbedtls_mpi_free, mbedtls_mpi_init
+#include <mbedtls/ctr_drbg.h>  // for mbedtls_ctr_drbg_free, mbedtls_ctr_drb...
+#include <mbedtls/entropy.h>   // for mbedtls_entropy_free, mbedtls_entropy_...
+#include <mbedtls/pkcs5.h>     // for mbedtls_pkcs5_pbkdf2_hmac
+#include <cstdint>             // for uint8_t
+#include <stdexcept>           // for runtime_error
+
+extern "C" {
+#include "aes.h"  // for AES_ECB_decrypt, AES_init_ctx, AES_ctx
+}
+
 CryptoMbedTLS::CryptoMbedTLS() {}
 
 CryptoMbedTLS::~CryptoMbedTLS() {

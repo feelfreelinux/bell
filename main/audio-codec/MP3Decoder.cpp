@@ -1,5 +1,13 @@
 #include "MP3Decoder.h"
 
+#include <stdlib.h>  // for free, malloc
+
+#include "CodecType.h"  // for bell
+
+namespace bell {
+class AudioContainer;
+}  // namespace bell
+
 using namespace bell;
 
 MP3Decoder::MP3Decoder() {

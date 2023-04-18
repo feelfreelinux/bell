@@ -3,9 +3,9 @@
 bell::AbstractLogger* bell::bellGlobalLogger;
 
 void bell::setDefaultLogger() {
-    bell::bellGlobalLogger = new bell::BellLogger();
+  bell::bellGlobalLogger = new bell::BellLogger();
 }
 
 void bell::enableSubmoduleLogging() {
-    bell::bellGlobalLogger->enableSubmodule = true;
+  bell::bellGlobalLogger->enableSubmodule = true;
 }
