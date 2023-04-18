@@ -1,5 +1,4 @@
 #pragma once
-
 #include <stdint.h>    // for uint8_t, uint16_t
 #include <functional>  // for function
 #include <string>      // for string
