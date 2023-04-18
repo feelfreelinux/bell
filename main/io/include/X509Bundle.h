@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <vector>
 #include "BellLogger.h"
 #include "mbedtls/ssl.h"
 
@@ -13,6 +14,7 @@ typedef struct crt_bundle_t {
 } crt_bundle_t;
 
 static crt_bundle_t s_crt_bundle;
+static std::vector<uint8_t> bundleBytes;
 
 static constexpr auto TAG = "X509Bundle";
 static constexpr auto CRT_HEADER_OFFSET = 4;

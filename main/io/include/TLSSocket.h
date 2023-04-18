@@ -53,6 +53,7 @@ class TLSSocket : public bell::Socket {
   bool isOpen();
 
   void close();
+  int getFd() { return server_fd.fd; }
 };
 
 }  // namespace bell

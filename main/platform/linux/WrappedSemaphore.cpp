@@ -1,4 +1,5 @@
 #include "WrappedSemaphore.h"
+#include <sys/time.h>
 
 using namespace bell;
 
@@ -22,8 +23,12 @@ int WrappedSemaphore::twait(long milliseconds)
 {
     // wait on semaphore with timeout
     struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_nsec += (milliseconds % 1000) * 1000000;
+    struct timeval tv;
+
+    gettimeofday (&tv, 0);
+
+    ts.tv_sec = tv.tv_sec + milliseconds / 1000;
+    ts.tv_nsec = tv.tv_usec * 1000 + (milliseconds % 1000) * 1000000;
     return sem_timedwait(&this->semaphoreHandle, &ts);
 }
 

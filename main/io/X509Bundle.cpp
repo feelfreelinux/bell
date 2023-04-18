@@ -1,4 +1,5 @@
 #include "X509Bundle.h"
+#include "mbedtls/error.h"
 
 using namespace bell::X509Bundle;
 
@@ -21,7 +22,8 @@ int bell::X509Bundle::crtCheckCertificate(mbedtls_x509_crt* child,
 
   if ((ret = mbedtls_pk_parse_public_key(&parent.pk, pub_key_buf,
                                          pub_key_len)) != 0) {
-    BELL_LOG(error, TAG, "PK parse failed with error %X", ret);
+    BELL_LOG(error, TAG, "PK parse failed with error 0x%04x, key len = %d", ret,
+             pub_key_len);
     goto cleanup;
   }
 
@@ -110,6 +112,8 @@ int bell::X509Bundle::crtVerifyCallback(void* buf, mbedtls_x509_crt* crt,
     ret = crtCheckCertificate(
         child, s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET + name_len,
         key_len);
+  } else {
+    BELL_LOG(error, TAG, "Certificate not found in bundle");
   }
 
   if (ret == 0) {
@@ -138,10 +142,13 @@ void bell::X509Bundle::init(const uint8_t* x509_bundle, size_t bundle_size) {
     throw std::runtime_error("Unable to allocate memory for bundle");
   }
 
+  bundleBytes.resize(bundle_size);
+  memcpy(bundleBytes.data(), x509_bundle, bundle_size);
+
   const uint8_t* cur_crt;
   /* This is the maximum region that is allowed to access */
-  const uint8_t* bundle_end = x509_bundle + bundle_size;
-  cur_crt = x509_bundle + BUNDLE_HEADER_OFFSET;
+  const uint8_t* bundle_end = bundleBytes.data() + bundle_size;
+  cur_crt = bundleBytes.data() + BUNDLE_HEADER_OFFSET;
 
   for (int i = 0; i < num_certs; i++) {
     crts[i] = cur_crt;

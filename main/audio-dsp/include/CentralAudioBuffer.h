@@ -71,6 +71,7 @@ class CentralAudioBuffer {
   void clearBuffer() {
     std::scoped_lock lock(this->dataAccessMutex);
     //size_t exceptSize = currentSampleRate + (sizeof(AudioChunk) - (currentSampleRate % sizeof(AudioChunk)));
+    hasChunk = false;
     audioBuffer->emptyBuffer();
   }
 

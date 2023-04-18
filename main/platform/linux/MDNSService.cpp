@@ -87,15 +87,14 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
        implMDNSService::avahiClient = avahi_client_new(avahi_simple_poll_get(implMDNSService::avahiPoll),
                                       AvahiClientFlags(0), NULL, NULL, NULL);
     }
-    
-    AvahiEntryGroup *avahiGroup;
+    AvahiEntryGroup *avahiGroup = NULL;
 
     if (implMDNSService::avahiClient &&
         (avahiGroup = avahi_entry_group_new(implMDNSService::avahiClient, groupHandler, NULL)) == NULL) {
         BELL_LOG(error, "MDNS", "cannot create service %s", serviceName.c_str());
     }
-    
-    if (avahiGroup) {
+
+    if (avahiGroup != NULL) {
         AvahiStringList* avahiTxt = NULL;
 
         for (auto& [key, value] : txtData) {
