@@ -1,5 +1,7 @@
 #include "Compressor.h"
 
+#include <cstdlib>  // for abs
+
 using namespace bell;
 
 float log2f_approx(float X) {
@@ -19,11 +21,11 @@ float log2f_approx(float X) {
 
 Compressor::Compressor() {}
 
-void Compressor::sumChannels(std::unique_ptr<StreamInfo> &data) {
+void Compressor::sumChannels(std::unique_ptr<StreamInfo>& data) {
   tmp.resize(data->numSamples);
   for (int i = 0; i < data->numSamples; i++) {
     float sum = 0.0f;
-    for (auto &channel : channels) {
+    for (auto& channel : channels) {
       sum += data->data[channel][i];
     }
     tmp[i] = sum;
@@ -31,7 +33,7 @@ void Compressor::sumChannels(std::unique_ptr<StreamInfo> &data) {
 }
 
 void Compressor::calLoudness() {
-  for (auto &value : tmp) {
+  for (auto& value : tmp) {
     value = 20 * log10f_fast(std::abs(value) + 1.0e-9f);
     if (value >= lastLoudness) {
       value = attack * lastLoudness + (1.0 - attack) * value;
@@ -44,7 +46,7 @@ void Compressor::calLoudness() {
 }
 
 void Compressor::calGain() {
-  for (auto &value : tmp) {
+  for (auto& value : tmp) {
     if (value > threshold) {
       value = -(value - threshold) * (factor - 1.0) / factor;
     } else {
@@ -58,9 +60,9 @@ void Compressor::calGain() {
   }
 }
 
-void Compressor::applyGain(std::unique_ptr<StreamInfo> &data) {
+void Compressor::applyGain(std::unique_ptr<StreamInfo>& data) {
   for (int i = 0; i < data->numSamples; i++) {
-    for (auto &channel : channels) {
+    for (auto& channel : channels) {
       data->data[channel][i] *= tmp[i];
     }
   }

@@ -1,28 +1,29 @@
 #pragma once
 
-#include "AudioTransform.h"
-#include "StreamInfo.h"
-#include <memory>
-#include "Gain.h"
-#include <mutex>
+#include <memory>  // for shared_ptr, unique_ptr
+#include <mutex>   // for mutex
+#include <vector>  // for vector
 
-namespace bell
-{
-  class AudioPipeline
-  {
-  private:
-    std::shared_ptr<Gain> headroomGainTransform;
+#include "StreamInfo.h"  // for StreamInfo
 
-  public:
-    AudioPipeline();
-    ~AudioPipeline(){};
+namespace bell {
+class AudioTransform;
+class Gain;
 
-    std::mutex accessMutex;
-    std::vector<std::shared_ptr<AudioTransform>> transforms;
+class AudioPipeline {
+ private:
+  std::shared_ptr<Gain> headroomGainTransform;
 
-    void recalculateHeadroom();
-    void addTransform(std::shared_ptr<AudioTransform> transform);
-    void volumeUpdated(int volume);
-    std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data);
-  };
-}; // namespace bell
+ public:
+  AudioPipeline();
+  ~AudioPipeline(){};
+
+  std::mutex accessMutex;
+  std::vector<std::shared_ptr<AudioTransform>> transforms;
+
+  void recalculateHeadroom();
+  void addTransform(std::shared_ptr<AudioTransform> transform);
+  void volumeUpdated(int volume);
+  std::unique_ptr<StreamInfo> process(std::unique_ptr<StreamInfo> data);
+};
+};  // namespace bell

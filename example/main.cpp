@@ -1,26 +1,14 @@
-#include <memory.h>
 #include <atomic>
-#include <cmath>
-#include <fstream>
-#include <iostream>
-#include <map>
 #include <memory>
-#include <vector>
-#include "AudioCodecs.h"
-#include "AudioContainers.h"
-#include "BellHTTPServer.h"
-#include "BellTar.h"
+#include <string>
+#include <type_traits>
+
 #include "BellTask.h"
 #include "CentralAudioBuffer.h"
-#include "Compressor.h"
-#include "DecoderGlobals.h"
-#include "EncodedAudioStream.h"
-#include "HTTPClient.h"
 #include "PortAudioSink.h"
-#define DEBUG_LEVEL 4
-#include "X509Bundle.h"
-#include "mbedtls/debug.h"
+#include "StreamInfo.h"
 
+#define DEBUG_LEVEL 4
 #include <BellDSP.h>
 #include <BellLogger.h>
 
@@ -58,13 +46,8 @@ class AudioPlayer : bell::Task {
 int main() {
   bell::setDefaultLogger();
 
-  std::fstream file("system.tar", std::ios::in | std::ios::binary);
-  if (!file.is_open()) {
-    std::cout << "file not open" << std::endl;
-    return 1;
-  }
 
-  BellTar::reader reader(file);
-  reader.extract_all_files("./dupa2");
+  BELL_LOG(info, "cock", "Published?");
+
   return 0;
 }

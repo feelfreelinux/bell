@@ -1,9 +1,9 @@
 #pragma once
 
-#include <iostream>
-#include <regex>
-#include <stdexcept>
-#include <string>
+#include <cstdlib>    // for strtol, size_t
+#include <regex>      // for match_results, match_results<>::value_type, sub...
+#include <stdexcept>  // for invalid_argument
+#include <string>     // for string, allocator, operator+, char_traits, oper...
 
 namespace bell {
 class URLParser {
@@ -60,7 +60,7 @@ class URLParser {
   std::string path;
 #ifdef BELL_DISABLE_REGEX
   void parse(const char* url, std::vector<std::string>& match);
-#else  
+#else
   static const std::regex urlParseRegex;
 #endif
 
@@ -71,10 +71,10 @@ class URLParser {
 #ifdef BELL_DISABLE_REGEX
     std::vector<std::string> match(6);
     parser.parse(url.c_str(), match);
-#else    
+#else
     std::cmatch match;
     std::regex_match(url.c_str(), match, parser.urlParseRegex);
-#endif    
+#endif
 
     if (match.size() < 3) {
       throw std::invalid_argument("Invalid URL");

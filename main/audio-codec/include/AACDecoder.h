@@ -1,9 +1,12 @@
 #pragma once
 
-#include "BaseCodec.h"
-#include "aacdec.h"
+#include <stdint.h>  // for uint8_t, uint32_t, int16_t
+
+#include "BaseCodec.h"  // for BaseCodec
+#include "aacdec.h"     // for AACFrameInfo, HAACDecoder
 
 namespace bell {
+class AudioContainer;
 
 class AACDecoder : public BaseCodec {
  private:

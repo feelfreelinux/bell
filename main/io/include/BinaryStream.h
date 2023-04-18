@@ -1,10 +1,11 @@
 #pragma once
 
 #ifndef ESP_PLATFORM
-#include <bit>
+#include <bit>  // for endian
 #endif
-#include <iostream>
-#include <vector>
+#include <stdint.h>  // for int16_t, int32_t, int64_t, uint16_t, uint32_t
+#include <cstddef>   // for byte
+#include <iostream>  // for istream, ostream
 
 namespace bell {
 class BinaryStream {

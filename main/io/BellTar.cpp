@@ -1,14 +1,18 @@
 #include "BellTar.h"
-#include <sys/stat.h>
-#include <fstream>
+
+#include <sys/stat.h>  // for mkdir
 
 using namespace bell::BellTar;
 
-#include <cassert>
-#include <cstdio>   // for sprintf, snprintf and sscanf
-#include <cstdlib>  // for rand
-#include <cstring>  // for strlen and memset
-#include <ctime>    // for time
+#include <algorithm>  // for min
+#include <cassert>    // for assert
+#include <cstdint>    // for uint8_t
+#include <cstdio>     // for sprintf, size_t, sscanf, EOF, NULL
+#include <cstdlib>    // for rand
+#include <cstring>    // for memset, strlen
+#include <ctime>      // for time
+#include <fstream>    // for ofstream
+#include <vector>     // for vector
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -59,7 +63,7 @@ void header_set_metadata(tar_header* header) {
   std::memset(header, 0, sizeof(tar_header));
 
   std::sprintf(header->magic, "ustar");
-  std::sprintf(header->mtime, "%011lo", (unsigned long) std::time(NULL));
+  std::sprintf(header->mtime, "%011lo", (unsigned long)std::time(NULL));
   std::sprintf(header->mode, "%07o", 0644);
   std::sprintf(header->uname, "unkown");  // ... a bit random
   std::sprintf(header->gname, "users");

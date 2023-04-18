@@ -1,14 +1,16 @@
 #ifndef EUPHONIUM_BELL_UTILS
 #define EUPHONIUM_BELL_UTILS
 
-#include <string.h>
+#include <stdint.h>  // for int32_t, int64_t
+#include <string.h>  // for NULL
 #ifdef _WIN32
 #include <WinSock2.h>
 #else
-#include <sys/time.h>
+#include <sys/time.h>  // for timeval, gettimeofday
+#include <unistd.h>    // for usleep
 #endif
-#include <random>
-#include <vector>
+#include <cmath>   // for floor
+#include <string>  // for string
 
 #ifdef ESP_PLATFORM
 #include "esp_system.h"
@@ -28,9 +30,9 @@ struct tv {
 #if _WIN32
     static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
 
-    SYSTEMTIME  system_time;
-    FILETIME    file_time;
-    uint64_t    time;
+    SYSTEMTIME system_time;
+    FILETIME file_time;
+    uint64_t time;
 
     GetSystemTime(&system_time);
     SystemTimeToFileTime(&system_time, &file_time);
@@ -50,7 +52,9 @@ struct tv {
   int32_t sec;
   int32_t usec;
 
-  int64_t ms() { return (sec * (int64_t)1000) + (usec / 1000); }
+  int64_t ms() {
+    return (sec * (int64_t)1000) + (usec / 1000);
+  }
 
   tv operator+(const tv& other) const {
     tv result(*this);
@@ -95,7 +99,6 @@ struct tv {
 #define BELL_SLEEP_MS(ms) Sleep(ms)
 #define BELL_YIELD() ;
 #else
-#include <unistd.h>
 
 #define BELL_SLEEP_MS(ms) usleep(ms * 1000)
 #define BELL_YIELD() ;

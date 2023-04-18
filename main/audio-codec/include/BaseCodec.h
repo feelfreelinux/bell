@@ -1,8 +1,9 @@
 #pragma once
 
-#include "AudioContainer.h"
+#include <stdint.h>  // for uint32_t, uint8_t
 
 namespace bell {
+class AudioContainer;
 
 class BaseCodec {
  private:

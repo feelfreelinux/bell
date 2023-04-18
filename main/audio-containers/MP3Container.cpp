@@ -1,5 +1,10 @@
 #include "MP3Container.h"
 
+#include <cstring>  // for memmove
+
+#include "StreamInfo.h"  // for BitWidth, BitWidth::BW_16, SampleRate, Sampl...
+#include "mp3dec.h"      // for MP3FindSyncWord
+
 using namespace bell;
 
 MP3Container::MP3Container(std::istream& istr) : bell::AudioContainer(istr) {}

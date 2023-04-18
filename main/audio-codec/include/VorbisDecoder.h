@@ -1,9 +1,14 @@
 #pragma once
 
-#include "BaseCodec.h"
-#include "ivorbiscodec.h"
+#include <stdint.h>  // for uint8_t, uint32_t, int16_t
+
+#include "BaseCodec.h"     // for BaseCodec
+#include "ivorbiscodec.h"  // for vorbis_comment, vorbis_dsp_state, vorbis_info
+#include "ogg.h"           // for ogg_packet
 
 namespace bell {
+class AudioContainer;
+
 class VorbisDecoder : public BaseCodec {
  private:
   vorbis_info* vi = nullptr;

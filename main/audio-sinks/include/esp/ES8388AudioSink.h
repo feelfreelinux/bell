@@ -1,23 +1,22 @@
 #ifndef ES8388AUDIOSINK_H
 #define ES8388AUDIOSINK_H
 
-#include "driver/i2s.h"
 #include <driver/i2c.h>
-#include <vector>
-#include <iostream>
-#include "BufferedAudioSink.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
-#include <sys/unistd.h>
 #include <sys/stat.h>
+#include <sys/unistd.h>
+#include <iostream>
+#include <vector>
+#include "BufferedAudioSink.h"
+#include "driver/i2s.h"
 #include "esp_err.h"
 #include "esp_log.h"
 
-
 #define ES8388_ADDR 0x20
 
-#define ACK_CHECK_EN   		0x1 
+#define ACK_CHECK_EN 0x1
 
 /* ES8388 register */
 #define ES8388_CONTROL1 0x00
@@ -78,28 +77,27 @@
 #define ES8388_DACCONTROL29 0x33
 #define ES8388_DACCONTROL30 0x34
 
-class ES8388AudioSink : public BufferedAudioSink
-{
-public:
-    ES8388AudioSink();
-    ~ES8388AudioSink();
-    
-    bool begin(int sda = -1, int scl = -1, uint32_t frequency = 400000U);
+class ES8388AudioSink : public BufferedAudioSink {
+ public:
+  ES8388AudioSink();
+  ~ES8388AudioSink();
 
-    enum ES8388_OUT
-    {
-        ES_MAIN, // this is the DAC output volume (both outputs)
-        ES_OUT1, // this is the additional gain for OUT1
-        ES_OUT2  // this is the additional gain for OUT2
-    };
+  bool begin(int sda = -1, int scl = -1, uint32_t frequency = 400000U);
 
-    void mute(const ES8388_OUT out, const bool muted);
-    void volume(const ES8388_OUT out, const uint8_t vol);
+  enum ES8388_OUT {
+    ES_MAIN,  // this is the DAC output volume (both outputs)
+    ES_OUT1,  // this is the additional gain for OUT1
+    ES_OUT2   // this is the additional gain for OUT2
+  };
 
-    void writeReg(uint8_t reg_add, uint8_t data);
-private:
-    i2c_config_t i2c_config;
-    i2c_port_t i2c_port = 0;
+  void mute(const ES8388_OUT out, const bool muted);
+  void volume(const ES8388_OUT out, const uint8_t vol);
+
+  void writeReg(uint8_t reg_add, uint8_t data);
+
+ private:
+  i2c_config_t i2c_config;
+  i2c_port_t i2c_port = 0;
 };
 
 #endif

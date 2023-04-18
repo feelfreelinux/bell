@@ -3,108 +3,87 @@
 #include "TransformConfig.h"
 #include "cJSON.h"
 
-namespace bell
-{
-    class JSONTransformConfig : public bell::TransformConfig
-    {
-    private:
-        cJSON *json;
+namespace bell {
+class JSONTransformConfig : public bell::TransformConfig {
+ private:
+  cJSON* json;
 
-    public:
-        JSONTransformConfig(cJSON *body)
-        {
-            this->json = body;
-        };
-        ~JSONTransformConfig(){};
+ public:
+  JSONTransformConfig(cJSON* body) { this->json = body; };
+  ~JSONTransformConfig(){};
 
-        std::string rawGetString(const std::string &field) override
-        {
-            cJSON *value = cJSON_GetObjectItem(json, field.c_str());
+  std::string rawGetString(const std::string& field) override {
+    cJSON* value = cJSON_GetObjectItem(json, field.c_str());
 
-            if (value != NULL && cJSON_IsString(value))
-            {
-                return std::string(value->valuestring);
-            }
+    if (value != NULL && cJSON_IsString(value)) {
+      return std::string(value->valuestring);
+    }
 
-            return "invalid";
+    return "invalid";
+  }
+
+  std::vector<int> rawGetIntArray(const std::string& field) override {
+    std::vector<int> result;
+
+    cJSON* value = cJSON_GetObjectItem(json, field.c_str());
+
+    if (value != NULL && cJSON_IsArray(value)) {
+      for (int i = 0; i < cJSON_GetArraySize(value); i++) {
+        cJSON* item = cJSON_GetArrayItem(value, i);
+        if (item != NULL && cJSON_IsNumber(item)) {
+          result.push_back(item->valueint);
         }
+      }
+    }
 
-        std::vector<int> rawGetIntArray(const std::string &field) override
-        {
-            std::vector<int> result;
+    return result;
+  }
 
-            cJSON *value = cJSON_GetObjectItem(json, field.c_str());
+  std::vector<float> rawGetFloatArray(const std::string& field) override {
+    std::vector<float> result;
 
-            if (value != NULL && cJSON_IsArray(value))
-            {
-                for (int i = 0; i < cJSON_GetArraySize(value); i++)
-                {
-                    cJSON *item = cJSON_GetArrayItem(value, i);
-                    if (item != NULL && cJSON_IsNumber(item))
-                    {
-                        result.push_back(item->valueint);
-                    }
-                }
-            }
+    cJSON* value = cJSON_GetObjectItem(json, field.c_str());
 
-            return result;
+    if (value != NULL && cJSON_IsArray(value)) {
+      for (int i = 0; i < cJSON_GetArraySize(value); i++) {
+        cJSON* item = cJSON_GetArrayItem(value, i);
+        if (item != NULL && cJSON_IsNumber(item)) {
+          result.push_back(item->valuedouble);
         }
+      }
+    }
 
-        std::vector<float> rawGetFloatArray(const std::string &field) override
-        {
-            std::vector<float> result;
+    return result;
+  }
 
-            cJSON *value = cJSON_GetObjectItem(json, field.c_str());
+  int rawGetInt(const std::string& field) override {
+    cJSON* value = cJSON_GetObjectItem(json, field.c_str());
 
-            if (value != NULL && cJSON_IsArray(value))
-            {
-                for (int i = 0; i < cJSON_GetArraySize(value); i++)
-                {
-                    cJSON *item = cJSON_GetArrayItem(value, i);
-                    if (item != NULL && cJSON_IsNumber(item))
-                    {
-                        result.push_back(item->valuedouble);
-                    }
-                }
-            }
+    if (value != NULL && cJSON_IsNumber(value)) {
+      return (int)value->valueint;
+    }
 
-            return result;
-        }
+    return invalidInt;
+  }
 
-        int rawGetInt(const std::string &field) override
-        {
-            cJSON *value = cJSON_GetObjectItem(json, field.c_str());
+  bool isArray(const std::string& field) override {
+    cJSON* value = cJSON_GetObjectItem(json, field.c_str());
 
-            if (value != NULL && cJSON_IsNumber(value))
-            {
-                return (int)value->valueint;
-            }
+    if (value != NULL && cJSON_IsArray(value)) {
+      return true;
+    }
 
-            return invalidInt;
-        }
+    return false;
+  }
 
-        bool isArray(const std::string &field) override
-        {
-            cJSON *value = cJSON_GetObjectItem(json, field.c_str());
+  float rawGetFloat(const std::string& field) override {
+    cJSON* value = cJSON_GetObjectItem(json, field.c_str());
 
-            if (value != NULL && cJSON_IsArray(value))
-            {
-                return true;
-            }
+    if (value != NULL && cJSON_IsNumber(value)) {
+      return (float)value->valuedouble;
+    }
 
-            return false;
-        }
-
-        float rawGetFloat(const std::string &field) override
-        {
-            cJSON *value = cJSON_GetObjectItem(json, field.c_str());
-
-            if (value != NULL && cJSON_IsNumber(value))
-            {
-                return (float)value->valuedouble;
-            }
-
-            return invalidInt;
-        }
-    };
-}
+    return invalidInt;
+  }
+};
+}  // namespace bell

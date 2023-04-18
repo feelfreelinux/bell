@@ -1,10 +1,14 @@
 #include "BellHTTPServer.h"
-#include <mutex>
-#include <regex>
-#include <cassert>
-#include "BellLogger.h"
-#include "CivetServer.h"
-#include "civetweb.h"
+
+#include <string.h>   // for memcpy
+#include <cassert>    // for assert
+#include <exception>  // for exception
+#include <mutex>      // for scoped_lock
+#include <regex>      // for sregex_token_iterator, regex
+
+#include "BellLogger.h"   // for AbstractLogger, BELL_LOG, bell
+#include "CivetServer.h"  // for CivetServer, CivetWebSocketHandler
+#include "civetweb.h"     // for mg_get_request_info, mg_printf, mg_set_user...
 
 using namespace bell;
 

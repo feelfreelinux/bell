@@ -1,22 +1,18 @@
 #pragma once
 
-#include <BellLogger.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <utility>
-#include <optional>
-#include <regex>
-#include <sstream>
-#include <string>
-#include <mutex>
-#include <unordered_map>
-#include "CivetServer.h"
-#include "civetweb.h"
+#include <BellLogger.h>   // for bell
+#include <stdint.h>       // for uint8_t
+#include <stdlib.h>       // for free, size_t
+#include <functional>     // for function
+#include <map>            // for map
+#include <memory>         // for unique_ptr
+#include <mutex>          // for mutex
+#include <string>         // for string, hash, operator==, operator<
+#include <unordered_map>  // for unordered_map
+#include <utility>        // for pair
+#include <vector>         // for vector
+
+#include "CivetServer.h"  // for CivetServer, CivetHandler
 
 using namespace bell;
 namespace bell {
@@ -46,7 +42,9 @@ class BellHTTPServer : public CivetHandler {
       }
     }
   };
-  typedef std::function<std::unique_ptr<HTTPResponse>(struct mg_connection* conn)> HTTPHandler;
+  typedef std::function<std::unique_ptr<HTTPResponse>(
+      struct mg_connection* conn)>
+      HTTPHandler;
   typedef std::function<void(struct mg_connection* conn, WSState)>
       WSStateHandler;
   typedef std::function<void(struct mg_connection* conn, char*, size_t)>
@@ -79,7 +77,8 @@ class BellHTTPServer : public CivetHandler {
   std::vector<int> getListeningPorts() { return server->getListeningPorts(); };
   void close() { server->close(); }
 
-  std::unique_ptr<HTTPResponse> makeJsonResponse(const std::string& json, int status = 200);
+  std::unique_ptr<HTTPResponse> makeJsonResponse(const std::string& json,
+                                                 int status = 200);
   std::unique_ptr<HTTPResponse> makeEmptyResponse();
 
   void registerNotFound(HTTPHandler handler);
@@ -88,7 +87,8 @@ class BellHTTPServer : public CivetHandler {
   void registerWS(const std::string&, WSDataHandler dataHandler,
                   WSStateHandler stateHandler);
 
-  static std::unordered_map<std::string, std::string> extractParams(struct mg_connection* conn);
+  static std::unordered_map<std::string, std::string> extractParams(
+      struct mg_connection* conn);
 
  private:
   std::unique_ptr<CivetServer> server;
