@@ -1,5 +1,6 @@
 #include <cassert>
 #include <vector>
+#include <mutex>
 
 #include "BellLogger.h"
 #include "MDNSService.h"
@@ -33,11 +34,13 @@ class implMDNSService : public MDNSService {
  **/
 
 struct mdnsd* implMDNSService::mdnsServer = NULL;
+static std::mutex registerMutex;
 
 std::unique_ptr<MDNSService> MDNSService::registerService(
     const std::string& serviceName, const std::string& serviceType,
     const std::string& serviceProto, const std::string& serviceHost,
     int servicePort, const std::map<std::string, std::string> txtData) {
+  std::lock_guard lock(registerMutex);
   if (!implMDNSService::mdnsServer) {
     char hostname[128];
     gethostname(hostname, sizeof(hostname));
