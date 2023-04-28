@@ -3,13 +3,17 @@
 
 #include <stdarg.h>  // for va_end, va_list, va_start
 #include <stdio.h>   // for printf, vprintf
-#include <string>    // for string, basic_string
+#include <iomanip>
+#include <iostream>
+#include <string>  // for string, basic_string
 
 namespace bell {
 
 class AbstractLogger {
  public:
   bool enableSubmodule = false;
+  bool enableTimestamp = false;
+
   virtual void debug(std::string filename, int line, std::string submodule,
                      const char* format, ...) = 0;
   virtual void error(std::string filename, int line, std::string submodule,
@@ -24,6 +28,7 @@ class BellLogger : public bell::AbstractLogger {
   // static bool enableColors = true;
   void debug(std::string filename, int line, std::string submodule,
              const char* format, ...) {
+    printTimestamp();
 
     printf(colorRed);
     printf("D ");
@@ -42,6 +47,7 @@ class BellLogger : public bell::AbstractLogger {
 
   void error(std::string filename, int line, std::string submodule,
              const char* format, ...) {
+    printTimestamp();
 
     printf(colorRed);
     printf("E ");
@@ -61,6 +67,7 @@ class BellLogger : public bell::AbstractLogger {
 
   void info(std::string filename, int line, std::string submodule,
             const char* format, ...) {
+    printTimestamp();
 
     printf(colorBlue);
     printf("I ");
@@ -77,6 +84,21 @@ class BellLogger : public bell::AbstractLogger {
     va_end(args);
     printf("\n");
   };
+
+  void printTimestamp() {
+    if (enableTimestamp) {
+      auto now = std::chrono::system_clock::now();
+      time_t now_time = std::chrono::system_clock::to_time_t(now);
+      const auto nowMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                             now.time_since_epoch()) %
+                         1000;
+
+      auto gmt_time = gmtime(&now_time);
+      printf(colorReset);
+      std::cout << std::put_time(gmt_time, "[%Y-%m-%d %H:%M:%S") << '.'
+                << std::setfill('0') << std::setw(3) << nowMs.count() << "] ";
+    }
+  }
 
   void printFilename(std::string filename) {
 #ifdef _WIN32
@@ -106,6 +128,7 @@ class BellLogger : public bell::AbstractLogger {
 
 void setDefaultLogger();
 void enableSubmoduleLogging();
+void enableTimestampLogging();
 }  // namespace bell
 
 #define BELL_LOG(type, ...)                                        \
