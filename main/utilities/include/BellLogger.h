@@ -5,6 +5,7 @@
 #include <stdio.h>   // for printf, vprintf
 #include <iomanip>
 #include <iostream>
+#include <chrono>
 #include <string>  // for string, basic_string
 
 namespace bell {
