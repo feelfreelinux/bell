@@ -8,7 +8,7 @@
 #include <pb_encode.h>
 
 bool bell::nanopb::encodeString(pb_ostream_t* stream, const pb_field_t* field,
-                         void* const* arg) {
+                                void* const* arg) {
   auto& str = *static_cast<std::string*>(*arg);
 
   if (str.size() > 0) {
@@ -25,7 +25,7 @@ bool bell::nanopb::encodeString(pb_ostream_t* stream, const pb_field_t* field,
 }
 
 bool bell::nanopb::encodeBoolean(pb_ostream_t* stream, const pb_field_t* field,
-                          void* const* arg) {
+                                 void* const* arg) {
   auto& boolean = *static_cast<std::optional<bool>*>(*arg);
 
   if (boolean.has_value()) {
@@ -42,7 +42,7 @@ bool bell::nanopb::encodeBoolean(pb_ostream_t* stream, const pb_field_t* field,
 }
 
 bool bell::nanopb::encodeVector(pb_ostream_t* stream, const pb_field_t* field,
-                         void* const* arg) {
+                                void* const* arg) {
   auto& vector = *static_cast<std::vector<uint8_t>*>(*arg);
 
   if (vector.size() > 0) {

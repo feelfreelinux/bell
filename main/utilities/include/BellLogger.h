@@ -3,9 +3,9 @@
 
 #include <stdarg.h>  // for va_end, va_list, va_start
 #include <stdio.h>   // for printf, vprintf
+#include <chrono>
 #include <iomanip>
 #include <iostream>
-#include <chrono>
 #include <string>  // for string, basic_string
 
 namespace bell {
