@@ -50,6 +50,7 @@ class implMDNSService : public MDNSService {
 
 struct mdnsd* implMDNSService::mdnsServer = NULL;
 in_addr_t implMDNSService::host = INADDR_ANY;
+static std::mutex registerMutex;
 #ifndef BELL_DISABLE_AVAHI
 AvahiClient* implMDNSService::avahiClient = NULL;
 AvahiSimplePoll* implMDNSService::avahiPoll = NULL;
@@ -75,6 +76,7 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
     const std::string& serviceName, const std::string& serviceType,
     const std::string& serviceProto, const std::string& serviceHost,
     int servicePort, const std::map<std::string, std::string> txtData) {
+  std::lock_guard lock(registerMutex);        
 #ifndef BELL_DISABLE_AVAHI
   // try avahi first if available
   if (!implMDNSService::avahiPoll) {
