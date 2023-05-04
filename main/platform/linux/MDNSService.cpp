@@ -76,7 +76,7 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
     const std::string& serviceName, const std::string& serviceType,
     const std::string& serviceProto, const std::string& serviceHost,
     int servicePort, const std::map<std::string, std::string> txtData) {
-  std::lock_guard lock(registerMutex);        
+  std::lock_guard lock(registerMutex);
 #ifndef BELL_DISABLE_AVAHI
   // try avahi first if available
   if (!implMDNSService::avahiPoll) {
