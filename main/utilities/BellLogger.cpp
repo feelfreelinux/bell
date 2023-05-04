@@ -9,3 +9,7 @@ void bell::setDefaultLogger() {
 void bell::enableSubmoduleLogging() {
   bell::bellGlobalLogger->enableSubmodule = true;
 }
+
+void bell::enableTimestampLogging() {
+  bell::bellGlobalLogger->enableTimestamp = true;
+}

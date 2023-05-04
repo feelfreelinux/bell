@@ -1,8 +1,6 @@
 #ifndef BELL_CRYPTO_H
 #define BELL_CRYPTO_H
 
-#define Crypto CryptoMbedTLS
-
 #include <string>  // for string
 #include <vector>  // for vector
 
@@ -72,5 +70,7 @@ class CryptoMbedTLS {
   // Random stuff
   std::vector<uint8_t> generateVectorWithRandomData(size_t length);
 };
+
+#define Crypto CryptoMbedTLS
 
 #endif

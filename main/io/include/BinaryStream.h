@@ -4,6 +4,7 @@
 #include <bit>  // for endian
 #endif
 #include <stdint.h>  // for int16_t, int32_t, int64_t, uint16_t, uint32_t
+#include <bit>       // for endian
 #include <cstddef>   // for byte
 #include <iostream>  // for istream, ostream
 

@@ -28,6 +28,7 @@ T pbDecode(const pb_msgdesc_t* fields, std::vector<uint8_t>& data) {
   if (pb_decode(&stream, fields, &result) == false) {
     printf("Decode failed: %s\n", PB_GET_ERROR(&stream));
   }
+
   return result;
 }
 
