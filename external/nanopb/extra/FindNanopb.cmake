@@ -125,7 +125,7 @@ function(NANOPB_GENERATE_CPP SRCS HDRS)
   endif()
   
   if(MSVC)
-    set(CALL_PREFIX call)
+    set(CUSTOM_COMMAND_PREFIX call)
   endif()
 
   if(NANOPB_GENERATE_CPP_APPEND_PATH)
@@ -187,7 +187,7 @@ function(NANOPB_GENERATE_CPP SRCS HDRS)
       set(GENERATOR_CORE_PYTHON_SRC ${GENERATOR_CORE_PYTHON_SRC} ${output})
       add_custom_command(
         OUTPUT ${output}
-        COMMAND ${CALL_PREFIX} ${PROTOBUF_PROTOC_EXECUTABLE}
+        COMMAND ${CUSTOM_COMMAND_PREFIX} ${PROTOBUF_PROTOC_EXECUTABLE}
         ARGS -I${GENERATOR_PATH}/proto
           --python_out=${GENERATOR_CORE_DIR} ${ABS_FIL}
         DEPENDS ${ABS_FIL}
@@ -279,7 +279,7 @@ function(NANOPB_GENERATE_CPP SRCS HDRS)
     add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${FIL_PATH_REL}/${FIL_WE}.pb.c"
              "${CMAKE_CURRENT_BINARY_DIR}/${FIL_PATH_REL}/${FIL_WE}.pb.h"
-      COMMAND ${CALL_PREFIX} ${PROTOBUF_PROTOC_EXECUTABLE}
+      COMMAND ${CUSTOM_COMMAND_PREFIX} ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS -I${GENERATOR_PATH} -I${GENERATOR_CORE_DIR}
            -I${CMAKE_CURRENT_BINARY_DIR} ${_nanopb_include_path}
            --plugin=protoc-gen-nanopb=${NANOPB_GENERATOR_PLUGIN}
@@ -297,7 +297,7 @@ function(NANOPB_GENERATE_CPP SRCS HDRS)
   set(${HDRS} ${${HDRS}} ${NANOPB_HDRS} PARENT_SCOPE)
   
   if(MSVC)
-      unset(CALL_PREFIX)
+      unset(CUSTOM_COMMAND_PREFIX)
   endif()    
 
 endfunction()
