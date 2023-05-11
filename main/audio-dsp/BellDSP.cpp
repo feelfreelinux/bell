@@ -52,10 +52,6 @@ size_t BellDSP::process(uint8_t* data, size_t bytes, int channels,
     return 0;
   }
 
-  size_t bytesPerSample = channels * 2;
-
-  size_t samplesLeftInBuffer = buffer->audioBuffer->size() / bytesPerSample;
-
   // Create a StreamInfo object to pass to the pipeline
   auto streamInfo = std::make_unique<StreamInfo>();
   streamInfo->numChannels = channels;

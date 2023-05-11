@@ -92,6 +92,7 @@ class BellHTTPServer : public CivetHandler {
 
  private:
   std::unique_ptr<CivetServer> server;
+  std::vector<std::string> civetWebOptions;
   int serverPort = 8080;
 
   Router getRequestsRouter;

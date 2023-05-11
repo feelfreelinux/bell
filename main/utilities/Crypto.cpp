@@ -12,6 +12,8 @@ extern "C" {
 #include "aes.h"  // for AES_ECB_decrypt, AES_init_ctx, AES_ctx
 }
 
+static unsigned char DHGenerator[1] = {2};
+
 CryptoMbedTLS::CryptoMbedTLS() {}
 
 CryptoMbedTLS::~CryptoMbedTLS() {
