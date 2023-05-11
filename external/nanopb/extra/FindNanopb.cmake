@@ -298,7 +298,7 @@ function(NANOPB_GENERATE_CPP SRCS HDRS)
   
   if(MSVC)
       unset(CUSTOM_COMMAND_PREFIX)
-  endif()    
+  endif()
 
 endfunction()
 
