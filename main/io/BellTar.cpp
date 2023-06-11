@@ -288,7 +288,11 @@ void reader::extract_all_files(std::string dest_directory) {
     auto fileName = get_next_file_name();
 
     // 0 is the normal file type, skip apple's ._ files
+#if __cplusplus >= 202002L
     if (fileType == '0' && !fileName.starts_with("._")) {
+#else
+    if (fileType == '0' && fileName.find("._") != 0) {
+#endif       
       std::string path = dest_directory + "/" + fileName;
 
       size_t pos = 0;

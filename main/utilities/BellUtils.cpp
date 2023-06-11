@@ -3,7 +3,7 @@
 #include <stdlib.h>  // for free
 #include <random>    // for mt19937, uniform_int_distribution, random_device
 #ifdef ESP_PLATFORM
-#include "esp_mac.h"
+#include "esp_system.h"
 #endif
 
 std::string bell::generateRandomUUID() {
