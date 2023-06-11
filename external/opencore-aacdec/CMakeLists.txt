@@ -1,0 +1,5 @@
+file(GLOB AACDEC_SOURCES "src/*.c")
+file(GLOB AACDEC_HEADERS "src/*.h" "oscl/*.h" "include/*.h")
+
+add_library(opencore-aacdec SHARED ${AACDEC_SOURCES})
+target_include_directories(opencore-aacdec PUBLIC "src/" "oscl/" "include/")
