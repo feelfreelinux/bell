@@ -57,7 +57,7 @@ int main() {
   audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
   auto task = AudioPlayer();
 
-  auto url = "http://193.222.135.71/378";
+  auto url = "https://0n-jazz.radionetz.de/0n-jazz.aac";
 
   auto req = bell::HTTPClient::get(url);
   auto container = AudioContainers::guessAudioContainer(req->stream());

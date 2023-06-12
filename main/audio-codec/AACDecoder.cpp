@@ -17,32 +17,30 @@ using namespace bell;
 AACDecoder::AACDecoder() {
   aacDecoder =
       (tPVMP4AudioDecoderExternal*)malloc(sizeof(tPVMP4AudioDecoderExternal));
+
   int32_t pMemRequirement = PVMP4AudioDecoderGetMemRequirements();
-  printf("pMemRequirement: %d\n", pMemRequirement);
   pMem = malloc(pMemRequirement);
+  memset(aacDecoder, 0, sizeof(tPVMP4AudioDecoderExternal));
+  memset(pMem, 0, pMemRequirement);
 
   // Initialize the decoder buffers
-  inputBuffer.resize(PVMP4AUDIODECODER_INBUFSIZE * 2);
   outputBuffer.resize(4096);
 
   aacDecoder->pOutputBuffer_plus = &outputBuffer[2048];
   aacDecoder->pOutputBuffer = &outputBuffer[0];
-  aacDecoder->pInputBuffer = &inputBuffer[0];
-  aacDecoder->inputBufferMaxLength = inputBuffer.size();
+  aacDecoder->inputBufferMaxLength = PVMP4AUDIODECODER_INBUFSIZE;
 
   // Settings
   aacDecoder->desiredChannels = 2;
   aacDecoder->outputFormat = OUTPUTFORMAT_16PCM_INTERLEAVED;
-  aacDecoder->repositionFlag = TRUE;
   aacDecoder->aacPlusEnabled = TRUE;
 
   // State
   aacDecoder->inputBufferCurrentLength = 0;
   aacDecoder->inputBufferUsedLength = 0;
   aacDecoder->remainderBits = 0;
-  aacDecoder->frameLength = 0;
 
-  synchronized = false;
+  firstFrame = true;
 
   assert(PVMP4AudioDecoderInitLibrary(aacDecoder, pMem) == MP4AUDEC_SUCCESS);
 }
@@ -70,12 +68,12 @@ int AACDecoder::getDecodedStreamType() {
 
 bool AACDecoder::setup(uint32_t sampleRate, uint8_t channelCount,
                        uint8_t bitDepth) {
-  synchronized = false;
+  firstFrame = true;
   return true;
 }
 
 bool AACDecoder::setup(AudioContainer* container) {
-  synchronized = false;
+  firstFrame = true;
   return true;
 }
 
@@ -86,25 +84,41 @@ uint8_t* AACDecoder::decode(uint8_t* inData, uint32_t& inLen,
 
   aacDecoder->inputBufferCurrentLength = inLen;
   aacDecoder->inputBufferUsedLength = 0;
+  aacDecoder->inputBufferMaxLength = inLen;
+  aacDecoder->pInputBuffer = inData;
   aacDecoder->remainderBits = 0;
-  aacDecoder->frameLength = 0;
+  aacDecoder->repositionFlag = false;
 
-  memcpy(aacDecoder->pInputBuffer, inData, inLen);
+  int32_t status;
 
-  int32_t status = PVMP4AudioDecodeFrame(aacDecoder, pMem);
+  if (firstFrame) {
+    if (PVMP4AudioDecoderConfig(aacDecoder, pMem) != MP4AUDEC_SUCCESS) {
+      status = PVMP4AudioDecodeFrame(aacDecoder, pMem);
+      if (status == MP4AUDEC_SUCCESS) {
+        firstFrame = false;
+        int streamType = getDecodedStreamType();
+        printf("Stream type: %d\n", streamType);
 
-  printf("Used length: %d\n", aacDecoder->inputBufferUsedLength);
-  printf("Frame length: %d\n", aacDecoder->frameLength);
-  inLen -= aacDecoder->inputBufferUsedLength;
-
-  if (getDecodedStreamType() == -1) {
-    return nullptr;
+        if (streamType == AAC && aacDecoder->aacPlusUpsamplingFactor == 2) {
+          PVMP4AudioDecoderDisableAacPlus(aacDecoder, pMem);
+          printf("AAC+ disabled\n");
+          outLen = aacDecoder->frameLength * sizeof(int16_t);
+        }
+      }
+    } else {
+      inLen = 0;
+      return nullptr;
+    }
+  } else {
+    status = PVMP4AudioDecodeFrame(aacDecoder, pMem);
   }
 
   if (status != MP4AUDEC_SUCCESS) {
-    printf("AAC decode error: %d\n", status);
-    BELL_SLEEP_MS(100);
+    outLen = 0;
+    inLen = 0;
     return nullptr;
+  } else {
+    inLen -= aacDecoder->inputBufferUsedLength;
   }
 
   outLen = aacDecoder->frameLength * sizeof(int16_t);
@@ -112,26 +126,6 @@ uint8_t* AACDecoder::decode(uint8_t* inData, uint32_t& inLen,
   // Handle AAC+
   if (aacDecoder->aacPlusUpsamplingFactor == 2) {
     outLen *= 2;
-
-    if (!synchronized) {
-      printf("AAC+ detected\n");
-    }
-  }
-
-  if (!synchronized) {
-    int streamType = getDecodedStreamType();
-
-    if (streamType == AAC && aacDecoder->aacPlusUpsamplingFactor == 2) {
-      printf("AAC+ Disable\n");
-      PVMP4AudioDecoderDisableAacPlus(aacDecoder, pMem);
-      outLen = aacDecoder->frameLength * sizeof(int16_t);
-    }
-
-    printf("AAC Synchronized, %d\n", streamType);
-  }
-
-  if (!synchronized) {
-    synchronized = true;
   }
 
   outLen *= aacDecoder->desiredChannels;

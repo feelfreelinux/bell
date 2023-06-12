@@ -15,7 +15,7 @@ class AACDecoder : public BaseCodec {
   std::vector<uint8_t> inputBuffer;
   std::vector<int16_t> outputBuffer;
   void* pMem;
-  bool synchronized = false;
+  bool firstFrame = true;
 
   int getDecodedStreamType();
 
