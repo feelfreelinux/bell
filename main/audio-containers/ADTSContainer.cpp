@@ -1,6 +1,7 @@
 #include "ADTSContainer.h"
 
 #include <cstring>  // for memmove
+#include <iostream>
 
 #include "StreamInfo.h"  // for BitWidth, BitWidth::BW_16, SampleRate, Sampl...
 #include "sbr_crc_check.h"
@@ -12,20 +13,24 @@ using namespace bell;
 #define SYNCWORDH 0xff
 #define SYNCWORDL 0xf0
 
-static int AACFindSyncWord(unsigned char* buf, int nBytes) {
-  int i;
+// AAC ADTS frame header len
+#define AAC_ADTS_FRAME_HEADER_LEN 9
 
-  /* find byte-aligned syncword (12 bits = 0xFFF) */
-  for (i = 0; i < nBytes - 1; i++) {
-    if ((buf[i + 0] & SYNCWORDH) == SYNCWORDH &&
-        (buf[i + 1] & SYNCWORDL) == SYNCWORDL)
-      return i;
+// AAC ADTS frame sync verify
+#define AAC_ADTS_SYNC_VERIFY(buf) \
+  ((buf[0] == 0xff) && ((buf[1] & 0xf6) == 0xf0))
+
+// AAC ADTS Frame size value stores in 13 bits started at the 31th bit from header
+#define AAC_ADTS_FRAME_GETSIZE(buf) \
+  ((buf[3] & 0x03) << 11 | buf[4] << 3 | buf[5] >> 5)
+
+ADTSContainer::ADTSContainer(std::istream& istr, const std::byte* headingBytes)
+    : bell::AudioContainer(istr) {
+  if (headingBytes != nullptr) {
+    memcpy(buffer.data(), headingBytes, 7);
+    bytesInBuffer = 7;
   }
-
-  return -1;
 }
-
-ADTSContainer::ADTSContainer(std::istream& istr) : bell::AudioContainer(istr) {}
 
 bool ADTSContainer::fillBuffer() {
   if (this->bytesInBuffer < AAC_MAX_FRAME_SIZE * 2) {
@@ -36,34 +41,87 @@ bool ADTSContainer::fillBuffer() {
   return this->bytesInBuffer >= AAC_MAX_FRAME_SIZE;
 }
 
-std::byte* ADTSContainer::readSample(uint32_t& len) {
-  // Align the data if previous read was offseted
-  if (toConsume > 0) {
-    size_t consumedAmount = min(toConsume, bytesInBuffer);
-    memmove(buffer.data(), buffer.data() + consumedAmount,
-            buffer.size() - consumedAmount);
-    bytesInBuffer = bytesInBuffer - consumedAmount;
-    toConsume -= consumedAmount;
+bool ADTSContainer::resyncADTS() {
+  int resyncOffset = 0;
+  bool resyncValid = false;
+
+  size_t validBytes = bytesInBuffer - dataOffset;
+
+  while (!resyncValid && resyncOffset < validBytes) {
+    uint8_t* buf = (uint8_t*)this->buffer.data() + dataOffset + resyncOffset;
+    if (AAC_ADTS_SYNC_VERIFY(buf)) {
+      // Read frame size, and check if a consecutive frame is available
+      uint32_t frameSize = AAC_ADTS_FRAME_GETSIZE(buf);
+
+      if (frameSize + resyncOffset > validBytes) {
+        // Not enough data, discard this frame
+        resyncOffset++;
+        continue;
+      }
+
+      buf =
+          (uint8_t*)this->buffer.data() + dataOffset + resyncOffset + frameSize;
+
+      if (AAC_ADTS_SYNC_VERIFY(buf)) {
+        buf += AAC_ADTS_FRAME_GETSIZE(buf);
+        if (AAC_ADTS_SYNC_VERIFY(buf)) {
+          protectionAbsent = (buf[1] & 1);
+
+          // Found 3 consecutive frames, resynced
+          resyncValid = true;
+        }
+      }
+    } else {
+      resyncOffset++;
+    }
   }
-  
+
+  dataOffset += resyncOffset;
+  return resyncValid;
+}
+
+void ADTSContainer::consumeBytes(uint32_t len) {
+  dataOffset += len;
+}
+
+std::byte* ADTSContainer::readSample(uint32_t& len) {
+  // Align data if previous read was offseted
+  if (dataOffset > 0 && bytesInBuffer > 0) {
+    size_t toConsume = min(dataOffset, bytesInBuffer);
+    memmove(buffer.data(), buffer.data() + toConsume,
+            buffer.size() - toConsume);
+
+    dataOffset -= toConsume;
+    bytesInBuffer -= toConsume;
+  }
+
   if (!this->fillBuffer()) {
     len = 0;
     return nullptr;
   }
 
-  // int startOffset =
-  //     AACFindSyncWord((uint8_t*)this->buffer.data(), bytesInBuffer);
+  uint8_t* buf = (uint8_t*)buffer.data() + dataOffset;
 
-  // if (startOffset < 0) {
-  //   // Discard word
-  //   toConsume = AAC_MAX_FRAME_SIZE;
-  //   return nullptr;
-  // }
+  if (!AAC_ADTS_SYNC_VERIFY(buf)) {
+    if (!resyncADTS()) {
+      len = 0;
+      return nullptr;
+    }
+  } else {
+    protectionAbsent = (buf[1] & 1);
+  }
 
-  // toConsume = startOffset;
-  len = bytesInBuffer;
+  len = AAC_ADTS_FRAME_GETSIZE(buf);
+  printf("len: %d\n", len);
 
-  return this->buffer.data();
+  if (len > bytesInBuffer - dataOffset) {
+    if (!resyncADTS()) {
+      len = 0;
+      return nullptr;
+    }
+  }
+
+  return buffer.data() + dataOffset;
 }
 
 void ADTSContainer::parseSetupData() {

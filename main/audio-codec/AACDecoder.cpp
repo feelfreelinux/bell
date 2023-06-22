@@ -88,34 +88,27 @@ uint8_t* AACDecoder::decode(uint8_t* inData, uint32_t& inLen,
   aacDecoder->pInputBuffer = inData;
   aacDecoder->remainderBits = 0;
   aacDecoder->repositionFlag = false;
+  printf("Decoding %d\n", inLen);
 
   int32_t status;
 
-  if (firstFrame) {
-    if (PVMP4AudioDecoderConfig(aacDecoder, pMem) != MP4AUDEC_SUCCESS) {
-      status = PVMP4AudioDecodeFrame(aacDecoder, pMem);
-      if (status == MP4AUDEC_SUCCESS) {
-        firstFrame = false;
-        int streamType = getDecodedStreamType();
-        printf("Stream type: %d\n", streamType);
+  // if (firstFrame) {
+  //   if (PVMP4AudioDecoderConfig(aacDecoder, pMem) != MP4AUDEC_SUCCESS) {
+  //     printf("Failed to configure %d\n", aacDecoder->inputBufferUsedLength);
+  //     return nullptr;
 
-        if (streamType == AAC && aacDecoder->aacPlusUpsamplingFactor == 2) {
-          PVMP4AudioDecoderDisableAacPlus(aacDecoder, pMem);
-          printf("AAC+ disabled\n");
-          outLen = aacDecoder->frameLength * sizeof(int16_t);
-        }
-      }
-    } else {
-      inLen = 0;
-      return nullptr;
-    }
-  } else {
-    status = PVMP4AudioDecodeFrame(aacDecoder, pMem);
-  }
+  //   } else {
+  //     printf("Configured %d\n", aacDecoder->inputBufferUsedLength);
+  //   }
+  //   firstFrame = false;
+  // }
+  status = PVMP4AudioDecodeFrame(aacDecoder, pMem);
+  // }
 
   if (status != MP4AUDEC_SUCCESS) {
     outLen = 0;
     inLen = 0;
+    printf("Failed to decode %d\n", status);
     return nullptr;
   } else {
     inLen -= aacDecoder->inputBufferUsedLength;

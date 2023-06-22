@@ -16,6 +16,11 @@ class MP3Container : public AudioContainer {
 
   std::byte* readSample(uint32_t& len) override;
   void parseSetupData() override;
+  void consumeBytes(uint32_t len) override {
+    this->bytesInBuffer -= len;
+    this->toConsume += len;
+  }
+
   bell::AudioCodec getCodec() override { return bell::AudioCodec::MP3; }
 
  private:
@@ -26,6 +31,7 @@ class MP3Container : public AudioContainer {
 
   size_t bytesInBuffer = 0;
   size_t dataOffset = 0;
+  size_t toConsume = 0;
 
   bool fillBuffer();
 };

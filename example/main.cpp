@@ -54,13 +54,17 @@ class AudioPlayer : bell::Task {
 int main() {
   bell::setDefaultLogger();
   bell::createDecoders();
+    size_t size = sizeof(void*);
+  if ( size == 4 )
+    printf("Hola octos\n");
   audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
   auto task = AudioPlayer();
 
-  auto url = "https://0n-jazz.radionetz.de/0n-jazz.aac";
+  // auto url = "http://193.222.135.71/378";
+  std::ifstream file("aactest.aac", std::ios::binary);
 
-  auto req = bell::HTTPClient::get(url);
-  auto container = AudioContainers::guessAudioContainer(req->stream());
+  // auto req = bell::HTTPClient::get(url);
+  auto container = AudioContainers::guessAudioContainer(file);
   auto codec = AudioCodecs::getCodec(container.get());
 
   uint32_t dataLen;

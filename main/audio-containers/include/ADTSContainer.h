@@ -12,10 +12,12 @@ namespace bell {
 class ADTSContainer : public AudioContainer {
  public:
   ~ADTSContainer(){};
-  ADTSContainer(std::istream& istr);
+  ADTSContainer(std::istream& istr, const std::byte* headingBytes = nullptr);
 
   std::byte* readSample(uint32_t& len) override;
+  bool resyncADTS();
   void parseSetupData() override;
+  void consumeBytes(uint32_t len) override;
 
   bell::AudioCodec getCodec() override { return bell::AudioCodec::AAC; }
 
@@ -27,6 +29,7 @@ class ADTSContainer : public AudioContainer {
 
   size_t bytesInBuffer = 0;
   size_t dataOffset = 0;
+  bool protectionAbsent = false;
 
   bool fillBuffer();
 };
