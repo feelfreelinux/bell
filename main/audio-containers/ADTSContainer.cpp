@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "StreamInfo.h"  // for BitWidth, BitWidth::BW_16, SampleRate, Sampl...
-#include "sbr_crc_check.h"
 // #include "aacdec.h"      // for AACFindSyncWord
 
 using namespace bell;
@@ -87,7 +86,7 @@ void ADTSContainer::consumeBytes(uint32_t len) {
 std::byte* ADTSContainer::readSample(uint32_t& len) {
   // Align data if previous read was offseted
   if (dataOffset > 0 && bytesInBuffer > 0) {
-    size_t toConsume = min(dataOffset, bytesInBuffer);
+    size_t toConsume = std::min(dataOffset, bytesInBuffer);
     memmove(buffer.data(), buffer.data() + toConsume,
             buffer.size() - toConsume);
 
@@ -112,7 +111,6 @@ std::byte* ADTSContainer::readSample(uint32_t& len) {
   }
 
   len = AAC_ADTS_FRAME_GETSIZE(buf);
-  printf("len: %d\n", len);
 
   if (len > bytesInBuffer - dataOffset) {
     if (!resyncADTS()) {

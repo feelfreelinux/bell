@@ -2,9 +2,7 @@
 
 #include <stdlib.h>  // for free, malloc
 #include <string.h>
-
-#include "BellUtils.h"
-#include "CodecType.h"  // for bell
+#include <assert.h>
 #include "e_tmp4audioobjecttype.h"
 #include "pvmp4audiodecoder_api.h"
 
@@ -46,13 +44,11 @@ AACDecoder::AACDecoder() {
 }
 
 AACDecoder::~AACDecoder() {
-  PVMP4AudioDecoderResetBuffer(pMem);
+  free(pMem);
   free(aacDecoder);
 }
 
 int AACDecoder::getDecodedStreamType() {
-  printf("Extended audio object type: %d\n",
-         aacDecoder->extendedAudioObjectType);
   switch (aacDecoder->extendedAudioObjectType) {
     case MP4AUDIO_AAC_LC:
     case MP4AUDIO_LTP:
@@ -68,11 +64,15 @@ int AACDecoder::getDecodedStreamType() {
 
 bool AACDecoder::setup(uint32_t sampleRate, uint8_t channelCount,
                        uint8_t bitDepth) {
+  PVMP4AudioDecoderResetBuffer(pMem);
+  assert(PVMP4AudioDecoderInitLibrary(aacDecoder, pMem) == MP4AUDEC_SUCCESS);
   firstFrame = true;
   return true;
 }
 
 bool AACDecoder::setup(AudioContainer* container) {
+  PVMP4AudioDecoderResetBuffer(pMem);
+  assert(PVMP4AudioDecoderInitLibrary(aacDecoder, pMem) == MP4AUDEC_SUCCESS);
   firstFrame = true;
   return true;
 }
@@ -87,28 +87,14 @@ uint8_t* AACDecoder::decode(uint8_t* inData, uint32_t& inLen,
   aacDecoder->inputBufferMaxLength = inLen;
   aacDecoder->pInputBuffer = inData;
   aacDecoder->remainderBits = 0;
-  aacDecoder->repositionFlag = false;
-  printf("Decoding %d\n", inLen);
+  aacDecoder->repositionFlag = true;
 
   int32_t status;
-
-  // if (firstFrame) {
-  //   if (PVMP4AudioDecoderConfig(aacDecoder, pMem) != MP4AUDEC_SUCCESS) {
-  //     printf("Failed to configure %d\n", aacDecoder->inputBufferUsedLength);
-  //     return nullptr;
-
-  //   } else {
-  //     printf("Configured %d\n", aacDecoder->inputBufferUsedLength);
-  //   }
-  //   firstFrame = false;
-  // }
   status = PVMP4AudioDecodeFrame(aacDecoder, pMem);
-  // }
 
   if (status != MP4AUDEC_SUCCESS) {
     outLen = 0;
     inLen = 0;
-    printf("Failed to decode %d\n", status);
     return nullptr;
   } else {
     inLen -= aacDecoder->inputBufferUsedLength;
@@ -123,27 +109,4 @@ uint8_t* AACDecoder::decode(uint8_t* inData, uint32_t& inLen,
 
   outLen *= aacDecoder->desiredChannels;
   return (uint8_t*)&outputBuffer[0];
-  /*
-
-
-  int status = AACDecode(aac, static_cast<unsigned char**>(&inData),
-                         reinterpret_cast<int*>(&inLen),
-                         static_cast<short*>(this->pcmData));
-
-  AACGetLastFrameInfo(aac, &frame);
-  if (status != ERR_AAC_NONE) {
-    lastErrno = status;
-    return nullptr;
-  }
-
-  if (sampleRate != frame.sampRateOut) {
-    this->sampleRate = frame.sampRateOut;
-  }
-
-  if (channelCount != frame.nChans) {
-    this->channelCount = frame.nChans;
-  }
-
-  outLen = frame.outputSamps * sizeof(int16_t);
-  */
 }
