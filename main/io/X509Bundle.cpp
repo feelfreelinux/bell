@@ -2,7 +2,6 @@
 
 #include <mbedtls/md.h>              // for mbedtls_md, mbedtls_md_get_size
 #include <mbedtls/pk.h>              // for mbedtls_pk_can_do, mbedtls_pk_pa...
-#include <mbedtls/private_access.h>  // for MBEDTLS_PRIVATE
 #include <mbedtls/ssl.h>             // for mbedtls_ssl_conf_ca_chain, mbedt...
 #include <mbedtls/x509.h>            // for mbedtls_x509_buf, MBEDTLS_ERR_X5...
 #include <stdlib.h>                  // for free, calloc
@@ -13,8 +12,21 @@
 
 using namespace bell::X509Bundle;
 
+typedef struct crt_bundle_t {
+  const uint8_t** crts;
+  uint16_t num_certs;
+  size_t x509_crt_bundle_len;
+} crt_bundle_t;
+
+static std::vector<uint8_t> bundleBytes;
+
+static constexpr auto TAG = "X509Bundle";
+static constexpr auto CRT_HEADER_OFFSET = 4;
+static constexpr auto BUNDLE_HEADER_OFFSET = 2;
+
 static mbedtls_x509_crt s_dummy_crt;
 static bool s_should_verify_certs = false;
+static crt_bundle_t s_crt_bundle;
 
 #ifndef MBEDTLS_PRIVATE
 #define MBEDTLS_PRIVATE(member) member
