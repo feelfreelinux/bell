@@ -1,8 +1,10 @@
 #include "AACDecoder.h"
 
 #include <stdlib.h>  // for free, malloc
-
-#include "CodecType.h"  // for bell
+#include <string.h>
+#include <assert.h>
+#include "e_tmp4audioobjecttype.h"
+#include "pvmp4audiodecoder_api.h"
 
 namespace bell {
 class AudioContainer;
@@ -11,47 +13,100 @@ class AudioContainer;
 using namespace bell;
 
 AACDecoder::AACDecoder() {
-  aac = AACInitDecoder();
-  pcmData = (int16_t*)malloc(AAC_MAX_NSAMPS * AAC_MAX_NCHANS * sizeof(int16_t));
+  aacDecoder =
+      (tPVMP4AudioDecoderExternal*)malloc(sizeof(tPVMP4AudioDecoderExternal));
+
+  int32_t pMemRequirement = PVMP4AudioDecoderGetMemRequirements();
+  pMem = malloc(pMemRequirement);
+  memset(aacDecoder, 0, sizeof(tPVMP4AudioDecoderExternal));
+  memset(pMem, 0, pMemRequirement);
+
+  // Initialize the decoder buffers
+  outputBuffer.resize(4096);
+
+  aacDecoder->pOutputBuffer_plus = &outputBuffer[2048];
+  aacDecoder->pOutputBuffer = &outputBuffer[0];
+  aacDecoder->inputBufferMaxLength = PVMP4AUDIODECODER_INBUFSIZE;
+
+  // Settings
+  aacDecoder->desiredChannels = 2;
+  aacDecoder->outputFormat = OUTPUTFORMAT_16PCM_INTERLEAVED;
+  aacDecoder->aacPlusEnabled = TRUE;
+
+  // State
+  aacDecoder->inputBufferCurrentLength = 0;
+  aacDecoder->inputBufferUsedLength = 0;
+  aacDecoder->remainderBits = 0;
+
+  firstFrame = true;
+
+  assert(PVMP4AudioDecoderInitLibrary(aacDecoder, pMem) == MP4AUDEC_SUCCESS);
 }
 
 AACDecoder::~AACDecoder() {
-  AACFreeDecoder(aac);
-  free(pcmData);
+  free(pMem);
+  free(aacDecoder);
+}
+
+int AACDecoder::getDecodedStreamType() {
+  switch (aacDecoder->extendedAudioObjectType) {
+    case MP4AUDIO_AAC_LC:
+    case MP4AUDIO_LTP:
+      return AAC;
+    case MP4AUDIO_SBR:
+      return AACPLUS;
+    case MP4AUDIO_PS:
+      return ENH_AACPLUS;
+    default:
+      return -1;
+  }
 }
 
 bool AACDecoder::setup(uint32_t sampleRate, uint8_t channelCount,
                        uint8_t bitDepth) {
+  PVMP4AudioDecoderResetBuffer(pMem);
+  assert(PVMP4AudioDecoderInitLibrary(aacDecoder, pMem) == MP4AUDEC_SUCCESS);
+  firstFrame = true;
   return true;
 }
 
 bool AACDecoder::setup(AudioContainer* container) {
+  PVMP4AudioDecoderResetBuffer(pMem);
+  assert(PVMP4AudioDecoderInitLibrary(aacDecoder, pMem) == MP4AUDEC_SUCCESS);
+  firstFrame = true;
   return true;
 }
 
 uint8_t* AACDecoder::decode(uint8_t* inData, uint32_t& inLen,
                             uint32_t& outLen) {
-  if (!inData)
+  if (!inData || inLen == 0)
     return nullptr;
 
-  int status = AACDecode(aac, static_cast<unsigned char**>(&inData),
-                         reinterpret_cast<int*>(&inLen),
-                         static_cast<short*>(this->pcmData));
+  aacDecoder->inputBufferCurrentLength = inLen;
+  aacDecoder->inputBufferUsedLength = 0;
+  aacDecoder->inputBufferMaxLength = inLen;
+  aacDecoder->pInputBuffer = inData;
+  aacDecoder->remainderBits = 0;
+  aacDecoder->repositionFlag = true;
 
-  AACGetLastFrameInfo(aac, &frame);
-  if (status != ERR_AAC_NONE) {
-    lastErrno = status;
+  int32_t status;
+  status = PVMP4AudioDecodeFrame(aacDecoder, pMem);
+
+  if (status != MP4AUDEC_SUCCESS) {
+    outLen = 0;
+    inLen = 0;
     return nullptr;
+  } else {
+    inLen -= aacDecoder->inputBufferUsedLength;
   }
 
-  if (sampleRate != frame.sampRateOut) {
-    this->sampleRate = frame.sampRateOut;
+  outLen = aacDecoder->frameLength * sizeof(int16_t);
+
+  // Handle AAC+
+  if (aacDecoder->aacPlusUpsamplingFactor == 2) {
+    outLen *= 2;
   }
 
-  if (channelCount != frame.nChans) {
-    this->channelCount = frame.nChans;
-  }
-
-  outLen = frame.outputSamps * sizeof(int16_t);
-  return (uint8_t*)pcmData;
+  outLen *= aacDecoder->desiredChannels;
+  return (uint8_t*)&outputBuffer[0];
 }

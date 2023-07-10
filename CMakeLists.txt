@@ -5,7 +5,7 @@ project(bell)
 
 # Configurable options
 option(BELL_DISABLE_CODECS "Disable the entire audio codec wrapper" OFF)
-option(BELL_CODEC_AAC "Support libhelix-aac codec" ON)
+option(BELL_CODEC_AAC "Support opencore-aac codec" ON)
 option(BELL_CODEC_MP3 "Support libhelix-mp3 codec" ON)
 option(BELL_DISABLE_MQTT "Disable the built-in MQTT wrapper" OFF)
 option(BELL_DISABLE_WEBSERVER "Disable the built-in Web server" OFF)
@@ -170,9 +170,8 @@ if(NOT BELL_DISABLE_CODECS)
 
     # AAC-LC codec
     if(BELL_CODEC_AAC)
-        file(GLOB LIBHELIX_AAC_SOURCES "external/libhelix-aac/*.c")
-        list(APPEND LIBHELIX_SOURCES ${LIBHELIX_AAC_SOURCES})
-        list(APPEND EXTERNAL_INCLUDES "external/libhelix-aac")
+        add_subdirectory(external/opencore-aacdec)
+        list(APPEND EXTRA_LIBS opencore-aacdec)
         list(APPEND SOURCES "${AUDIO_CODEC_DIR}/AACDecoder.cpp")
         list(APPEND CODEC_FLAGS "-DBELL_CODEC_AAC")
     endif()

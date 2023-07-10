@@ -6,7 +6,6 @@
 #include <string>    // for basic_string, string
 #include <vector>    // for vector
 
-#include "aacdec.h"  // for AACFrameInfo
 #include "mp3dec.h"  // for MP3FrameInfo
 
 namespace bell {
@@ -48,7 +47,7 @@ class EncodedAudioStream {
   std::vector<uint8_t> mp3MagicBytesUntagged = {0xFF, 0xFB};
   std::vector<uint8_t> mp3MagicBytesIdc = {0x49, 0x44, 0x33};
 
-  AACFrameInfo aacFrameInfo;
+  // AACFrameInfo aacFrameInfo;
   MP3FrameInfo mp3FrameInfo;
 
   size_t decodeFrameMp3(uint8_t* dst);
