@@ -136,7 +136,7 @@ endfunction()
 
 
 if(ESP_PLATFORM)
-    list(APPEND EXTRA_LIBS idf::mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
+    list(APPEND EXTRA_LIBS idf::espressif__mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
     add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation -Wno-stringop-overflow -Wno-error=format -Wno-format -Wno-stringop-overread -Wno-stringop-overflow)
 else()
     find_package(Threads REQUIRED)
@@ -344,3 +344,4 @@ endif()
 if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     target_compile_definitions(bell PUBLIC PB_NO_STATIC_ASSERT)
 endif()
+
