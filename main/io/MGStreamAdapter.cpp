@@ -37,3 +37,41 @@ int mg_buf::sync() {
 MGStreamAdapter::MGStreamAdapter(struct mg_connection* _conn) : std::ostream(&buf), buf(_conn) {
     rdbuf(&buf);  // set the custom streambuf
 }
+
+
+mg_read_buf::mg_read_buf(struct mg_connection* _conn) : conn(_conn) {
+    setg(buffer + BUF_SIZE,     // beginning of putback area
+         buffer + BUF_SIZE,     // read position
+         buffer + BUF_SIZE);    // end position
+}
+
+mg_read_buf::int_type mg_read_buf::underflow() {
+    if (gptr() < egptr()) { // buffer not exhausted
+        return traits_type::to_int_type(*gptr());
+    }
+
+    char* base = buffer;
+    char* start = base;
+
+    if (eback() == base) { // true when this isn't the first fill
+        // Make arrangements for putback characters
+        std::memmove(base, egptr() - 2, 2);
+        start += 2;
+    }
+
+    // Read new characters
+    int n = mg_read(conn, start, buffer + BUF_SIZE - start);
+    if (n == 0) {
+        return traits_type::eof();
+    }
+
+    // Set buffer pointers
+    setg(base, start, start + n);
+
+    // Return next character
+    return traits_type::to_int_type(*gptr());
+}
+
+MGInputStreamAdapter::MGInputStreamAdapter(struct mg_connection* _conn) : std::istream(&buf), buf(_conn) {
+    rdbuf(&buf);  // set the custom streambuf
+}
