@@ -135,14 +135,11 @@ std::vector<uint8_t> CryptoMbedTLS::pbkdf2HmacSha1(
     int iterations, int digestSize) {
   auto digest = std::vector<uint8_t>(digestSize);
 
-  // Init sha context
-  sha1Init();
-  mbedtls_pkcs5_pbkdf2_hmac(&sha1Context, password.data(), password.size(),
+ 
+  mbedtls_pkcs5_pbkdf2_hmac_ext(MBEDTLS_MD_SHA1, password.data(), password.size(),
                             salt.data(), salt.size(), iterations, digestSize,
                             digest.data());
 
-  // Free sha context
-  mbedtls_md_free(&sha1Context);
 
   return digest;
 }
