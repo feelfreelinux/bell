@@ -4,6 +4,9 @@
 #include <random>    // for mt19937, uniform_int_distribution, random_device
 #ifdef ESP_PLATFORM
 #include "esp_system.h"
+#if __has_include("esp_mac.h")
+#include "esp_mac.h"
+#endif
 #endif
 
 std::string bell::generateRandomUUID() {
@@ -27,6 +30,7 @@ std::string bell::generateRandomUUID() {
 
 std::string bell::getMacAddress() {
 #ifdef ESP_PLATFORM
+
   uint8_t mac[6];
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
   char macStr[18];

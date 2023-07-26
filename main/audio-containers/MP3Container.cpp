@@ -7,7 +7,12 @@
 
 using namespace bell;
 
-MP3Container::MP3Container(std::istream& istr) : bell::AudioContainer(istr) {}
+MP3Container::MP3Container(std::istream& istr, const std::byte* headingBytes) : bell::AudioContainer(istr) {
+  if (headingBytes != nullptr) {
+    memcpy(buffer.data(), headingBytes, 7);
+    bytesInBuffer = 7;
+  }
+}
 
 bool MP3Container::fillBuffer() {
   if (this->bytesInBuffer < MP3_MAX_FRAME_SIZE * 2) {
@@ -18,18 +23,25 @@ bool MP3Container::fillBuffer() {
   return this->bytesInBuffer >= MP3_MAX_FRAME_SIZE * 2;
 }
 
+void MP3Container::consumeBytes(uint32_t len) {
+  dataOffset += len;
+}
+
 std::byte* MP3Container::readSample(uint32_t& len) {
+  // Align data if previous read was offseted
+  if (dataOffset > 0 && bytesInBuffer > 0) {
+    size_t toConsume = std::min(dataOffset, bytesInBuffer);
+    memmove(buffer.data(), buffer.data() + toConsume,
+            buffer.size() - toConsume);
+
+    dataOffset -= toConsume;
+    bytesInBuffer -= toConsume;
+  }
+
+  
   if (!this->fillBuffer()) {
     len = 0;
     return nullptr;
-  }
-
-  // Align the data if previous read was offseted
-  if (toConsume > 0 && toConsume <= bytesInBuffer) {
-    memmove(buffer.data(), buffer.data() + toConsume,
-            buffer.size() - toConsume);
-    bytesInBuffer = bytesInBuffer - toConsume;
-    toConsume = 0;
   }
 
   int startOffset =
@@ -37,13 +49,15 @@ std::byte* MP3Container::readSample(uint32_t& len) {
 
   if (startOffset < 0) {
     // Discard word
-    toConsume = MP3_MAX_FRAME_SIZE;
+    dataOffset = MP3_MAX_FRAME_SIZE;
     return nullptr;
   }
 
-  len = bytesInBuffer - startOffset;
+  dataOffset += startOffset;
 
-  return this->buffer.data() + startOffset;
+  len = bytesInBuffer - dataOffset;
+
+  return this->buffer.data() + dataOffset;
 }
 
 void MP3Container::parseSetupData() {

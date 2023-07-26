@@ -12,10 +12,12 @@ namespace bell {
 class MP3Container : public AudioContainer {
  public:
   ~MP3Container(){};
-  MP3Container(std::istream& istr);
+  MP3Container(std::istream& istr, const std::byte* headingBytes = nullptr);
 
   std::byte* readSample(uint32_t& len) override;
   void parseSetupData() override;
+  void consumeBytes(uint32_t len) override;
+
   bell::AudioCodec getCodec() override { return bell::AudioCodec::MP3; }
 
  private:
@@ -26,6 +28,7 @@ class MP3Container : public AudioContainer {
 
   size_t bytesInBuffer = 0;
   size_t dataOffset = 0;
+  size_t toConsume = 0;
 
   bool fillBuffer();
 };

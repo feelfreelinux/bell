@@ -7,7 +7,7 @@
 
 #include <stdio.h>  // for NULL
 
-#include "aacdec.h"  // for AACFreeDecoder, AACInitDecoder, HAACDecoder
+// #include "aacdec.h"  // for AACFreeDecoder, AACInitDecoder, HAACDecoder
 #include "mp3dec.h"  // for MP3FreeDecoder, MP3InitDecoder, HMP3Decoder
 
 namespace bell {
@@ -16,16 +16,16 @@ class DecodersInstance {
   DecodersInstance(){};
   ~DecodersInstance() {
     MP3FreeDecoder(mp3Decoder);
-    AACFreeDecoder(aacDecoder);
+    // AACFreeDecoder(aacDecoder);
   };
 
-  HAACDecoder aacDecoder = NULL;
+  // HAACDecoder aacDecoder = NULL;
   HMP3Decoder mp3Decoder = NULL;
 
   void ensureAAC() {
-    if (aacDecoder == NULL) {
-      aacDecoder = AACInitDecoder();
-    }
+    // if (aacDecoder == NULL) {
+      // aacDecoder = AACInitDecoder();
+    // }
   }
 
   void ensureMP3() {

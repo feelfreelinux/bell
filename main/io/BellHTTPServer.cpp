@@ -35,7 +35,14 @@ class WebSocketHandler : public CivetWebSocketHandler {
   }
 
   virtual bool handleData(CivetServer* server, struct mg_connection* conn,
-                          int bits, char* data, size_t data_len) {
+                          int flags, char* data, size_t data_len) {
+
+    if ((flags & 0xf) == MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE) {
+      // Received close message from client. Close the connection.
+      this->stateHandler(conn, BellHTTPServer::WSState::CLOSED);
+      return false;
+    }
+
     this->dataHandler(conn, data, data_len);
     return true;
   }

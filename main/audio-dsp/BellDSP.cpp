@@ -100,7 +100,6 @@ size_t BellDSP::process(uint8_t* data, size_t bytes, int channels,
 
     // Data has been downmixed to mono
     if (streamInfo->numChannels == 1) {
-
       data16Bit[i] = dataLeft[i] * MAX_INT16;  // Denormalize left
     } else {
       data16Bit[i * 2] = dataLeft[i] * MAX_INT16;       // Denormalize left
