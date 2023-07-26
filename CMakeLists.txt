@@ -136,7 +136,7 @@ endfunction()
 
 
 if(ESP_PLATFORM)
-    if (IDF_VERSION_MAJOR GREATER_EQUAL 4)
+    if (IDF_VERSION_MAJOR LESS_EQUAL 4)
         list(APPEND EXTRA_LIBS idf::mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
     else()	
         list(APPEND EXTRA_LIBS idf::espressif__mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
