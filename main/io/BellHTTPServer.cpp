@@ -184,8 +184,10 @@ BellHTTPServer::BellHTTPServer(int serverPort) {
   BELL_LOG(info, "HttpServer", "Server listening on port %d", serverPort);
   this->serverPort = serverPort;
   auto port = std::to_string(this->serverPort);
-  const char* options[] = {"listening_ports", port.c_str(), 0};
-  server = std::make_unique<CivetServer>(options);
+
+  civetWebOptions.push_back("listening_ports");
+  civetWebOptions.push_back(port);
+  server = std::make_unique<CivetServer>(civetWebOptions);
 }
 
 std::unique_ptr<BellHTTPServer::HTTPResponse> BellHTTPServer::makeJsonResponse(

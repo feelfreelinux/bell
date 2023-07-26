@@ -118,8 +118,7 @@ class CentralAudioBuffer {
       return nullptr;
     }
 
-    auto readBytes =
-        audioBuffer->read((uint8_t*)&lastReadChunk, sizeof(AudioChunk));
+    audioBuffer->read((uint8_t*)&lastReadChunk, sizeof(AudioChunk));
     currentSampleRate = static_cast<uint32_t>(lastReadChunk.sampleRate);
     return &lastReadChunk;
   }

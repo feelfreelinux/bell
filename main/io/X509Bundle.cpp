@@ -12,8 +12,21 @@
 
 using namespace bell::X509Bundle;
 
+typedef struct crt_bundle_t {
+  const uint8_t** crts;
+  uint16_t num_certs;
+  size_t x509_crt_bundle_len;
+} crt_bundle_t;
+
+static std::vector<uint8_t> bundleBytes;
+
+static constexpr auto TAG = "X509Bundle";
+static constexpr auto CRT_HEADER_OFFSET = 4;
+static constexpr auto BUNDLE_HEADER_OFFSET = 2;
+
 static mbedtls_x509_crt s_dummy_crt;
 static bool s_should_verify_certs = false;
+static crt_bundle_t s_crt_bundle;
 
 #ifndef MBEDTLS_PRIVATE
 #define MBEDTLS_PRIVATE(member) member
