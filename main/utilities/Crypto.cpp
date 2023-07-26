@@ -147,7 +147,7 @@ std::vector<uint8_t> CryptoMbedTLS::pbkdf2HmacSha1(
 #else
   mbedtls_pkcs5_pbkdf2_hmac_ext(MBEDTLS_MD_SHA1, password.data(), password.size(),
                             salt.data(), salt.size(), iterations, digestSize,
-                            digest.data());  
+                            digest.data());
 #endif    
 
   return digest;

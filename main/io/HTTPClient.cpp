@@ -50,10 +50,12 @@ void HTTPClient::Response::rawRequest(const std::string& url,
   }
 
   socketStream << reqEnd;
+
   // Write request body
   if (content.size() > 0) {
-      socketStream.write((const char*)content.data(), content.size());
+    socketStream.write((const char*)content.data(), content.size());
   }
+
   socketStream.flush();
 
   // Parse response
@@ -123,9 +125,9 @@ void HTTPClient::Response::get(const std::string& url, Headers headers) {
 }
 
 void HTTPClient::Response::post(const std::string& url, Headers headers,
-    const std::vector<uint8_t>& body) {
-    std::string method = "POST";
-    return this->rawRequest(url, method, body, headers);
+                                const std::vector<uint8_t>& body) {
+  std::string method = "POST";
+  return this->rawRequest(url, method, body, headers);
 }
 
 size_t HTTPClient::Response::contentLength() {

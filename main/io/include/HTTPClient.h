@@ -58,7 +58,7 @@ class HTTPClient {
                     const std::vector<uint8_t>& content, Headers& headers);
     void get(const std::string& url, Headers headers = {});
     void post(const std::string& url, Headers headers = {},
-        const std::vector<uint8_t>& body = {});
+              const std::vector<uint8_t>& body = {});
 
     std::string_view body();
     std::vector<uint8_t> bytes();
@@ -106,12 +106,12 @@ class HTTPClient {
   }
 
   static std::unique_ptr<Response> post(const std::string& url,
-      Headers headers = {},
-      const std::vector<uint8_t>& body = {}) {
-      auto response = std::make_unique<Response>();
-      response->connect(url);
-      response->post(url, headers, body);
-      return response;
+                                        Headers headers = {},
+                                        const std::vector<uint8_t>& body = {}) {
+    auto response = std::make_unique<Response>();
+    response->connect(url);
+    response->post(url, headers, body);
+    return response;
   }
 };
 }  // namespace bell
