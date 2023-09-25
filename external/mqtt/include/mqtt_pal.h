@@ -29,7 +29,6 @@ SOFTWARE.
 extern "C" {
 #endif
 #include <sys/types.h>
-#include <sys/socket.h>
 // #ifdef ESP_PLATFORM
 // #define MQTT_USE_MBEDTLS
 // #else
@@ -83,6 +82,7 @@ extern "C" {
     #include <time.h>
     #include <arpa/inet.h>
     #include <pthread.h>
+    #include <sys/socket.h>
 
     #define MQTT_PAL_HTONS(s) htons(s)
     #define MQTT_PAL_NTOHS(s) ntohs(s)

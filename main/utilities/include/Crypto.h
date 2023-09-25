@@ -31,8 +31,8 @@ class CryptoMbedTLS {
   CryptoMbedTLS();
   ~CryptoMbedTLS();
   // Base64
-  std::vector<uint8_t> base64Decode(const std::string& data);
-  std::string base64Encode(const std::vector<uint8_t>& data);
+  static std::vector<uint8_t> base64Decode(const std::string& data);
+  static std::string base64Encode(const std::vector<uint8_t>& data);
 
   // Sha1
   void sha1Init();
