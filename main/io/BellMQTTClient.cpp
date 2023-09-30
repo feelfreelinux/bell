@@ -3,8 +3,8 @@
 #ifndef _WIN32
 #include <sys/fcntl.h>  // for fcntl, F_GETFL, F_SETFL, O_NONBLOCK
 #endif
-#include <stddef.h>     // for NULL
-#include <stdexcept>    // for runtime_error
+#include <stddef.h>   // for NULL
+#include <stdexcept>  // for runtime_error
 
 #include "BellLogger.h"  // for AbstractLogger, BELL_LOG
 #include "BellSocket.h"  // for bell
@@ -34,7 +34,7 @@ void bell::MQTTClient::connect(const std::string& host, uint16_t port,
   ioctlsocket(socket.getFd(), FIONBIO, &iMode);
 #else
   int status = fcntl(socket.getFd(), F_SETFL,
-      fcntl(socket.getFd(), F_GETFL, 0) | O_NONBLOCK);
+                     fcntl(socket.getFd(), F_GETFL, 0) | O_NONBLOCK);
 #endif
 
   // Pass pointer to this object to the publish callback

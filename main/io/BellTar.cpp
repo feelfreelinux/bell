@@ -292,7 +292,7 @@ void reader::extract_all_files(std::string dest_directory) {
     if (fileType == '0' && !fileName.starts_with("._")) {
 #else
     if (fileType == '0' && fileName.find("._") != 0) {
-#endif       
+#endif
       std::string path = dest_directory + "/" + fileName;
 
       size_t pos = 0;

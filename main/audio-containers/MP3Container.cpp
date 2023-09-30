@@ -7,7 +7,8 @@
 
 using namespace bell;
 
-MP3Container::MP3Container(std::istream& istr, const std::byte* headingBytes) : bell::AudioContainer(istr) {
+MP3Container::MP3Container(std::istream& istr, const std::byte* headingBytes)
+    : bell::AudioContainer(istr) {
   if (headingBytes != nullptr) {
     memcpy(buffer.data(), headingBytes, 7);
     bytesInBuffer = 7;
@@ -38,7 +39,6 @@ std::byte* MP3Container::readSample(uint32_t& len) {
     bytesInBuffer -= toConsume;
   }
 
-  
   if (!this->fillBuffer()) {
     len = 0;
     return nullptr;

@@ -1,8 +1,8 @@
 #include "AACDecoder.h"
 
+#include <assert.h>
 #include <stdlib.h>  // for free, malloc
 #include <string.h>
-#include <assert.h>
 #include "e_tmp4audioobjecttype.h"
 #include "pvmp4audiodecoder_api.h"
 
