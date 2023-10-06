@@ -14,6 +14,7 @@ class AbstractLogger {
  public:
   bool enableSubmodule = false;
   bool enableTimestamp = false;
+  bool shortTime = false;
 
   virtual void debug(std::string filename, int line, std::string submodule,
                      const char* format, ...) = 0;
@@ -94,10 +95,18 @@ class BellLogger : public bell::AbstractLogger {
                              now.time_since_epoch()) %
                          1000;
 
-      auto gmt_time = gmtime(&now_time);
       printf(colorReset);
-      std::cout << std::put_time(gmt_time, "[%Y-%m-%d %H:%M:%S") << '.'
-                << std::setfill('0') << std::setw(3) << nowMs.count() << "] ";
+      struct tm* gmt_time;
+      if (shortTime) {
+        gmt_time = localtime(&now_time);
+        std::cout << std::put_time(gmt_time, "[%H:%M:%S") << '.'
+                  << std::setfill('0') << std::setw(3) << nowMs.count() << "] ";
+      }
+      else {
+          gmt_time = gmtime(&now_time);
+          std::cout << std::put_time(gmt_time, "[%Y-%m-%d %H:%M:%S") << '.'
+              << std::setfill('0') << std::setw(3) << nowMs.count() << "] ";
+      }
     }
   }
 
@@ -129,7 +138,7 @@ class BellLogger : public bell::AbstractLogger {
 
 void setDefaultLogger();
 void enableSubmoduleLogging();
-void enableTimestampLogging();
+void enableTimestampLogging(bool local = false);
 }  // namespace bell
 
 #define BELL_LOG(type, ...)                                        \
