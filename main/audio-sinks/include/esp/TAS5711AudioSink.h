@@ -22,7 +22,7 @@ class TAS5711AudioSink : public BufferedAudioSink {
 
  private:
   i2c_config_t i2c_config;
-  i2c_port_t i2c_port = 0;
+  i2c_port_t i2c_port = I2C_NUM_0;
 };
 
 #endif

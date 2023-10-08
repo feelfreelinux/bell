@@ -55,8 +55,10 @@ class HTTPClient {
     void connect(const std::string& url);
 
     void rawRequest(const std::string& method, const std::string& url,
-                    const std::string& content, Headers& headers);
+                    const std::vector<uint8_t>& content, Headers& headers);
     void get(const std::string& url, Headers headers = {});
+    void post(const std::string& url, Headers headers = {},
+              const std::vector<uint8_t>& body = {});
 
     std::string_view body();
     std::vector<uint8_t> bytes();
@@ -100,6 +102,15 @@ class HTTPClient {
     auto response = std::make_unique<Response>();
     response->connect(url);
     response->get(url, headers);
+    return response;
+  }
+
+  static std::unique_ptr<Response> post(const std::string& url,
+                                        Headers headers = {},
+                                        const std::vector<uint8_t>& body = {}) {
+    auto response = std::make_unique<Response>();
+    response->connect(url);
+    response->post(url, headers, body);
     return response;
   }
 };

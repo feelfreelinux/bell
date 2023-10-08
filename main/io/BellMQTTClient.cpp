@@ -1,8 +1,10 @@
 #include "BellMQTTClient.h"
 
-#include <stddef.h>     // for NULL
+#ifndef _WIN32
 #include <sys/fcntl.h>  // for fcntl, F_GETFL, F_SETFL, O_NONBLOCK
-#include <stdexcept>    // for runtime_error
+#endif
+#include <stddef.h>   // for NULL
+#include <stdexcept>  // for runtime_error
 
 #include "BellLogger.h"  // for AbstractLogger, BELL_LOG
 #include "BellSocket.h"  // for bell
@@ -27,8 +29,13 @@ void bell::MQTTClient::connect(const std::string& host, uint16_t port,
   }
 
   // Set the socket to non-blocking
+#ifdef _WIN32
+  u_long iMode = 1;
+  ioctlsocket(socket.getFd(), FIONBIO, &iMode);
+#else
   int status = fcntl(socket.getFd(), F_SETFL,
                      fcntl(socket.getFd(), F_GETFL, 0) | O_NONBLOCK);
+#endif
 
   // Pass pointer to this object to the publish callback
   client.publish_response_callback_state = this;

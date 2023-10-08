@@ -2,12 +2,11 @@
 
 #include <memory>  // for shared_ptr
 
-#include "CodecType.h"  // for AudioCodec
+#include "AudioContainer.h"  // for AudioContainer
+#include "BaseCodec.h"       // for BaseCodec
+#include "CodecType.h"       // for AudioCodec
 
 namespace bell {
-class AudioContainer;
-class BaseCodec;
-
 class AudioCodecs {
  public:
   static std::shared_ptr<BaseCodec> getCodec(AudioCodec type);

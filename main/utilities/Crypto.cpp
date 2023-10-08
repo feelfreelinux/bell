@@ -12,6 +12,8 @@ extern "C" {
 #include "aes.h"  // for AES_ECB_decrypt, AES_init_ctx, AES_ctx
 }
 
+static unsigned char DHGenerator[1] = {2};
+
 CryptoMbedTLS::CryptoMbedTLS() {}
 
 CryptoMbedTLS::~CryptoMbedTLS() {
@@ -133,6 +135,7 @@ std::vector<uint8_t> CryptoMbedTLS::pbkdf2HmacSha1(
     int iterations, int digestSize) {
   auto digest = std::vector<uint8_t>(digestSize);
 
+#if MBEDTLS_VERSION_NUMBER < 0x03030000
   // Init sha context
   sha1Init();
   mbedtls_pkcs5_pbkdf2_hmac(&sha1Context, password.data(), password.size(),
@@ -141,6 +144,11 @@ std::vector<uint8_t> CryptoMbedTLS::pbkdf2HmacSha1(
 
   // Free sha context
   mbedtls_md_free(&sha1Context);
+#else
+  mbedtls_pkcs5_pbkdf2_hmac_ext(MBEDTLS_MD_SHA1, password.data(),
+                                password.size(), salt.data(), salt.size(),
+                                iterations, digestSize, digest.data());
+#endif
 
   return digest;
 }

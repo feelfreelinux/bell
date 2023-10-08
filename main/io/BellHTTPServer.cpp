@@ -35,7 +35,14 @@ class WebSocketHandler : public CivetWebSocketHandler {
   }
 
   virtual bool handleData(CivetServer* server, struct mg_connection* conn,
-                          int bits, char* data, size_t data_len) {
+                          int flags, char* data, size_t data_len) {
+
+    if ((flags & 0xf) == MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE) {
+      // Received close message from client. Close the connection.
+      this->stateHandler(conn, BellHTTPServer::WSState::CLOSED);
+      return false;
+    }
+
     this->dataHandler(conn, data, data_len);
     return true;
   }
@@ -184,8 +191,10 @@ BellHTTPServer::BellHTTPServer(int serverPort) {
   BELL_LOG(info, "HttpServer", "Server listening on port %d", serverPort);
   this->serverPort = serverPort;
   auto port = std::to_string(this->serverPort);
-  const char* options[] = {"listening_ports", port.c_str(), 0};
-  server = std::make_unique<CivetServer>(options);
+
+  civetWebOptions.push_back("listening_ports");
+  civetWebOptions.push_back(port);
+  server = std::make_unique<CivetServer>(civetWebOptions);
 }
 
 std::unique_ptr<BellHTTPServer::HTTPResponse> BellHTTPServer::makeJsonResponse(

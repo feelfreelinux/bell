@@ -27,7 +27,7 @@ HTTPClient::Response::~Response() {
 
 void HTTPClient::Response::rawRequest(const std::string& url,
                                       const std::string& method,
-                                      const std::string& content,
+                                      const std::vector<uint8_t>& content,
                                       Headers& headers) {
   urlParser = bell::URLParser::parse(url);
 
@@ -50,6 +50,12 @@ void HTTPClient::Response::rawRequest(const std::string& url,
   }
 
   socketStream << reqEnd;
+
+  // Write request body
+  if (content.size() > 0) {
+    socketStream.write((const char*)content.data(), content.size());
+  }
+
   socketStream.flush();
 
   // Parse response
@@ -115,7 +121,13 @@ void HTTPClient::Response::readResponseHeaders() {
 
 void HTTPClient::Response::get(const std::string& url, Headers headers) {
   std::string method = "GET";
-  return this->rawRequest(url, method, "", headers);
+  return this->rawRequest(url, method, {}, headers);
+}
+
+void HTTPClient::Response::post(const std::string& url, Headers headers,
+                                const std::vector<uint8_t>& body) {
+  std::string method = "POST";
+  return this->rawRequest(url, method, body, headers);
 }
 
 size_t HTTPClient::Response::contentLength() {

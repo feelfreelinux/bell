@@ -49,12 +49,12 @@ ES8388AudioSink::ES8388AudioSink() {
     ESP_LOGE("OI", "i2s set pin error: %d", err);
   }
 
-  err = i2c_param_config(0, &i2c_config);
+  err = i2c_param_config(I2C_NUM_0, &i2c_config);
   if (err != ESP_OK) {
     ESP_LOGE("OI", "i2c param config error: %d", err);
   }
 
-  err = i2c_driver_install(0, I2C_MODE_MASTER, 0, 0, 0);
+  err = i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0);
   if (err != ESP_OK) {
     ESP_LOGE("OI", "i2c driver installation error: %d", err);
   }
@@ -132,7 +132,7 @@ void ES8388AudioSink::writeReg(uint8_t reg_add, uint8_t data) {
   res |= i2c_master_write_byte(cmd, reg_add, ACK_CHECK_EN);
   res |= i2c_master_write_byte(cmd, data, ACK_CHECK_EN);
   res |= i2c_master_stop(cmd);
-  res |= i2c_master_cmd_begin(0, cmd, 1000 / portTICK_PERIOD_MS);
+  res |= i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000 / portTICK_PERIOD_MS);
   i2c_cmd_link_delete(cmd);
 
   if (res != ESP_OK) {

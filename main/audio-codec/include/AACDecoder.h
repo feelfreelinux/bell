@@ -1,18 +1,23 @@
 #pragma once
 
 #include <stdint.h>  // for uint8_t, uint32_t, int16_t
+#include <vector>
 
-#include "BaseCodec.h"  // for BaseCodec
-#include "aacdec.h"     // for AACFrameInfo, HAACDecoder
+#include "BaseCodec.h"              // for BaseCodec
+#include "pvmp4audiodecoder_api.h"  // for tPVMP4AudioDecoderExternal
 
 namespace bell {
 class AudioContainer;
 
 class AACDecoder : public BaseCodec {
  private:
-  HAACDecoder aac;
-  int16_t* pcmData;
-  AACFrameInfo frame = {};
+  tPVMP4AudioDecoderExternal* aacDecoder;
+  std::vector<uint8_t> inputBuffer;
+  std::vector<int16_t> outputBuffer;
+  void* pMem;
+  bool firstFrame = true;
+
+  int getDecodedStreamType();
 
  public:
   AACDecoder();

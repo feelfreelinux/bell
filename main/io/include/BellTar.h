@@ -51,7 +51,7 @@ class reader {
   reader(std::istream& inp)
       : _inp(inp), _cached_header_data_valid(false), _number_of_files(-1) {}
 
-  // Returns true iff another file can be read from |inp|.
+  // Returns true if another file can be read from |inp|.
   bool contains_another_file();
 
   // Returns file name of next file in |inp|.

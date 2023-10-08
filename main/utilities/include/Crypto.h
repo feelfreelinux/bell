@@ -1,8 +1,6 @@
 #ifndef BELL_CRYPTO_H
 #define BELL_CRYPTO_H
 
-#define Crypto CryptoMbedTLS
-
 #include <string>  // for string
 #include <vector>  // for vector
 
@@ -23,9 +21,6 @@ const static unsigned char DHPrime[] = {
     0xf2, 0x5f, 0x14, 0x37, 0x4f, 0xe1, 0x35, 0x6d, 0x6d, 0x51, 0xc2, 0x45,
     0xe4, 0x85, 0xb5, 0x76, 0x62, 0x5e, 0x7e, 0xc6, 0xf4, 0x4c, 0x42, 0xe9,
     0xa6, 0x3a, 0x36, 0x20, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-
-static unsigned char DHGenerator[1] = {2};
-
 class CryptoMbedTLS {
  private:
   mbedtls_md_context_t sha1Context;
@@ -36,8 +31,8 @@ class CryptoMbedTLS {
   CryptoMbedTLS();
   ~CryptoMbedTLS();
   // Base64
-  std::vector<uint8_t> base64Decode(const std::string& data);
-  std::string base64Encode(const std::vector<uint8_t>& data);
+  static std::vector<uint8_t> base64Decode(const std::string& data);
+  static std::string base64Encode(const std::vector<uint8_t>& data);
 
   // Sha1
   void sha1Init();
@@ -72,5 +67,7 @@ class CryptoMbedTLS {
   // Random stuff
   std::vector<uint8_t> generateVectorWithRandomData(size_t length);
 };
+
+#define Crypto CryptoMbedTLS
 
 #endif
