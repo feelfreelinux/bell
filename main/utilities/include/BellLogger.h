@@ -101,11 +101,10 @@ class BellLogger : public bell::AbstractLogger {
         gmt_time = localtime(&now_time);
         std::cout << std::put_time(gmt_time, "[%H:%M:%S") << '.'
                   << std::setfill('0') << std::setw(3) << nowMs.count() << "] ";
-      }
-      else {
-          gmt_time = gmtime(&now_time);
-          std::cout << std::put_time(gmt_time, "[%Y-%m-%d %H:%M:%S") << '.'
-              << std::setfill('0') << std::setw(3) << nowMs.count() << "] ";
+      } else {
+        gmt_time = gmtime(&now_time);
+        std::cout << std::put_time(gmt_time, "[%Y-%m-%d %H:%M:%S") << '.'
+                  << std::setfill('0') << std::setw(3) << nowMs.count() << "] ";
       }
     }
   }
