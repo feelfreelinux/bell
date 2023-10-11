@@ -22,6 +22,20 @@ int SocketBuffer::open(const std::string& hostname, int port, bool isSSL) {
   return 0;
 }
 
+int SocketBuffer::open(int fd, bool isSSL) {
+  if (internalSocket != nullptr) {
+    close();
+  }
+  if (isSSL) {
+    internalSocket = std::make_unique<bell::TLSSocket>();
+  } else {
+    internalSocket = std::make_unique<bell::TCPSocket>();
+  }
+
+  internalSocket->wrapFd(fd);
+  return 0;
+}
+
 int SocketBuffer::close() {
   if (internalSocket != nullptr && isOpen()) {
     pubsync();

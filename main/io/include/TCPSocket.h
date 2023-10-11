@@ -85,6 +85,20 @@ class TCPSocket : public bell::Socket {
     isClosed = false;
   }
 
+  void wrapFd(int fd) {
+    if (fd != -1) {
+      sockFd = fd;
+      int flag = 1;
+      setsockopt(sockFd,       /* socket affected */
+                 IPPROTO_TCP,  /* set option at TCP level */
+                 TCP_NODELAY,  /* name of option */
+                 (char*)&flag, /* the cast is historical cruft */
+                 sizeof(int)); /* length of option value */
+
+      isClosed = false;
+    }
+  }
+
   size_t read(uint8_t* buf, size_t len) {
     return recv(sockFd, (char*)buf, len, 0);
   }
@@ -103,9 +117,8 @@ class TCPSocket : public bell::Socket {
 #endif
     return value;
   }
-  bool isOpen() {
-    return !isClosed;
-  }
+
+  bool isOpen() { return !isClosed; }
 
   void close() {
     if (!isClosed) {
