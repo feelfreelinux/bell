@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <vector>
+#include <mutex>
 
 #if __has_include("avahi-client/client.h")
 #include <avahi-client/client.h>
