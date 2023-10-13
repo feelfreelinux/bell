@@ -2,7 +2,9 @@
 
 #include <stdint.h>  // for uint8_t
 #include <cstdio>    // for NULL, ssize_t
+#include <memory>
 
+#include "BellSocket.h"
 #include "TCPSocket.h"  // for TCPSocket
 #include "TLSSocket.h"  // for TLSSocket
 
@@ -22,17 +24,12 @@ int SocketBuffer::open(const std::string& hostname, int port, bool isSSL) {
   return 0;
 }
 
-int SocketBuffer::open(int fd, bool isSSL) {
+int SocketBuffer::open(std::unique_ptr<bell::Socket> socket) {
   if (internalSocket != nullptr) {
     close();
   }
-  if (isSSL) {
-    internalSocket = std::make_unique<bell::TLSSocket>();
-  } else {
-    internalSocket = std::make_unique<bell::TCPSocket>();
-  }
 
-  internalSocket->wrapFd(fd);
+  internalSocket = std::move(socket);
   return 0;
 }
 

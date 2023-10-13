@@ -4,6 +4,7 @@
 #include <memory>  // for unique_ptr
 #include <string>  // for string
 #include <vector>  // for vector
+#include <functional>  // for function
 
 namespace bell {
 

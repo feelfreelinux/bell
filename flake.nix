@@ -41,7 +41,7 @@
 
         devShells = {
           default = pkgs.mkShell {
-            packages = with pkgs; [ cmake unstable.mbedtls ninja python3 ] ++ [ clang-tools llvm.clang ];
+            packages = with pkgs; [  avahi avahi-compat cmake unstable.mbedtls ninja python3 portaudio alsalib ] ++ [ clang-tools llvm.clang ];
           };
         };
 

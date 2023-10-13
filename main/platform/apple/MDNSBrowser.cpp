@@ -3,10 +3,11 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stddef.h>  // for NULL
-#include <sys/_select.h>
-#include <sys/_types/_timeval.h>
+#include <sys/select.h>
+#include <sys/types.h>
 #include <stdexcept>
 #include <utility>  // for pair
+#include <atomic>  // for function
 #include "BellLogger.h"
 
 #include "dns_sd.h"  // for DNSServiceRef, DNSServiceRefDeallocate, DNS...

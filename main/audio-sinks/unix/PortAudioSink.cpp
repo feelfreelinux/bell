@@ -1,4 +1,5 @@
 #include "PortAudioSink.h"
+#include <portaudio.h>
 
 PortAudioSink::PortAudioSink() {
   Pa_Initialize();
@@ -12,11 +13,16 @@ bool PortAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount,
   }
   PaStreamParameters outputParameters;
   outputParameters.device = Pa_GetDefaultOutputDevice();
+
+  for (int x = 0; x < Pa_GetDeviceCount(); x++) {
+    printf("PortAudio: Running on device %d, %s\n",x, Pa_GetDeviceInfo(x)->name);
+  }
+
   if (outputParameters.device == paNoDevice) {
     printf("PortAudio: Default audio device not found!\n");
     // exit(0);
   }
-  printf("PortAudio: Default audio device not found!\n");
+  outputParameters.device = 3;
 
   outputParameters.channelCount = channelCount;
   switch (bitDepth) {

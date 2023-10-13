@@ -23,7 +23,7 @@ class SocketBuffer : public std::streambuf {
 
   int open(const std::string& hostname, int port, bool isSSL = false);
 
-  int open(int fd, bool isSSL = false);
+  int open(std::unique_ptr<bell::Socket> socket);
 
   int close();
 
@@ -66,8 +66,8 @@ class SocketStream : public std::iostream {
     return err;
   }
 
-  int open(int fd, bool isSSL = false) {
-    int err = socketBuf.open(fd, isSSL);
+  int open(std::unique_ptr<bell::Socket> socket) {
+    int err = socketBuf.open(std::move(socket));
     if (err)
       setstate(std::ios::failbit);
     return err;
