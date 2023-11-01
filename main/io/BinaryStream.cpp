@@ -42,7 +42,7 @@ BinaryStream& BinaryStream::operator>>(uint16_t& value) {
   ensureReadable();
   istr->read((char*)&value, sizeof(value));
   if (flipBytes)
-    swap16(value);
+    value = swap16(value);
 
   return *this;
 }

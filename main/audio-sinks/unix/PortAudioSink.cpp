@@ -3,7 +3,7 @@
 
 PortAudioSink::PortAudioSink() {
   Pa_Initialize();
-  this->setParams(44100, 2, 16);
+  this->setParams(4800, 2, 32);
 }
 
 bool PortAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount,
@@ -22,7 +22,7 @@ bool PortAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount,
     printf("PortAudio: Default audio device not found!\n");
     // exit(0);
   }
-  outputParameters.device = 3;
+  // outputParameters.device = 3
 
   outputParameters.channelCount = channelCount;
   switch (bitDepth) {

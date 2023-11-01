@@ -13,23 +13,22 @@ class MDNSBrowser {
   virtual ~MDNSBrowser() {}
 
   // Type for MDNS record
-  struct Record {
-    std::string fullname, host;
+  struct DiscoveredRecord {
+    std::string name, type, domain, hostname;
 
-    std::vector<std::string> addresses;
+    std::vector<std::string> ipv4, ipv6;
     uint16_t port = 0;
 
-    bool operator==(const Record& rhs) const {
-      return fullname == rhs.fullname && port == rhs.port &&
-             addresses == rhs.addresses;
+    bool operator==(const DiscoveredRecord& rhs) const {
+      return name == rhs.name && type == rhs.type && domain == rhs.domain;
     }
   };
 
   // Current list of discovered devices
-  std::vector<Record> discoveredRecords;
+  std::vector<DiscoveredRecord> discoveredRecords;
 
   // Typedef for record callback
-  using RecordsUpdatedCallback = std::function<void(std::vector<Record>&)>;
+  using RecordsUpdatedCallback = std::function<void(std::vector<DiscoveredRecord>&)>;
 
   // Holds the callback
   RecordsUpdatedCallback recordsCallback;

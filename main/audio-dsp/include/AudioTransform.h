@@ -14,7 +14,7 @@ class AudioTransform {
  public:
   virtual std::unique_ptr<StreamInfo> process(
       std::unique_ptr<StreamInfo> data) = 0;
-  virtual void sampleRateChanged(uint32_t sampleRate){};
+  virtual void sampleRateChanged(uint32_t sampleRate) = 0;
   virtual float calculateHeadroom() { return 0; };
 
   virtual void reconfigure(){};
