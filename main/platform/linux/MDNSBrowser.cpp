@@ -131,7 +131,7 @@ class implMDNSBrowser : public MDNSBrowser {
       case AVAHI_BROWSER_REMOVE:
         for (auto iter = discoveredRecords.begin();
              iter != discoveredRecords.end();) {
-          if (iter->name == name && iter->name == name &&
+          if (iter->name == name && iter->type == type &&
               iter->domain == domain)
             iter = discoveredRecords.erase(iter);
           else

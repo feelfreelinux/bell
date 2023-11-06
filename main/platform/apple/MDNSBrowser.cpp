@@ -5,11 +5,11 @@
 #include <stddef.h>  // for NULL
 #include <sys/select.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <atomic>  // for function
 #include <stdexcept>
 #include <utility>  // for pair
-#include <atomic>  // for function
 #include "BellLogger.h"
-
 #include "dns_sd.h"  // for DNSServiceRef, DNSServiceRefDeallocate, DNS...
 
 using namespace bell;
@@ -23,82 +23,51 @@ class implMDNSBrowser : public MDNSBrowser {
   std::atomic<bool> runDiscovery = false;
 
  public:
-  struct DNSSDRecord {
-    std::string regType, serviceName, domain, host, ipv4;
-    uint16_t port;
-
-    implMDNSBrowser* parentPtr = NULL;
-
-    bool expired;
-
-    bool operator==(const DNSSDRecord& rhs) {
-      return regType == rhs.regType && rhs.serviceName == serviceName &&
-             rhs.domain == domain;
-    }
+  struct AddrResolvReference {
+    implMDNSBrowser* parentPtr;
+    std::string name, type, domain;
+    int port = 0;
   };
 
-  std::vector<DNSSDRecord> pendingRecords;
+  void publishDiscovered() {
+    auto fullyDiscovered = std::vector<DiscoveredRecord>();
 
-  void eraseRecord(DNSSDRecord* recordPtr) {
-    DNSSDRecord record = *recordPtr;
-
-    auto recordPos =
-        std::find(pendingRecords.begin(), pendingRecords.end(), record);
-
-    if (recordPos != pendingRecords.end()) {
-      pendingRecords.erase(recordPos);
-    }
-  }
-
-  void publishRecords() {
-    auto previousRecords = discoveredRecords;
-
-    discoveredRecords.clear();
-
-    // Map DNS-SD records to MDNSBrowser records
-    for (auto& record : pendingRecords) {
-      auto existingRecord = find_if(
-          discoveredRecords.begin(), discoveredRecords.end(),
-          [record](const Record& s) { return s.fullname == record.host; });
-
-      if (existingRecord != discoveredRecords.end()) {
-        existingRecord->addresses.push_back(record.ipv4);
-      } else {
-        discoveredRecords.push_back({.fullname = record.host,
-                                     .host = record.host,
-                                     .addresses = {record.ipv4},
-                                     .port = record.port});
+    for (auto service : discoveredRecords) {
+      if (service.port != 0) {
+        fullyDiscovered.push_back(service);
       }
     }
 
-    if ((recordsCallback != nullptr) &&
-        (previousRecords != discoveredRecords)) {
-      recordsCallback(discoveredRecords);
+    if (fullyDiscovered.size() > 0 && recordsCallback) {
+      recordsCallback(fullyDiscovered);
     }
   }
 
   /// Handle DNS-SD responses
-  void handleGetAddrInfoReply(DNSSDRecord* record, DNSServiceRef ref,
+  void handleGetAddrInfoReply(AddrResolvReference* ctx, DNSServiceRef ref,
                               DNSServiceFlags flags, uint32_t interfaceIndex,
                               DNSServiceErrorType errorCode,
                               const char* hostname,
                               const struct sockaddr* address, uint32_t ttl) {
-    if (record->expired) {
-      eraseRecord(record);
-    } else {
-      if (errorCode == kDNSServiceErr_NoError) {
-        const sockaddr_in* in = (const sockaddr_in*)address;
-        record->ipv4.resize(INET_ADDRSTRLEN + 1);
-        inet_ntop(AF_INET, &(in->sin_addr), record->ipv4.data(),
-                  INET_ADDRSTRLEN);
+    if (errorCode == kDNSServiceErr_NoError) {
+      const sockaddr_in* in = (const sockaddr_in*)address;
+      std::string addrStr;
+      addrStr.resize(INET_ADDRSTRLEN + 1);
+      inet_ntop(AF_INET, &(in->sin_addr), addrStr.data(), INET_ADDRSTRLEN);
 
-        record->ipv4.resize(record->ipv4.find('\0'));
-      } else {
-        eraseRecord(record);
+      addrStr.resize(addrStr.find('\0'));
+
+      for (auto& record : discoveredRecords) {
+        if (record.name == ctx->name && record.domain == ctx->domain &&
+            record.type == ctx->type) {
+          record.hostname = hostname;
+          record.ipv4.push_back(addrStr);
+          record.port = ctx->port;
+        }
       }
-    }
 
-    publishRecords();
+      publishDiscovered();
+    }
   }
 
   /// Thin shim passing dns-sd C-style callback to a member function
@@ -106,34 +75,34 @@ class implMDNSBrowser : public MDNSBrowser {
       DNSServiceRef ref, DNSServiceFlags flags, uint32_t interfaceIndex,
       DNSServiceErrorType errorCode, const char* hostname,
       const struct sockaddr* address, uint32_t ttl, void* context) {
-    auto record = reinterpret_cast<DNSSDRecord*>(context);
-    if (record && record->parentPtr) {
-      record->parentPtr->handleGetAddrInfoReply(record, ref, flags,
-                                                interfaceIndex, errorCode,
-                                                hostname, address, ttl);
+    auto ctx = reinterpret_cast<AddrResolvReference*>(context);
+    if (ctx->parentPtr != NULL) {
+      ctx->parentPtr->handleGetAddrInfoReply(ctx, ref, flags, interfaceIndex,
+                                             errorCode, hostname, address, ttl);
     }
+
+    // Not passed anywhere further
+    delete ctx;
   }
 
   /// Handle DNS-SD responses
-  void handleServiceResolveReply(DNSSDRecord* recordPtr, DNSServiceRef ref,
+  void handleServiceResolveReply(AddrResolvReference* ctx, DNSServiceRef ref,
                                  DNSServiceFlags flags, uint32_t interfaceIndex,
                                  DNSServiceErrorType errorCode,
                                  const char* fullName, const char* hostTarget,
                                  uint16_t opaqueport, uint16_t txtLen,
                                  const unsigned char* txtRecord) {
     auto refCopy = service;
-
-    if (recordPtr->expired) {
-      eraseRecord(recordPtr);
-    } else {
-      recordPtr->host = fullName;
+    if (ctx->parentPtr != NULL) {
       auto error = DNSServiceGetAddrInfo(
           &refCopy, kDNSServiceFlagsShareConnection, interfaceIndex,
-          kDNSServiceProtocol_IPv4, hostTarget, getAddrInfoReply, recordPtr);
+          kDNSServiceProtocol_IPv4, hostTarget, getAddrInfoReply, ctx);
 
       if (error != kDNSServiceErr_NoError) {
-        eraseRecord(recordPtr);
+        delete ctx;
       }
+    } else {
+      delete ctx;
     }
   }
 
@@ -143,13 +112,16 @@ class implMDNSBrowser : public MDNSBrowser {
       DNSServiceErrorType errorCode, const char* fullName,
       const char* hostTarget, uint16_t opaqueport, uint16_t txtLen,
       const unsigned char* txtRecord, void* context) {
-    auto record = reinterpret_cast<DNSSDRecord*>(context);
-    if (record && record->parentPtr) {
-      record->port = ntohs(opaqueport);
 
-      record->parentPtr->handleServiceResolveReply(
-          record, ref, flags, interfaceIndex, errorCode, fullName, hostTarget,
-          opaqueport, txtLen, txtRecord);
+    auto ctx = reinterpret_cast<AddrResolvReference*>(context);
+    if (ctx->parentPtr != NULL) {
+      ctx->port = ntohs(opaqueport);
+
+      ctx->parentPtr->handleServiceResolveReply(ctx, ref, flags, interfaceIndex,
+                                                errorCode, fullName, hostTarget,
+                                                opaqueport, txtLen, txtRecord);
+    } else {
+      delete ctx;
     }
   }
 
@@ -157,43 +129,54 @@ class implMDNSBrowser : public MDNSBrowser {
   void handleReply(DNSServiceFlags flags, uint32_t interfaceIndex,
                    DNSServiceErrorType errorCode, const char* serviceName,
                    const char* regType, const char* replyDomain) {
-    DNSSDRecord record = {
-        .regType = regType,
-        .serviceName = serviceName,
+    DiscoveredRecord record = {
+        .name = serviceName,
+        .type = regType,
         .domain = replyDomain,
+        .hostname = "",
+        .ipv4 = {},
+        .ipv6 = {},
         .port = 0,
-        .parentPtr = this,
-        .expired = false,
     };
 
     auto existingRecord =
-        std::find(pendingRecords.begin(), pendingRecords.end(), record);
+        std::find(discoveredRecords.begin(), discoveredRecords.end(), record);
 
     if (flags & kDNSServiceFlagsAdd) {
-      if (existingRecord == pendingRecords.end()) {
-        pendingRecords.push_back(record);
-      }
+      if (existingRecord == discoveredRecords.end()) {
+        discoveredRecords.push_back(record);
 
-      auto refCopy = service;
+        auto refCopy = service;
 
-      DNSServiceErrorType err =
-          DNSServiceResolve(&refCopy, kDNSServiceFlagsShareConnection,
-                            interfaceIndex, serviceName, regType, replyDomain,
-                            serviceResolveReply, &(pendingRecords.back()));
+        auto addrResolvCtx = new AddrResolvReference();
 
-      if (err != kDNSServiceErr_NoError) {
-        BELL_LOG(error, "MDNSBrowser",
-                 "Could not start discovered record service resolve, %d", err);
+        // Prepare context for dns sd
+        addrResolvCtx->domain = record.domain;
+        addrResolvCtx->type = record.type;
+        addrResolvCtx->name = record.name;
+        addrResolvCtx->parentPtr = this;
+
+        DNSServiceErrorType err =
+            DNSServiceResolve(&refCopy, kDNSServiceFlagsShareConnection,
+                              interfaceIndex, serviceName, regType, replyDomain,
+                              serviceResolveReply, addrResolvCtx);
+
+        if (err != kDNSServiceErr_NoError) {
+          BELL_LOG(error, "MDNSBrowser",
+                   "Could not start discovered record service resolve, %d",
+                   err);
+        }
       }
     } else {
-      // Either mark record for removal after address resolvation finishes, or remove it now
-      if (existingRecord != pendingRecords.end())
-        existingRecord->expired = true;
-
-      if (existingRecord->ipv4.length() > 0) {
-        pendingRecords.erase(existingRecord);
-        publishRecords();
+      for (auto iter = discoveredRecords.begin();
+           iter != discoveredRecords.end();) {
+        if (iter->name == serviceName && iter->type == regType &&
+            iter->domain == replyDomain)
+          iter = discoveredRecords.erase(iter);
+        else
+          ++iter;
       }
+      publishDiscovered();
     }
 
     if (!(flags & kDNSServiceFlagsMoreComing) && recordsCallback) {}
