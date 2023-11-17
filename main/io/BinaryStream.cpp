@@ -34,13 +34,11 @@ BinaryStream& BinaryStream::operator>>(char& value) {
   return *this;
 }
 
-
 BinaryStream& BinaryStream::operator>>(std::byte& value) {
   ensureReadable();
   istr->read((char*)&value, 1);
   return *this;
 }
-
 
 BinaryStream& BinaryStream::operator>>(int16_t& value) {
   ensureReadable();

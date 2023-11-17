@@ -15,7 +15,8 @@ bool PortAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount,
   outputParameters.device = Pa_GetDefaultOutputDevice();
 
   for (int x = 0; x < Pa_GetDeviceCount(); x++) {
-    printf("PortAudio: Running on device %d, %s\n",x, Pa_GetDeviceInfo(x)->name);
+    printf("PortAudio: Running on device %d, %s\n", x,
+           Pa_GetDeviceInfo(x)->name);
   }
 
   if (outputParameters.device == paNoDevice) {

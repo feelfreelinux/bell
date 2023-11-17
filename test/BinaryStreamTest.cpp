@@ -26,7 +26,7 @@ TEST_CASE("BinaryStream encodes and decodes data properly", "[BinaryStream]") {
   SECTION("throws when trying to read writable stream") {
     char testVal;
 
-    REQUIRE_THROWS(bs>>testVal);
+    REQUIRE_THROWS(bs >> testVal);
   }
 
   SECTION("encodes char and byte properly") {

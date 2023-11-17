@@ -33,7 +33,7 @@ class TLSSocket : public bell::Socket {
   ~TLSSocket() { close(); };
 
   void open(const std::string& host, uint16_t port);
-  void wrapFd(int fd){}; // @TODO: implement
+  void wrapFd(int fd){};  // @TODO: implement
 
   size_t read(uint8_t* buf, size_t len);
   size_t write(uint8_t* buf, size_t len);

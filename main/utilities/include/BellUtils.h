@@ -10,9 +10,9 @@
 #include <sys/time.h>  // for tv, gettimeofday
 #include <unistd.h>    // for usleep
 #endif
+#include <chrono>
 #include <cstdlib>  // for floor
 #include <string>   // for string
-#include <chrono>
 
 #ifdef ESP_PLATFORM
 #include "esp_system.h"
@@ -35,16 +35,16 @@ struct tv {
   tv(int64_t sec, int64_t usec) : sec(sec), usec(usec) { normalize(); }
 
   // Normalize the tv to ensure usec is within [-1,000,000, 1,000,000]
-    void normalize() {
-        if (usec >= 1000000) {
-            sec += usec / 1000000;
-            usec %= 1000000;
-        } else if (usec < 0) {
-            long borrow_sec = std::abs(usec / 1000000) + 1;
-            sec -= borrow_sec;
-            usec += borrow_sec * 1000000;
-        }
+  void normalize() {
+    if (usec >= 1000000) {
+      sec += usec / 1000000;
+      usec %= 1000000;
+    } else if (usec < 0) {
+      long borrow_sec = std::abs(usec / 1000000) + 1;
+      sec -= borrow_sec;
+      usec += borrow_sec * 1000000;
     }
+  }
   // Overloading addition operator
   tv operator+(const tv& other) const {
     tv result(sec + other.sec, usec + other.usec);
