@@ -1,7 +1,8 @@
 #include <catch2/catch.hpp>
-#include <type_traits>
 #include "BinaryStream.h"
-#include "StreamUtils.h"
+
+#include <sstream> // for std::ostringstream
+#include "StreamUtils.h" // for bell::IMemoryStream
 
 TEST_CASE("BinaryStream encodes and decodes data properly", "[BinaryStream]") {
   // Static so we retain value through the test
