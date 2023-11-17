@@ -1,4 +1,5 @@
 #include "BellMQTTClient.h"
+#include <cassert>
 
 #ifndef _WIN32
 #include <sys/fcntl.h>  // for fcntl, F_GETFL, F_SETFL, O_NONBLOCK
@@ -35,6 +36,9 @@ void bell::MQTTClient::connect(const std::string& host, uint16_t port,
 #else
   int status = fcntl(socket.getFd(), F_SETFL,
                      fcntl(socket.getFd(), F_GETFL, 0) | O_NONBLOCK);
+  if (status < 0) {
+    throw std::runtime_error("Cannot set connection as non blocking");
+  }
 #endif
 
   // Pass pointer to this object to the publish callback

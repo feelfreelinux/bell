@@ -38,16 +38,17 @@ bell::TLSSocket::TLSSocket() {
 }
 
 void bell::TLSSocket::open(const std::string& hostUrl, uint16_t port) {
-  int ret;
-  if ((ret = mbedtls_net_connect(&server_fd, hostUrl.c_str(),
-                                 std::to_string(port).c_str(),
-                                 MBEDTLS_NET_PROTO_TCP)) != 0) {
+  int ret =
+      mbedtls_net_connect(&server_fd, hostUrl.c_str(),
+                          std::to_string(port).c_str(), MBEDTLS_NET_PROTO_TCP);
+  if (ret != 0) {
     BELL_LOG(error, "http_tls", "failed! connect returned %d\n", ret);
   }
 
-  if ((ret = mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_CLIENT,
-                                         MBEDTLS_SSL_TRANSPORT_STREAM,
-                                         MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
+  ret = mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_CLIENT,
+                                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                                    MBEDTLS_SSL_PRESET_DEFAULT);
+  if (ret != 0) {
 
     BELL_LOG(error, "http_tls", "failed! config returned %d\n", ret);
     throw std::runtime_error("mbedtls_ssl_config_defaults failed");
@@ -63,7 +64,8 @@ void bell::TLSSocket::open(const std::string& hostUrl, uint16_t port) {
   mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
   mbedtls_ssl_setup(&ssl, &conf);
 
-  if ((ret = mbedtls_ssl_set_hostname(&ssl, hostUrl.c_str())) != 0) {
+  ret = mbedtls_ssl_set_hostname(&ssl, hostUrl.c_str());
+  if (ret != 0) {
     throw std::runtime_error("mbedtls_ssl_set_hostname failed");
   }
   mbedtls_ssl_set_bio(&ssl, &server_fd, mbedtls_net_send, mbedtls_net_recv,

@@ -6,7 +6,7 @@
 #include "AudioSink.h"
 #include "portaudio.h"
 
-class PortAudioSink : public AudioSink {
+class PortAudioSink final : public AudioSink {
  public:
   PortAudioSink();
   ~PortAudioSink() override;

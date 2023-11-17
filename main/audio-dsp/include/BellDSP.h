@@ -18,12 +18,12 @@ class CentralAudioBuffer;
 class BellDSP {
  public:
   BellDSP(std::shared_ptr<CentralAudioBuffer> centralAudioBuffer);
-  ~BellDSP(){};
+  ~BellDSP();
 
   class AudioEffect {
    public:
     AudioEffect() = default;
-    ~AudioEffect() = default;
+    virtual ~AudioEffect() = default;
     size_t duration;
     virtual void apply(float* sampleData, size_t samples,
                        size_t relativePosition) = 0;

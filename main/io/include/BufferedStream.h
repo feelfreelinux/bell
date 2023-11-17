@@ -29,7 +29,7 @@
  * The source stream (passed to open() or returned by the reader) should implement the read()
  * method correctly, such as that 0 is returned if, and only if the stream ends.
  */
-class BufferedStream : public bell::ByteStream, bell::Task {
+class BufferedStream final : public bell::ByteStream, bell::Task {
  public:
   typedef std::shared_ptr<bell::ByteStream> StreamPtr;
   typedef std::function<StreamPtr(uint32_t rangeStart)> StreamReader;

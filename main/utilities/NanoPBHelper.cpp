@@ -38,8 +38,8 @@ std::vector<uint8_t> pbEncode(const pb_msgdesc_t* fields,
 }
 
 void packString(char*& dst, std::string stringToPack) {
-  dst = (char*)malloc((strlen(stringToPack.c_str()) + 1) * sizeof(char));
-  strcpy(dst, stringToPack.c_str());
+  dst = (char*)malloc(stringToPack.size() + 1);
+  strncpy(dst, stringToPack.c_str(), stringToPack.size());
 }
 
 pb_bytes_array_t* vectorToPbArray(const std::vector<uint8_t>& vectorToPack) {
@@ -54,12 +54,6 @@ pb_bytes_array_t* vectorToPbArray(const std::vector<uint8_t>& vectorToPack) {
 void pbPutString(const std::string& stringToPack, char* dst) {
   stringToPack.copy(dst, stringToPack.size());
   dst[stringToPack.size()] = '\0';
-}
-
-void pbPutCharArray(const char* stringToPack, char* dst) {
-  // copy stringToPack into dst
-  strcpy(dst, stringToPack);
-  //dst[sizeof(stringToPack)-1] = '\0';
 }
 
 void pbPutBytes(const std::vector<uint8_t>& data, pb_bytes_array_t& dst) {

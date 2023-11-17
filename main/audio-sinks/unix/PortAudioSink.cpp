@@ -3,7 +3,7 @@
 
 PortAudioSink::PortAudioSink() {
   Pa_Initialize();
-  this->setParams(4800, 2, 32);
+  this->setParams(48000, 2, 32);
 }
 
 bool PortAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount,

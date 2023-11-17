@@ -28,6 +28,20 @@ void BinaryStream::ensureWritable() {
     throw std::runtime_error("No output provided for binary stream");
 }
 
+BinaryStream& BinaryStream::operator>>(char& value) {
+  ensureReadable();
+  istr->read((char*)&value, 1);
+  return *this;
+}
+
+
+BinaryStream& BinaryStream::operator>>(std::byte& value) {
+  ensureReadable();
+  istr->read((char*)&value, 1);
+  return *this;
+}
+
+
 BinaryStream& BinaryStream::operator>>(int16_t& value) {
   ensureReadable();
   istr->read((char*)&value, sizeof(value));

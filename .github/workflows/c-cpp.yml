@@ -1,15 +1,19 @@
-name: Build library
+name: CI
+
 on:
-  pull_request:
   push:
+  pull_request:
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-    - uses: cachix/install-nix-action@v18
-      with:
-        nix_path: nixpkgs=channel:nixos-22.11
-    - run: nix build '.?submodules=1#lib' 
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - run: nix flake check '.?submodules=1'

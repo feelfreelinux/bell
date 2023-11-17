@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 2.8.12)
-cmake_policy(SET CMP0077 NEW)
+cmake_minimum_required(VERSION 3.17)
 
 project(bell)
 
 # Configurable options
+option(BELL_DISABLE_TESTS "Disable bell unit tests" ON)
+option(BELL_RUN_CLANGTIDY "Run clang-tidy static analysis" OFF)
 option(BELL_DISABLE_CODECS "Disable the entire audio codec wrapper" OFF)
 option(BELL_CODEC_AAC "Support opencore-aac codec" ON)
 option(BELL_CODEC_MP3 "Support libhelix-mp3 codec" ON)
@@ -30,9 +31,6 @@ option(BELL_VORBIS_FLOAT "Use floating point Vorbis API" OFF)
 option(BELL_DISABLE_FMT "Don't use std::fmt (saves space)" OFF)
 option(BELL_DISABLE_REGEX "Don't use std::regex (saves space)" OFF)
 
-# disable json tests
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-
 # Backwards compatibility with deprecated options
 if(BELL_USE_ALSA)
     message(WARNING "Deprecated Bell options used, replace BELL_USE_ALSA with BELL_SINK_ALSA")
@@ -45,6 +43,7 @@ if(BELL_USE_PORTAUDIO)
 endif()
 
 message(STATUS "Bell options:")
+message(STATUS "    Disable unit tests: ${BELL_DISABLE_TESTS}")
 message(STATUS "    Disable all codecs: ${BELL_DISABLE_CODECS}")
 
 if(NOT BELL_DISABLE_CODECS)
@@ -133,7 +132,6 @@ function(message)
         _message(${ARGN})
     endif()
 endfunction()
-
 
 if(ESP_PLATFORM)
     if (IDF_VERSION_MAJOR LESS_EQUAL 4)
@@ -228,10 +226,11 @@ if(NOT BELL_DISABLE_CODECS)
         set(HAVE_LRINTF ON CACHE BOOL "")
         set(HAVE_LRINTF ON)
         add_subdirectory("external/opus")
+        add_subdirectory("external/opus-resample")
         unset(MESSAGE_QUIET)
-        target_compile_options(opus PRIVATE "-O3")
-        list(APPEND EXTRA_LIBS Opus::opus)
-        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/OPUSDecoder.cpp")
+        target_compile_options(opus PRIVATE "-O3" -Wno-cast-align -Wno-unused-parameter -Wno-parentheses-equality)
+        # list(APPEND EXTRA_LIBS Opus::opus opus-resample)
+        # list(APPEND SOURCES "${AUDIO_CODEC_DIR}/OPUSDecoder.cpp")
         list(APPEND CODEC_FLAGS -DBELL_CODEC_OPUS)
     endif()
     
@@ -284,8 +283,26 @@ if(NOT BELL_DISABLE_SINKS)
     list(APPEND SOURCES ${SINK_SOURCES})
 endif()
 
+if (NOT BELL_DISABLE_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
+if (BELL_RUN_CLANGTIDY)
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+    set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+    find_program("CLANGTIDY" "clang-tidy")
+    if(CLANGTIDY)
+        set("CMAKE_CXX_CLANG_TIDY" "${CLANGTIDY}")
+        message("clang-tidy req")
+    else()
+        message(SEND_ERROR "clang-tidy requested but executable not found")
+    endif()
+endif()
+
 if(NOT BELL_ONLY_CJSON)
     set(JSON_SystemInclude ON CACHE INTERNAL "")
+    set(JSON_BuildTests OFF CACHE INTERNAL "")
     add_subdirectory(external/nlohmann_json)
     list(APPEND EXTRA_LIBS nlohmann_json::nlohmann_json)
 endif()	
@@ -313,7 +330,7 @@ if(NOT BELL_DISABLE_WEBSERVER)
 else()
     list(REMOVE_ITEM SOURCES "${IO_DIR}/BellHTTPServer.cpp")    
     list(REMOVE_ITEM SOURCES "${IO_DIR}/MGStreamAdapter.cpp")    
-endif()    
+endif()
 
 add_library(bell STATIC ${SOURCES})
 
@@ -328,6 +345,7 @@ endif()
 
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
+target_link_libraries(bell PRIVATE Opus::opus opus-resample)
 target_include_directories(bell PUBLIC ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(bell SYSTEM PUBLIC ${EXTERNAL_INCLUDES})
 target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC FMT_HEADER_ONLY)

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <map>     // for map
-#include <memory>  // for unique_ptr
-#include <string>  // for string
-#include <vector>  // for vector
 #include <functional>  // for function
+#include <map>         // for map
+#include <memory>      // for unique_ptr
+#include <string>      // for string
+#include <vector>      // for vector
 
 namespace bell {
 
@@ -28,7 +28,8 @@ class MDNSBrowser {
   std::vector<DiscoveredRecord> discoveredRecords;
 
   // Typedef for record callback
-  using RecordsUpdatedCallback = std::function<void(std::vector<DiscoveredRecord>&)>;
+  using RecordsUpdatedCallback =
+      std::function<void(std::vector<DiscoveredRecord>&)>;
 
   // Holds the callback
   RecordsUpdatedCallback recordsCallback;

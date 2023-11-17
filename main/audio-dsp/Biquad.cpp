@@ -204,7 +204,6 @@ void Biquad::highShelfCoEffs(float f, float gain, float q) {
   float w0 = 2 * M_PI * f / this->sampleRate;
   float c = cosf(w0);
   float s = sinf(w0);
-  float alpha = s / (2 * q);
   float beta = s * sqrtf(A) / q;
   float b0 = A * ((A + 1.0) + (A - 1.0) * c + beta);
   float b1 = -2.0 * A * ((A - 1.0) + (A + 1.0) * c);
@@ -298,7 +297,6 @@ void Biquad::lowShelfFOCoEffs(float f, float gain) {
 }
 
 void Biquad::notchCoEffs(float f, float gain, float q) {
-  float A = std::pow(10.0f, gain / 40.0f);
   float w0 = 2 * M_PI * f / this->sampleRate;
   float c = cosf(w0);
   float s = sinf(w0);
@@ -314,7 +312,6 @@ void Biquad::notchCoEffs(float f, float gain, float q) {
   this->normalizeCoEffs(a0, a1, a2, b0, b1, b2);
 }
 void Biquad::notchCoEffsBandwidth(float f, float gain, float bandwidth) {
-  float A = std::pow(10.0f, gain / 40.0f);
   float w0 = 2 * M_PI * f / this->sampleRate;
   float c = cosf(w0);
   float s = sinf(w0);
