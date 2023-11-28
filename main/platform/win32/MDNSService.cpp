@@ -26,6 +26,7 @@ class implMDNSService : public MDNSService {
  public:
   static struct mdnsd* mdnsServer;
   implMDNSService(struct mdns_service* service) : service(service){};
+  virtual ~implMDNSService();
 };
 
 /**
@@ -95,4 +96,10 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
                          type.c_str(), servicePort, NULL, txt.data());
 
   return std::make_unique<implMDNSService>(service);
+}
+
+implMDNSService::~implMDNSService() {
+  if (implMDNSService::mdnsServer) {
+    mdnsd_stop(implMDNSService::mdnsServer);
+  }
 }
