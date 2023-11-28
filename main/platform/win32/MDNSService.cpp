@@ -19,15 +19,12 @@ using namespace bell;
 class implMDNSService : public MDNSService {
  private:
   struct mdns_service* service;
-  void unregisterService(void) {
-    mdns_service_remove(implMDNSService::mdnsServer, service);
-  };
+  void unregisterService(void);
 
  public:
   static struct mdnsd* mdnsServer;
   static std::atomic<size_t> instances;
   implMDNSService(struct mdns_service* service) : service(service) { instances++; };
-  virtual ~implMDNSService();
 };
 
 /**
@@ -38,6 +35,14 @@ struct mdnsd* implMDNSService::mdnsServer = NULL;
 std::atomic<size_t> implMDNSService::instances = 0;
 
 static std::mutex registerMutex;
+
+void implMDNSService::unregisterService() {
+  mdns_service_remove(implMDNSService::mdnsServer, service);
+  if (!--instances && implMDNSService::mdnsServer) {
+    mdnsd_stop(implMDNSService::mdnsServer);
+    implMDNSService::mdnsServer = nullptr;
+  }   
+}
 
 std::unique_ptr<MDNSService> MDNSService::registerService(
     const std::string& serviceName, const std::string& serviceType,
@@ -99,11 +104,4 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
                          type.c_str(), servicePort, NULL, txt.data());
 
   return std::make_unique<implMDNSService>(service);
-}
-
-implMDNSService::~implMDNSService() {
-  if (!--instances && implMDNSService::mdnsServer) {
-    mdnsd_stop(implMDNSService::mdnsServer);
-    implMDNSService::mdnsServer = nullptr;
-  }
 }
