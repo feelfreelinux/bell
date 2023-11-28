@@ -48,7 +48,6 @@ class implMDNSService : public MDNSService {
 #ifndef BELL_DISABLE_AVAHI
   implMDNSService(AvahiEntryGroup* avahiGroup) : avahiGroup(avahiGroup){};
 #endif
-  virtual ~implMDNSService();
   void unregisterService();
 };
 
@@ -70,11 +69,21 @@ void implMDNSService::unregisterService() {
 #ifndef BELL_DISABLE_AVAHI
   if (avahiGroup) {
     avahi_entry_group_free(avahiGroup);
+    if (!--instances && implMDNSService::avahiClient) {
+      avahi_client_free(implMDNSService::avahiClient);
+      avahi_simple_poll_free(implMDNSService::avahiPoll);
+      implMDNSService::avahiClient = nullptr;
+      implMDNSService::avahiPoll = nullptr;
+    }
   } else
 #endif
   {
     mdns_service_remove(implMDNSService::mdnsServer, service);
-  }
+    if (!--instances && implMDNSService::mdnsServer) {
+     mdnsd_stop(implMDNSService::mdnsServer);
+     implMDNSService::mdnsServer = nullptr;
+    }
+  }  
 }
 
 std::unique_ptr<MDNSService> MDNSService::registerService(
@@ -199,18 +208,4 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
   BELL_LOG(error, "MDNS", "cannot start any mDNS listener for %s",
            serviceName.c_str());
   return NULL;
-}
-
-implMDNSService::~implMDNSService() {
-  if (--instances) return;
-#ifndef BELL_DISABLE_AVAHI
- if (implMDNSService::avahiClient) {
-    avahi_client_free(implMDNSService::avahiClient);
-    implMDNSService::avahiClient = nullptr;
- } else     
-#endif       
- if (implMDNSService::mdnsServer) {
-     mdnsd_stop(implMDNSService::mdnsServer);
-     implMDNSService::mdnsServer = nullptr;
-  }
 }
