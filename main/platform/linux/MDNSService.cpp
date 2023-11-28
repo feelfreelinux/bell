@@ -6,6 +6,7 @@
 #include <cstring>
 #include <vector>
 #include <mutex>
+#include <atomic>
 
 #if __has_include("avahi-client/client.h")
 #include <avahi-client/client.h>
@@ -41,8 +42,9 @@ class implMDNSService : public MDNSService {
 #endif
   static struct mdnsd* mdnsServer;
   static in_addr_t host;
+  static std::atomic<size_t> instances;
 
-  implMDNSService(struct mdns_service* service) : service(service){};
+  implMDNSService(struct mdns_service* service) : service(service){ instances++; };
 #ifndef BELL_DISABLE_AVAHI
   implMDNSService(AvahiEntryGroup* avahiGroup) : avahiGroup(avahiGroup){};
 #endif
@@ -52,6 +54,7 @@ class implMDNSService : public MDNSService {
 
 struct mdnsd* implMDNSService::mdnsServer = NULL;
 in_addr_t implMDNSService::host = INADDR_ANY;
+std::atomic<size_t> implMDNSService::instances = 0;
 static std::mutex registerMutex;
 #ifndef BELL_DISABLE_AVAHI
 AvahiClient* implMDNSService::avahiClient = NULL;
@@ -199,12 +202,15 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
 }
 
 implMDNSService::~implMDNSService() {
+  if (--instances) return;
 #ifndef BELL_DISABLE_AVAHI
  if (implMDNSService::avahiClient) {
     avahi_client_free(implMDNSService::avahiClient);
+    implMDNSService::avahiClient = nullptr;
  } else     
 #endif       
  if (implMDNSService::mdnsServer) {
-    mdnsd_stop(implMDNSService::mdnsServer);
+     mdnsd_stop(implMDNSService::mdnsServer);
+     implMDNSService::mdnsServer = nullptr;
   }
 }

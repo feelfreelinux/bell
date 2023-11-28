@@ -25,7 +25,8 @@ class implMDNSService : public MDNSService {
 
  public:
   static struct mdnsd* mdnsServer;
-  implMDNSService(struct mdns_service* service) : service(service){};
+  static std::atomic<size_t> instances;
+  implMDNSService(struct mdns_service* service) : service(service) { instances++; };
   virtual ~implMDNSService();
 };
 
@@ -34,6 +35,8 @@ class implMDNSService : public MDNSService {
  **/
 
 struct mdnsd* implMDNSService::mdnsServer = NULL;
+std::atomic<size_t> implMDNSService::instances = 0;
+
 static std::mutex registerMutex;
 
 std::unique_ptr<MDNSService> MDNSService::registerService(
@@ -99,7 +102,8 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
 }
 
 implMDNSService::~implMDNSService() {
-  if (implMDNSService::mdnsServer) {
+  if (!--instances && implMDNSService::mdnsServer) {
     mdnsd_stop(implMDNSService::mdnsServer);
+    implMDNSService::mdnsServer = nullptr;
   }
 }
