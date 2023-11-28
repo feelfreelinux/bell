@@ -206,7 +206,9 @@ implMDNSService::~implMDNSService() {
 #ifndef BELL_DISABLE_AVAHI
  if (implMDNSService::avahiClient) {
     avahi_client_free(implMDNSService::avahiClient);
+    avahi_simple_poll_free(implMDNSService::avahiPoll);
     implMDNSService::avahiClient = nullptr;
+    implMDNSService::avahiPoll = nullptr;
  } else     
 #endif       
  if (implMDNSService::mdnsServer) {
