@@ -72,7 +72,11 @@ class Task {
                           (LPTHREAD_START_ROUTINE)taskEntryFunc, this, 0, NULL);
     return thread != NULL;
 #else
-    return (pthread_create(&thread, NULL, taskEntryFunc, this) == 0);
+    if (!pthread_create(&thread, NULL, taskEntryFunc, this)) {
+        pthread_detach(thread);
+        return true;
+    }
+    return false;
 #endif
   }
 
@@ -108,13 +112,7 @@ class Task {
 #endif
 
   static void* taskEntryFunc(void* This) {
-    Task* self = (Task*)This;
-    self->runTask();
-#if _WIN32
-    WaitForSingleObject(self->thread, INFINITE);
-#else
-    pthread_join(self->thread, NULL);
-#endif
+    ((Task*)This)->runTask();
     return NULL;
   }
 };
