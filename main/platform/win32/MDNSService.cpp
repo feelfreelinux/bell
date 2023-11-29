@@ -103,5 +103,5 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
       mdnsd_register_svc(implMDNSService::mdnsServer, serviceName.c_str(),
                          type.c_str(), servicePort, NULL, txt.data());
 
-  return std::make_unique<implMDNSService>(service);
+  return service ? std::make_unique<implMDNSService>(service) : nullptr;
 }
