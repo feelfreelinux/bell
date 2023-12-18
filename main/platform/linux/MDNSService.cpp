@@ -6,6 +6,7 @@
 #include <cstring>
 #include <vector>
 #include <mutex>
+#include <atomic>
 
 #if __has_include("avahi-client/client.h")
 #include <avahi-client/client.h>
@@ -41,8 +42,9 @@ class implMDNSService : public MDNSService {
 #endif
   static struct mdnsd* mdnsServer;
   static in_addr_t host;
+  static std::atomic<size_t> instances;
 
-  implMDNSService(struct mdns_service* service) : service(service){};
+  implMDNSService(struct mdns_service* service) : service(service){ instances++; };
 #ifndef BELL_DISABLE_AVAHI
   implMDNSService(AvahiEntryGroup* avahiGroup) : avahiGroup(avahiGroup){};
 #endif
@@ -51,6 +53,7 @@ class implMDNSService : public MDNSService {
 
 struct mdnsd* implMDNSService::mdnsServer = NULL;
 in_addr_t implMDNSService::host = INADDR_ANY;
+std::atomic<size_t> implMDNSService::instances = 0;
 static std::mutex registerMutex;
 #ifndef BELL_DISABLE_AVAHI
 AvahiClient* implMDNSService::avahiClient = NULL;
@@ -66,11 +69,21 @@ void implMDNSService::unregisterService() {
 #ifndef BELL_DISABLE_AVAHI
   if (avahiGroup) {
     avahi_entry_group_free(avahiGroup);
+    if (!--instances && implMDNSService::avahiClient) {
+      avahi_client_free(implMDNSService::avahiClient);
+      avahi_simple_poll_free(implMDNSService::avahiPoll);
+      implMDNSService::avahiClient = nullptr;
+      implMDNSService::avahiPoll = nullptr;
+    }
   } else
 #endif
   {
     mdns_service_remove(implMDNSService::mdnsServer, service);
-  }
+    if (!--instances && implMDNSService::mdnsServer) {
+     mdnsd_stop(implMDNSService::mdnsServer);
+     implMDNSService::mdnsServer = nullptr;
+    }
+  }  
 }
 
 std::unique_ptr<MDNSService> MDNSService::registerService(
@@ -180,19 +193,14 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
     std::string type(serviceType + "." + serviceProto + ".local");
 
     BELL_LOG(info, "MDNS", "using built-in mDNS for %s", serviceName.c_str());
-    struct mdns_service* mdnsService =
+    auto service =
         mdnsd_register_svc(implMDNSService::mdnsServer, serviceName.c_str(),
-                           type.c_str(), servicePort, NULL, txt.data());
-    if (mdnsService) {
-      auto service =
-          mdnsd_register_svc(implMDNSService::mdnsServer, serviceName.c_str(),
                              type.c_str(), servicePort, NULL, txt.data());
 
-      return std::make_unique<implMDNSService>(service);
-    }
+    if (service) return std::make_unique<implMDNSService>(service);
   }
 
   BELL_LOG(error, "MDNS", "cannot start any mDNS listener for %s",
            serviceName.c_str());
-  return NULL;
+  return nullptr;
 }

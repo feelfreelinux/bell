@@ -22482,9 +22482,13 @@ mg_init_library(unsigned features)
 			file_mutex_init =
 			    pthread_mutex_init(&global_log_file_lock, &pthread_mutex_attr);
 			if (file_mutex_init == 0) {
+#ifdef WINSOCK_START
 				/* Start WinSock */
 				WSADATA data;
 				failed = wsa = WSAStartup(MAKEWORD(2, 2), &data);
+#else
+				failed = wsa = 0;
+#endif
 			}
 #else
 			mutexattr_init = pthread_mutexattr_init(&pthread_mutex_attr);
@@ -22498,7 +22502,9 @@ mg_init_library(unsigned features)
 		if (failed) {
 #if defined(_WIN32)
 			if (wsa == 0) {
+#ifdef WINSOCK_START
 				(void)WSACleanup();
+#endif
 			}
 			if (file_mutex_init == 0) {
 				(void)pthread_mutex_destroy(&global_log_file_lock);
@@ -22598,7 +22604,9 @@ mg_exit_library(void)
 #endif
 
 #if defined(_WIN32)
+#ifdef WINSOCK_START
 		(void)WSACleanup();
+#endif
 		(void)pthread_mutex_destroy(&global_log_file_lock);
 #else
 		(void)pthread_mutexattr_destroy(&pthread_mutex_attr);
