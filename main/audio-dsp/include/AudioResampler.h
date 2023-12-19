@@ -11,7 +11,7 @@
 struct SpeexResamplerState_;
 
 namespace bell {
-class AudioResampler : public bell::AudioTransform {
+class AudioResampler final : public bell::AudioTransform {
  public:
   AudioResampler();
   ~AudioResampler();
@@ -22,6 +22,8 @@ class AudioResampler : public bell::AudioTransform {
       std::unique_ptr<StreamInfo> data) override;
 
   void reconfigure() override { std::scoped_lock lock(this->accessMutex); }
+
+  void sampleRateChanged(uint32_t sampleRate) override{};
 
  private:
   SpeexResamplerState_* resampler = nullptr;

@@ -18,8 +18,13 @@ enum class BitWidth : uint32_t {
   BW_32 = 32,
 };
 
+static const int dspMaxFrames = 1024 * 2;
+static const int dspMaxChannels = 2;
+
+using DSPDataSlots = float[dspMaxChannels][dspMaxFrames];
+
 typedef struct {
-  float** data;
+  std::shared_ptr<DSPDataSlots> data;
   BitWidth bitwidth;
   int numChannels;
   SampleRate sampleRate;

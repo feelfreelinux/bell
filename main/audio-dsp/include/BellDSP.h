@@ -17,7 +17,7 @@ class CentralAudioBuffer;
 
 class BellDSP {
  public:
-  BellDSP(std::shared_ptr<CentralAudioBuffer> centralAudioBuffer);
+  BellDSP();
   ~BellDSP();
 
   class AudioEffect {
@@ -43,19 +43,42 @@ class BellDSP {
   };
 
   void applyPipeline(std::shared_ptr<AudioPipeline> pipeline);
+
+  /**
+   * @brief Executes an instant effect on the pipeline data, can be called from other thread
+   * 
+   * @param instantEffect effect to-be-executed
+   */
   void queryInstantEffect(std::unique_ptr<AudioEffect> instantEffect);
 
+  /**
+   * @brief Returns the currently active pipeline object
+   * 
+   * @return std::shared_ptr<AudioPipeline> active pipeline
+   */
   std::shared_ptr<AudioPipeline> getActivePipeline();
 
-  size_t process(uint8_t* data, size_t bytes, int channels, uint32_t sampleRate,
-                 BitWidth bitWidth);
+  /**
+   * @brief Executes the provided DSP pipeline, on provided PCM data
+   * 
+   * @param inputBuffer Pointer to a buffer storing PCM frames to be processed
+   * @param inputBufferLen Input buffer length, in bytes
+   * @param outputBuffer Pointer to a buffer where processed PCM data will be stored
+   * @param outputBufferLen Length of the output buffer. Needs to fit the expected processed PCM output.
+   * @param channels Number of channels in the input
+   * @param sampleRate Input sample rate
+   * @param bitWidth Input bitwidth
+   * @return StreamInfo object containing resulting processed data information
+   */
+  std::unique_ptr<StreamInfo> process(const uint8_t* inputBuffer, size_t inputBufferLen,
+                 uint8_t* outputBuffer, size_t outputBufferLen, int channels,
+                 SampleRate sampleRate, BitWidth bitWidth);
 
  private:
   std::shared_ptr<AudioPipeline> activePipeline;
-  std::shared_ptr<CentralAudioBuffer> buffer;
   std::mutex accessMutex;
-  std::vector<float> dataLeft = std::vector<float>(1024);
-  std::vector<float> dataRight = std::vector<float>(1024);
+
+  std::shared_ptr<DSPDataSlots> dataSlots;
 
   std::unique_ptr<AudioEffect> underflowEffect = nullptr;
   std::unique_ptr<AudioEffect> startEffect = nullptr;

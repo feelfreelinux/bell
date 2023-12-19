@@ -38,20 +38,19 @@ std::unique_ptr<StreamInfo> AudioResampler::process(
   // Assert that bandwidth matches config
   assert(from == info->sampleRate);
 
-  float resampledOutput[info->numSamples];
+  float resampledOutput[info->numSamples * 2];
+  spx_uint32_t outputSize = info->numSamples * 2;
 
   for (int chanIdx = 0; chanIdx < info->numChannels; chanIdx++) {
-    uint32_t inputSize = info->numSamples;
-    uint32_t outputSize = info->numSamples;
+    spx_uint32_t inputSize = info->numSamples;
 
     speex_resampler_process_float(resampler, chanIdx, info->data[chanIdx],
                                   &inputSize, resampledOutput, &outputSize);
 
     std::copy(&resampledOutput[0], &resampledOutput[outputSize],
               &info->data[chanIdx][0]);
-
-    info->numSamples = outputSize;
   }
+  info->numSamples = outputSize;
 
   return info;
 }
