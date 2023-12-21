@@ -41,6 +41,10 @@ void BellDSP::FadeEffect::apply(float* audioData, size_t samples,
 
 BellDSP::BellDSP() {
   dataSlots = std::make_shared<DSPDataSlots>();
+
+  // insert channel 0 and 1
+  dataSlots->insert({0, std::array<float, 2048>()});
+  dataSlots->insert({1, std::array<float, 2048>()});
 };
 
 void BellDSP::applyPipeline(std::shared_ptr<AudioPipeline> pipeline) {
@@ -77,13 +81,13 @@ std::unique_ptr<StreamInfo> BellDSP::process(
     for (auto chan = 0; chan < streamInfo->numChannels; chan++) {
       switch (bitWidth) {
         case BitWidth::BW_16: {
-          dataSlots[chan][frameIdx] =
+          dataSlots->at(chan)[frameIdx] =
               data16[(frameIdx * streamInfo->numChannels) + chan] /
               (float)std::numeric_limits<int16_t>::max();
           break;
         }
         case BitWidth::BW_32: {
-          dataSlots[chan][frameIdx] =
+          dataSlots->at(chan)[frameIdx] =
               data32[(frameIdx * streamInfo->numChannels) + chan] /
               (float)std::numeric_limits<int32_t>::max();
           break;
@@ -104,7 +108,8 @@ std::unique_ptr<StreamInfo> BellDSP::process(
   // Instant effect is acive, apply
   if (this->instantEffect != nullptr) {
     for (int chan = 0; chan < streamInfo->numChannels; chan++) {
-      this->instantEffect->apply(dataSlots[chan], streamInfo->numSamples,
+      this->instantEffect->apply(dataSlots->at(chan).data(),
+                                 streamInfo->numSamples,
                                  samplesSinceInstantQueued);
     }
 
@@ -122,19 +127,19 @@ std::unique_ptr<StreamInfo> BellDSP::process(
   for (size_t frameIdx = 0; frameIdx < streamInfo->numSamples; frameIdx++) {
     for (auto chan = 0; chan < streamInfo->numChannels; chan++) {
       // Clip data
-      if (dataSlots[chan][frameIdx] > 1.0f) {
-        dataSlots[chan][frameIdx] = 1.0f;
+      if (dataSlots->at(chan)[frameIdx] > 1.0f) {
+        dataSlots->at(chan)[frameIdx] = 1.0f;
       }
 
       switch (bitWidth) {
         case BitWidth::BW_16:
           outputData16[(frameIdx * streamInfo->numChannels) + chan] =
-              dataSlots[chan][frameIdx] *
+              dataSlots->at(chan)[frameIdx] *
               (float)std::numeric_limits<int16_t>::max();
           break;
         case BitWidth::BW_32:
           outputData32[(frameIdx * streamInfo->numChannels) + chan] =
-              dataSlots[chan][frameIdx] *
+              dataSlots->at(chan)[frameIdx] *
               (float)std::numeric_limits<int32_t>::max();
           break;
         default:

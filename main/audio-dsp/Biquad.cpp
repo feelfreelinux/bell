@@ -417,7 +417,7 @@ std::unique_ptr<StreamInfo> Biquad::process(
     std::unique_ptr<StreamInfo> stream) {
   std::scoped_lock lock(accessMutex);
 
-  auto input = stream->data[this->channel];
+  auto input = stream->data->at(this->channel);
   auto numSamples = stream->numSamples;
 
 #ifdef ESP_PLATFORM

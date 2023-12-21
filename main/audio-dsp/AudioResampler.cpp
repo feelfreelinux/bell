@@ -44,11 +44,12 @@ std::unique_ptr<StreamInfo> AudioResampler::process(
   for (int chanIdx = 0; chanIdx < info->numChannels; chanIdx++) {
     spx_uint32_t inputSize = info->numSamples;
 
-    speex_resampler_process_float(resampler, chanIdx, info->data[chanIdx],
-                                  &inputSize, resampledOutput, &outputSize);
+    speex_resampler_process_float(resampler, chanIdx,
+                                  info->data->at(chanIdx).data(), &inputSize,
+                                  resampledOutput, &outputSize);
 
     std::copy(&resampledOutput[0], &resampledOutput[outputSize],
-              &info->data[chanIdx][0]);
+              &info->data->at(chanIdx)[0]);
   }
   info->numSamples = outputSize;
 

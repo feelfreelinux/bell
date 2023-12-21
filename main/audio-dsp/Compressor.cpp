@@ -26,7 +26,7 @@ void Compressor::sumChannels(std::unique_ptr<StreamInfo>& data) {
   for (int i = 0; i < data->numSamples; i++) {
     float sum = 0.0f;
     for (auto& channel : channels) {
-      sum += data->data[channel][i];
+      sum += data->data->at(channel)[i];
     }
     tmp[i] = sum;
   }
@@ -63,7 +63,7 @@ void Compressor::calGain() {
 void Compressor::applyGain(std::unique_ptr<StreamInfo>& data) {
   for (int i = 0; i < data->numSamples; i++) {
     for (auto& channel : channels) {
-      data->data[channel][i] *= tmp[i];
+      data->data->at(channel)[i] *= tmp[i];
     }
   }
 }

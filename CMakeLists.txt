@@ -229,8 +229,8 @@ if(NOT BELL_DISABLE_CODECS)
         add_subdirectory("external/opus-resample")
         unset(MESSAGE_QUIET)
         target_compile_options(opus PRIVATE "-O3" -Wno-cast-align -Wno-unused-parameter -Wno-parentheses-equality)
-        # list(APPEND EXTRA_LIBS Opus::opus opus-resample)
-        # list(APPEND SOURCES "${AUDIO_CODEC_DIR}/OPUSDecoder.cpp")
+        list(APPEND EXTRA_LIBS Opus::opus opus-resample)
+        list(APPEND SOURCES "${AUDIO_CODEC_DIR}/OPUSDecoder.cpp")
         list(APPEND CODEC_FLAGS -DBELL_CODEC_OPUS)
     endif()
     
@@ -345,7 +345,6 @@ endif()
 
 # PUBLIC to propagate esp-idf includes to bell dependents
 target_link_libraries(bell PUBLIC ${EXTRA_LIBS})
-target_link_libraries(bell PRIVATE Opus::opus opus-resample)
 target_include_directories(bell PUBLIC ${EXTRA_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(bell SYSTEM PUBLIC ${EXTERNAL_INCLUDES})
 target_compile_definitions(bell PUBLIC PB_ENABLE_MALLOC FMT_HEADER_ONLY)

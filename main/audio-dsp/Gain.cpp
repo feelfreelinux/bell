@@ -21,7 +21,7 @@ std::unique_ptr<StreamInfo> Gain::process(std::unique_ptr<StreamInfo> data) {
   for (int i = 0; i < data->numSamples; i++) {
     // Apply gain to all channels
     for (auto& channel : channels) {
-      data->data[channel][i] *= gainFactor;
+      data->data->at(channel)[i] *= gainFactor;
     }
   }
 

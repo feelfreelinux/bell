@@ -24,8 +24,8 @@ std::unique_ptr<StreamInfo> AudioMixer::process(
       }
       // Copy channel
       for (int i = 0; i < info->numSamples; i++) {
-        info->data[singleConf.destination][i] =
-            info->data[singleConf.source[0]][i];
+        info->data->at(singleConf.destination)[i] =
+            info->data->at(singleConf.source[0])[i];
       }
     } else {
       // Mix channels
@@ -33,10 +33,10 @@ std::unique_ptr<StreamInfo> AudioMixer::process(
         // sample = 0.0f;
 
         for (auto& source : singleConf.source) {
-          sample += info->data[source][i];
+          sample += info->data->at(source)[i];
         }
 
-        info->data[singleConf.destination][i] =
+        info->data->at(singleConf.destination)[i] =
             sample / (float)singleConf.source.size();
       }
     }

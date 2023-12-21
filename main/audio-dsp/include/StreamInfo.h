@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <array>
+#include <unordered_map>
 
 namespace bell {
 enum class Channels { LEFT, RIGHT, LEFT_RIGHT };
@@ -21,7 +23,7 @@ enum class BitWidth : uint32_t {
 static const int dspMaxFrames = 1024 * 2;
 static const int dspMaxChannels = 2;
 
-using DSPDataSlots = float[dspMaxChannels][dspMaxFrames];
+using DSPDataSlots = std::unordered_map<int, std::array<float, 2048>>;
 
 typedef struct {
   std::shared_ptr<DSPDataSlots> data;
