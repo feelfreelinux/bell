@@ -23,6 +23,8 @@ class Gain : public bell::AudioTransform {
 
   void configure(std::vector<int> channels, float gainDB);
 
+  void sampleRateChanged(uint32_t sampleRate) override {}
+
   std::unique_ptr<StreamInfo> process(
       std::unique_ptr<StreamInfo> data) override;
 
@@ -30,6 +32,7 @@ class Gain : public bell::AudioTransform {
     std::scoped_lock lock(this->accessMutex);
     float gain = config->getFloat("gain");
     this->channels = config->getChannels();
+    std::cout << "the gain " << gain << std::endl;
 
     if (gainDb == gain) {
       return;

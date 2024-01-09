@@ -18,6 +18,7 @@ class implMDNSBrowser : public MDNSBrowser {
  private:
   DNSServiceRef service;
   std::vector<DNSServiceRef> addrResolveRefs;
+  std::vector<DiscoveredRecord> lastPublishedRecords;
 
   int socketFd = -1;
   std::atomic<bool> runDiscovery = false;
@@ -38,8 +39,9 @@ class implMDNSBrowser : public MDNSBrowser {
       }
     }
 
-    if (fullyDiscovered.size() > 0 && recordsCallback) {
+    if (recordsCallback && (lastPublishedRecords != fullyDiscovered)) {
       recordsCallback(fullyDiscovered);
+      lastPublishedRecords = fullyDiscovered;
     }
   }
 
@@ -81,6 +83,7 @@ class implMDNSBrowser : public MDNSBrowser {
                                              errorCode, hostname, address, ttl);
     }
 
+    DNSServiceRefDeallocate(ref);
     // Not passed anywhere further
     delete ctx;
   }
@@ -120,9 +123,8 @@ class implMDNSBrowser : public MDNSBrowser {
       ctx->parentPtr->handleServiceResolveReply(ctx, ref, flags, interfaceIndex,
                                                 errorCode, fullName, hostTarget,
                                                 opaqueport, txtLen, txtRecord);
-    } else {
-      delete ctx;
     }
+    DNSServiceRefDeallocate(ref);
   }
 
   /// Handle DNS-SD responses
@@ -155,7 +157,6 @@ class implMDNSBrowser : public MDNSBrowser {
         addrResolvCtx->type = record.type;
         addrResolvCtx->name = record.name;
         addrResolvCtx->parentPtr = this;
-
         DNSServiceErrorType err =
             DNSServiceResolve(&refCopy, kDNSServiceFlagsShareConnection,
                               interfaceIndex, serviceName, regType, replyDomain,
@@ -179,7 +180,10 @@ class implMDNSBrowser : public MDNSBrowser {
       publishDiscovered();
     }
 
-    if (!(flags & kDNSServiceFlagsMoreComing) && recordsCallback) {}
+    if (!(flags & kDNSServiceFlagsMoreComing) &&
+        (flags & kDNSServiceFlagsAdd)) {
+      publishDiscovered();
+    }
   }
 
   /// Thin shim passing dns-sd C-style callback to a member function

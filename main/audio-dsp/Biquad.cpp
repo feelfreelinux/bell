@@ -10,7 +10,7 @@ Biquad::Biquad() {
 
 void Biquad::sampleRateChanged(uint32_t sampleRate) {
   this->sampleRate = sampleRate;
-  //this->configure(this->type, this->currentConfig);
+  this->configure(this->type, this->currentConfig);
 }
 
 void Biquad::configure(Type type, std::map<std::string, float>& newConf) {
@@ -417,11 +417,11 @@ std::unique_ptr<StreamInfo> Biquad::process(
     std::unique_ptr<StreamInfo> stream) {
   std::scoped_lock lock(accessMutex);
 
-  auto input = stream->data->at(this->channel);
+  auto& input = stream->data->at(this->channel);
   auto numSamples = stream->numSamples;
 
 #ifdef ESP_PLATFORM
-  dsps_biquad_f32_ae32(input, input, numSamples, coeffs, w);
+  dsps_biquad_f32_ae32(input.data(), input.data(), numSamples, coeffs, w);
 #else
   // Apply the set coefficients
   for (int i = 0; i < numSamples; i++) {

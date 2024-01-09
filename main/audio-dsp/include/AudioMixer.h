@@ -37,6 +37,8 @@ class AudioMixer : public bell::AudioTransform {
 
   void reconfigure() override {}
 
+  void sampleRateChanged(uint32_t sampleRate) override {}
+
   void fromJSON(cJSON* json) {
     cJSON* mappedChannels = cJSON_GetObjectItem(json, "mapped_channels");
 
