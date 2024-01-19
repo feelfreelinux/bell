@@ -73,8 +73,8 @@ class Task {
     return thread != NULL;
 #else
     if (!pthread_create(&thread, NULL, taskEntryFunc, this)) {
-        pthread_detach(thread);
-        return true;
+      pthread_detach(thread);
+      return true;
     }
     return false;
 #endif

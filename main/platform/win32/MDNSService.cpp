@@ -24,7 +24,9 @@ class implMDNSService : public MDNSService {
  public:
   static struct mdnsd* mdnsServer;
   static std::atomic<size_t> instances;
-  implMDNSService(struct mdns_service* service) : service(service) { instances++; };
+  implMDNSService(struct mdns_service* service) : service(service) {
+    instances++;
+  };
 };
 
 /**
@@ -41,7 +43,7 @@ void implMDNSService::unregisterService() {
   if (!--instances && implMDNSService::mdnsServer) {
     mdnsd_stop(implMDNSService::mdnsServer);
     implMDNSService::mdnsServer = nullptr;
-  }   
+  }
 }
 
 std::unique_ptr<MDNSService> MDNSService::registerService(
