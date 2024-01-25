@@ -103,7 +103,7 @@ class TCPSocket : public bell::Socket {
     return recv(sockFd, (char*)buf, len, 0);
   }
 
-  size_t write(uint8_t* buf, size_t len) {
+  size_t write(const uint8_t* buf, size_t len) {
     return send(sockFd, (char*)buf, len, 0);
   }
 

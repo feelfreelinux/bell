@@ -141,6 +141,9 @@ class implMDNSBrowser : public MDNSBrowser {
         .port = 0,
     };
 
+    BELL_LOG(info, "MDNSBrowser", "Got record, [%s] isAdd=%d", serviceName,
+             flags & kDNSServiceFlagsAdd);
+
     auto existingRecord =
         std::find(discoveredRecords.begin(), discoveredRecords.end(), record);
 

@@ -35,7 +35,13 @@ class AudioMixer : public bell::AudioTransform {
   std::unique_ptr<StreamInfo> process(
       std::unique_ptr<StreamInfo> data) override;
 
-  void reconfigure() override {}
+  void reconfigure() override {
+    int src = config->getInt("source");
+    from = 2;
+    to = 2;
+    this->mixerConfig.push_back(MixerConfig{.source = {src}, .destination = 0});
+    this->mixerConfig.push_back(MixerConfig{.source = {src}, .destination = 1});
+  }
 
   void sampleRateChanged(uint32_t sampleRate) override {}
 

@@ -83,7 +83,7 @@ size_t bell::TLSSocket::read(uint8_t* buf, size_t len) {
   return mbedtls_ssl_read(&ssl, buf, len);
 }
 
-size_t bell::TLSSocket::write(uint8_t* buf, size_t len) {
+size_t bell::TLSSocket::write(const uint8_t* buf, size_t len) {
   return mbedtls_ssl_write(&ssl, buf, len);
 }
 

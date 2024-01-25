@@ -36,7 +36,7 @@ class TLSSocket : public bell::Socket {
   void wrapFd(int fd){};  // @TODO: implement
 
   size_t read(uint8_t* buf, size_t len);
-  size_t write(uint8_t* buf, size_t len);
+  size_t write(const uint8_t* buf, size_t len);
   size_t poll();
   bool isOpen();
 
