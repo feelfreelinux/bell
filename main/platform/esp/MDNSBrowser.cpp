@@ -1,0 +1,93 @@
+#include "MDNSBrowser.h"
+#include <stdexcept>
+#include "lwip/ip_addr.h"
+
+#include "BellLogger.h"
+#include "esp_netif_ip_addr.h"
+#include "mdns.h"
+
+using namespace bell;
+
+class implMDNSBrowser : public MDNSBrowser {
+ private:
+  std::string serviceName, proto;
+
+ public:
+  void publishDiscovered() {
+    auto fullyDiscovered = std::vector<DiscoveredRecord>();
+
+    for (auto service : discoveredRecords) {
+      if (service.port != 0) {
+        fullyDiscovered.push_back(service);
+      }
+    }
+
+    if (fullyDiscovered.size() > 0 && recordsCallback) {
+      recordsCallback(fullyDiscovered);
+    }
+  }
+
+  implMDNSBrowser(std::string type, RecordsUpdatedCallback callback) {
+    recordsCallback = callback;
+    auto delimiterPos = type.find(".");
+    serviceName = type.substr(0, delimiterPos);
+    proto = type.substr(delimiterPos + 1);
+  }
+  void stopDiscovery() {}
+
+  void processResults(mdns_result_t* results) {
+    mdns_result_t* r = results;
+    mdns_ip_addr_t* a = NULL;
+
+    discoveredRecords.clear();
+
+    while (r) {
+      DiscoveredRecord record;
+
+      if (r->instance_name) {
+        record.name = r->instance_name;
+      }
+      if (r->hostname) {
+        record.hostname = r->hostname;
+        record.port = r->port;
+      }
+
+      a = r->addr;
+      while (a) {
+        if (a->addr.type == IPADDR_TYPE_V4) {
+          char strIp[16];
+          esp_ip4addr_ntoa(&a->addr.u_addr.ip4, strIp, IP4ADDR_STRLEN_MAX);
+          record.ipv4.push_back(std::string(strIp));
+        }
+        a = a->next;
+      }
+
+      discoveredRecords.push_back(record);
+      r = r->next;
+    }
+
+    publishDiscovered();
+  }
+
+  void processEvents() {
+    mdns_result_t* results = NULL;
+    esp_err_t err = mdns_query_ptr(this->serviceName.c_str(),
+                                   this->proto.c_str(), 3000, 32, &results);
+    if (err) {
+      throw std::runtime_error("Could not query mdns services");
+    }
+
+    processResults(results);
+
+    mdns_query_results_free(results);
+  }
+};
+
+/**
+ * MacOS implementation of MDNSBrowser.
+ **/
+std::unique_ptr<MDNSBrowser> MDNSBrowser::startDiscovery(
+    std::string type, RecordsUpdatedCallback callback) {
+
+  return std::make_unique<implMDNSBrowser>(type, callback);
+}

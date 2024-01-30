@@ -21,7 +21,8 @@ class implMDNSBrowser : public MDNSBrowser {
   std::vector<DiscoveredRecord> lastPublishedRecords;
 
   int socketFd = -1;
-  std::atomic<bool> runDiscovery = false;
+  fd_set readFds;
+  int nFds;
 
  public:
   struct AddrResolvReference {
@@ -98,7 +99,7 @@ class implMDNSBrowser : public MDNSBrowser {
     auto refCopy = service;
     if (ctx->parentPtr != NULL) {
       auto error = DNSServiceGetAddrInfo(
-          &refCopy, kDNSServiceFlagsShareConnection, interfaceIndex,
+          &refCopy, kDNSServiceFlagsShareConnection, 0,
           kDNSServiceProtocol_IPv4, hostTarget, getAddrInfoReply, ctx);
 
       if (error != kDNSServiceErr_NoError) {
@@ -115,11 +116,9 @@ class implMDNSBrowser : public MDNSBrowser {
       DNSServiceErrorType errorCode, const char* fullName,
       const char* hostTarget, uint16_t opaqueport, uint16_t txtLen,
       const unsigned char* txtRecord, void* context) {
-
     auto ctx = reinterpret_cast<AddrResolvReference*>(context);
     if (ctx->parentPtr != NULL) {
       ctx->port = ntohs(opaqueport);
-
       ctx->parentPtr->handleServiceResolveReply(ctx, ref, flags, interfaceIndex,
                                                 errorCode, fullName, hostTarget,
                                                 opaqueport, txtLen, txtRecord);
@@ -141,9 +140,6 @@ class implMDNSBrowser : public MDNSBrowser {
         .port = 0,
     };
 
-    BELL_LOG(info, "MDNSBrowser", "Got record, [%s] isAdd=%d", serviceName,
-             flags & kDNSServiceFlagsAdd);
-
     auto existingRecord =
         std::find(discoveredRecords.begin(), discoveredRecords.end(), record);
 
@@ -160,10 +156,9 @@ class implMDNSBrowser : public MDNSBrowser {
         addrResolvCtx->type = record.type;
         addrResolvCtx->name = record.name;
         addrResolvCtx->parentPtr = this;
-        DNSServiceErrorType err =
-            DNSServiceResolve(&refCopy, kDNSServiceFlagsShareConnection,
-                              interfaceIndex, serviceName, regType, replyDomain,
-                              serviceResolveReply, addrResolvCtx);
+        DNSServiceErrorType err = DNSServiceResolve(
+            &refCopy, kDNSServiceFlagsShareConnection, 0, serviceName, regType,
+            replyDomain, serviceResolveReply, addrResolvCtx);
 
         if (err != kDNSServiceErr_NoError) {
           BELL_LOG(error, "MDNSBrowser",
@@ -216,12 +211,12 @@ class implMDNSBrowser : public MDNSBrowser {
     if (socketFd == -1) {
       throw std::runtime_error("MDNS browser could not bind to a socket");
     }
+
+    nFds = socketFd + 1;
   }
 
   /// Closes socket and deallocates dns-sd reference
   void stopDiscovery() {
-    runDiscovery = false;
-
     if (socketFd > -1) {
       ::close(socketFd);
     }
@@ -231,33 +226,26 @@ class implMDNSBrowser : public MDNSBrowser {
   }
 
   void processEvents() {
-    runDiscovery = true;
-
-    fd_set readFds;
-    int nFds = socketFd + 1;
-
     // Select and handle data on discovery socket
-    while (runDiscovery) {
-      FD_ZERO(&readFds);
-      FD_SET(socketFd, &readFds);
+    FD_ZERO(&readFds);
+    FD_SET(socketFd, &readFds);
 
-      struct timeval tv;
-      tv.tv_sec = 1;
-      tv.tv_usec = 0;
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
 
-      int result = ::select(nFds, &readFds, (fd_set*)NULL, (fd_set*)NULL, &tv);
-      if (result > 0) {
-        DNSServiceErrorType err = kDNSServiceErr_NoError;
-        if (FD_ISSET(socketFd, &readFds))
-          err = DNSServiceProcessResult(service);
-        if (err)
-          runDiscovery = false;
-      } else if (result < 0) {
-        BELL_LOG(error, "MDNSBrowser", "select(  ) returned %d errno %d %s\n",
-                 result, errno, strerror(errno));
-        if (errno != EINTR)
-          runDiscovery = false;
-      }
+    int result = ::select(nFds, &readFds, (fd_set*)NULL, (fd_set*)NULL, &tv);
+    if (result > 0) {
+      DNSServiceErrorType err = kDNSServiceErr_NoError;
+      if (FD_ISSET(socketFd, &readFds))
+        err = DNSServiceProcessResult(service);
+      if (err)
+        throw std::runtime_error("cannot run dns discovery");
+    } else if (result < 0) {
+      BELL_LOG(error, "MDNSBrowser", "select(  ) returned %d errno %d %s\n",
+               result, errno, strerror(errno));
+      if (errno != EINTR)
+        throw std::runtime_error("cannot run dns discovery");
     }
   }
 };
