@@ -34,6 +34,12 @@ BinaryStream& BinaryStream::operator>>(char& value) {
   return *this;
 }
 
+BinaryStream& BinaryStream::operator>>(uint8_t& value) {
+  ensureReadable();
+  istr->read((char*)&value, 1);
+  return *this;
+}
+
 BinaryStream& BinaryStream::operator>>(std::byte& value) {
   ensureReadable();
   istr->read((char*)&value, 1);
@@ -103,6 +109,13 @@ BinaryStream& BinaryStream::operator<<(char value) {
 }
 
 BinaryStream& BinaryStream::operator<<(std::byte value) {
+  ensureWritable();
+  ostr->write((const char*)&value, sizeof(value));
+
+  return *this;
+}
+
+BinaryStream& BinaryStream::operator<<(uint8_t value) {
   ensureWritable();
   ostr->write((const char*)&value, sizeof(value));
 
