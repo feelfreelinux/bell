@@ -1,14 +1,12 @@
 #pragma once
 
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
-#include <array>
 #include <unordered_map>
+#include <vector>
 
 namespace bell {
-enum class Channels { LEFT, RIGHT, LEFT_RIGHT };
-
 enum class SampleRate : uint32_t {
   SR_44100 = 44100,
   SR_48000 = 48000,
@@ -18,6 +16,63 @@ enum class BitWidth : uint32_t {
   BW_16 = 16,
   BW_24 = 24,
   BW_32 = 32,
+};
+
+/**
+ * @brief Simple helper over essential pcm audio stream params (bitwidth, sample rate, channels)
+ */
+struct AudioParams {
+  BitWidth bitwidth;
+  SampleRate sampleRate;
+  int channels;
+
+  AudioParams() {
+    // Roughly default params
+    bitwidth = BitWidth::BW_16;
+    sampleRate = SampleRate::SR_44100;
+    channels = 2;
+  }
+
+  AudioParams(BitWidth bw, SampleRate sr, int channels) {
+    this->bitwidth = bw;
+    this->sampleRate = sr;
+    this->channels = channels;
+  }
+
+  /**
+   * @brief Get the amount of bytes needed to store audio of given length
+   * 
+   * @param milliseconds milliseconds of audio stream
+   * @return bytes necessary to store the audio fragment 
+   */
+  inline uint64_t getBytesPerDuration(uint32_t milliseconds) {
+    return getBytesPerFrames(millisecondsToFrames(milliseconds));
+  }
+
+  /**
+   * @brief Converts milliseconds to audio frames at given parameters
+   * 
+   * @param milliseconds milliseconds of audio stream
+   * @return frames in given timespan
+   */
+  inline uint64_t millisecondsToFrames(uint64_t milliseconds) {
+    return static_cast<int>(sampleRate) * milliseconds / 1000;
+  }
+
+  /**
+   * @brief Get the amount of bytes needed to store audio of given length
+   * 
+   * @param frames frames of audio stream
+   * @return bytes necessary to store the audio fragment
+   */
+  inline uint64_t getBytesPerFrames(uint64_t frames) {
+    return channels * (static_cast<int>(bitwidth) / 8) * frames;
+  }
+
+  bool operator!=(const AudioParams& other) {
+    return (bitwidth != other.bitwidth) || (sampleRate != other.sampleRate) ||
+           (channels != other.channels);
+  }
 };
 
 static const int dspMaxFrames = 1024 * 2;

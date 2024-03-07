@@ -23,7 +23,7 @@ bool PortAudioSink::setParams(uint32_t sampleRate, uint8_t channelCount,
     printf("PortAudio: Default audio device not found!\n");
     // exit(0);
   }
-  // outputParameters.device = 0;
+  // outputParameters.device = 2;
 
   outputParameters.channelCount = channelCount;
   switch (bitDepth) {
