@@ -1,6 +1,6 @@
 #include <cassert>
-#include <vector>
 #include <mutex>
+#include <vector>
 
 #include "BellLogger.h"
 #include "MDNSService.h"
