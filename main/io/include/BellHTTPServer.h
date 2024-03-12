@@ -45,7 +45,7 @@ class BellHTTPServer : public CivetHandler {
   typedef std::function<std::unique_ptr<HTTPResponse>(
       struct mg_connection* conn)>
       HTTPHandler;
-  typedef std::function<void(struct mg_connection* conn, WSState)>
+  typedef std::function<void(const struct mg_connection* conn, WSState)>
       WSStateHandler;
   typedef std::function<void(struct mg_connection* conn, char*, size_t)>
       WSDataHandler;
