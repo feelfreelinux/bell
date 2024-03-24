@@ -85,8 +85,6 @@ class Biquad : public bell::AudioTransform {
     float frequency = config->getFloat("frequency", false, invalid);
 
     float q = config->getFloat("q", false, invalid);
-    std::cout << type << " " << gain << " " << frequency  << " " << q << std::endl;
-    std::cout << config->getChannels()[0] << std::endl;
 
     if (currentConfig["bandwidth"] == bandwidth &&
         currentConfig["slope"] == slope && currentConfig["gain"] == gain &&

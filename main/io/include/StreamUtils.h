@@ -19,6 +19,7 @@ struct MemoryBuffer : std::streambuf {
 
   // Override overflow to signal that the buffer is full
   int_type overflow(int_type ch) override {
+    (void)ch;
     return traits_type::eof();  // Signal failure to write
   }
 

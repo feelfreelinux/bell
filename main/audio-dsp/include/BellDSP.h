@@ -70,9 +70,11 @@ class BellDSP {
    * @param bitWidth Input bitwidth
    * @return StreamInfo object containing resulting processed data information
    */
-  std::unique_ptr<StreamInfo> process(const uint8_t* inputBuffer, size_t inputBufferLen,
-                 uint8_t* outputBuffer, size_t outputBufferLen, int channels,
-                 SampleRate sampleRate, BitWidth bitWidth);
+  std::unique_ptr<StreamInfo> process(const uint8_t* inputBuffer,
+                                      size_t inputBufferLen,
+                                      uint8_t* outputBuffer,
+                                      size_t outputBufferLen, int channels,
+                                      SampleRate sampleRate, BitWidth bitWidth);
 
  private:
   std::shared_ptr<AudioPipeline> activePipeline;
