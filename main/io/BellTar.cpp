@@ -280,7 +280,7 @@ int reader::number_of_files() {
   return _number_of_files;
 }
 
-void reader::extract_all_files(std::string dest_directory) {
+void reader::extract_all_files(std::string dest_directory, std::function<void(size_t)> progress_callback) {
   std::vector<uint8_t> scratch_buffer(1024);
 
   while (contains_another_file()) {
@@ -330,4 +330,9 @@ void reader::extract_all_files(std::string dest_directory) {
       skip_next_file();
     }
   }
+
+  if (progress_callback) {
+    progress_callback(_inp.tellg());
+  }
+
 }

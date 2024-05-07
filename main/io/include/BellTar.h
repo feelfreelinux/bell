@@ -2,6 +2,7 @@
 
 #include <iostream>  // for istream, ostream
 #include <string>    // for string
+#include <functional>
 
 namespace bell::BellTar {
 typedef long long unsigned file_size_t;
@@ -65,7 +66,13 @@ class reader {
 
   char get_next_file_type();
 
-  void extract_all_files(std::string output_dir);
+  /**
+   * @brief Extracts all files in the tar archive to the output directory.
+   * 
+   * @param output_dir The directory to extract the files to.
+   * @param progress_callback A callback function that will be called with the amount of bytes read from the tar archive so far.
+   */
+  void extract_all_files(std::string output_dir, std::function<void(size_t)> progress_callback = nullptr);
   // Skip next file in |inp|.
   void skip_next_file();
 
