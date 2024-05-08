@@ -280,13 +280,13 @@ int reader::number_of_files() {
   return _number_of_files;
 }
 
-void reader::extract_all_files(std::string dest_directory, std::function<void(size_t)> progress_callback) {
+void reader::extract_all_files(std::string dest_directory,
+                               std::function<void(size_t)> progress_callback) {
   std::vector<uint8_t> scratch_buffer(1024);
 
   while (contains_another_file()) {
     char fileType = get_next_file_type();
     auto fileName = get_next_file_name();
-
     // 0 is the normal file type, skip apple's ._ files
 #if __cplusplus >= 202002L
     if (fileType == '0' && !fileName.starts_with("._")) {
@@ -329,10 +329,9 @@ void reader::extract_all_files(std::string dest_directory, std::function<void(si
     } else {
       skip_next_file();
     }
-  }
 
-  if (progress_callback) {
-    progress_callback(_inp.tellg());
+    if (progress_callback) {
+      progress_callback(_inp.tellg());
+    }
   }
-
 }
