@@ -62,6 +62,11 @@ class implMDNSBrowser : public MDNSBrowser {
         a = a->next;
       }
 
+      // copy txt records int std::unordered_map
+      for (int x = 0; x < r->txt_count; x++) {
+        record.txtRecords.insert({std::string(r->txt[x].key), std::string(&r->txt[x].value[0], &r->txt[x].value[r->txt_value_len[x]])});
+      }
+
       discoveredRecords.push_back(record);
       r = r->next;
     }

@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <atomic>  // for function
 #include <stdexcept>
+#include <string>
 #include <utility>  // for pair
 #include "BellLogger.h"
 #include "dns_sd.h"  // for DNSServiceRef, DNSServiceRefDeallocate, DNS...
@@ -28,6 +29,7 @@ class implMDNSBrowser : public MDNSBrowser {
   struct AddrResolvReference {
     implMDNSBrowser* parentPtr;
     std::string name, type, domain;
+    std::unordered_map<std::string, std::string> txtRecords;
     int port = 0;
   };
 
@@ -63,6 +65,7 @@ class implMDNSBrowser : public MDNSBrowser {
       for (auto& record : discoveredRecords) {
         if (record.name == ctx->name && record.domain == ctx->domain &&
             record.type == ctx->type) {
+          record.txtRecords = ctx->txtRecords;
           record.hostname = hostname;
           record.ipv4.push_back(addrStr);
           record.port = ctx->port;
@@ -98,6 +101,7 @@ class implMDNSBrowser : public MDNSBrowser {
                                  const unsigned char* txtRecord) {
     auto refCopy = service;
     if (ctx->parentPtr != NULL) {
+      ctx->txtRecords = parseMDNSTXTRecord(txtLen, txtRecord);
       auto error = DNSServiceGetAddrInfo(
           &refCopy, kDNSServiceFlagsShareConnection, 0,
           kDNSServiceProtocol_IPv4, hostTarget, getAddrInfoReply, ctx);
