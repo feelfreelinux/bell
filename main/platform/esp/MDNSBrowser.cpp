@@ -11,6 +11,7 @@ using namespace bell;
 class implMDNSBrowser : public MDNSBrowser {
  private:
   std::string serviceName, proto;
+  std::vector<DiscoveredRecord> lastDiscoveredDevices;
 
  public:
   void publishDiscovered() {
@@ -22,9 +23,13 @@ class implMDNSBrowser : public MDNSBrowser {
       }
     }
 
-    if (fullyDiscovered.size() > 0 && recordsCallback) {
+    if (fullyDiscovered.size() > 0 && recordsCallback &&
+        fullyDiscovered != lastDiscoveredDevices) {
       recordsCallback(fullyDiscovered);
     }
+
+    // Only notify on state changes
+    lastDiscoveredDevices = fullyDiscovered;
   }
 
   implMDNSBrowser(std::string type, RecordsUpdatedCallback callback) {
@@ -64,7 +69,10 @@ class implMDNSBrowser : public MDNSBrowser {
 
       // copy txt records int std::unordered_map
       for (int x = 0; x < r->txt_count; x++) {
-        record.txtRecords.insert({std::string(r->txt[x].key), std::string(&r->txt[x].value[0], &r->txt[x].value[r->txt_value_len[x]])});
+        record.txtRecords.insert(
+            {std::string(r->txt[x].key),
+             std::string(&r->txt[x].value[0],
+                         &r->txt[x].value[r->txt_value_len[x]])});
       }
 
       discoveredRecords.push_back(record);
