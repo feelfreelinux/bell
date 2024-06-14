@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include "BellSocket.h"
@@ -100,11 +101,19 @@ class TCPSocket : public bell::Socket {
   }
 
   size_t read(uint8_t* buf, size_t len) {
-    return recv(sockFd, (char*)buf, len, 0);
+    ssize_t res = recv(sockFd, (char*)buf, len, 0);
+    if (res < 0) {
+      throw std::runtime_error("error in recv");
+    }
+    return res;
   }
 
   size_t write(const uint8_t* buf, size_t len) {
-    return send(sockFd, (char*)buf, len, 0);
+    ssize_t res = send(sockFd, (char*)buf, len, 0);
+    if (res < 0) {
+      throw std::runtime_error("error in read");
+    }
+    return res;
   }
 
   size_t poll() {
