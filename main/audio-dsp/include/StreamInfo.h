@@ -69,7 +69,7 @@ struct AudioParams {
     return channels * (static_cast<int>(bitwidth) / 8) * frames;
   }
 
-  bool operator!=(const AudioParams& other) {
+  bool operator!=(const AudioParams& other) const {
     return (bitwidth != other.bitwidth) || (sampleRate != other.sampleRate) ||
            (channels != other.channels);
   }
