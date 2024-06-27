@@ -27,8 +27,6 @@
 #endif
 #endif
 #include <BellLogger.h>
-#include <fstream>
-#include <sstream>
 
 namespace bell {
 class TCPSocket : public bell::Socket {
@@ -37,7 +35,7 @@ class TCPSocket : public bell::Socket {
   bool isClosed = true;
 
  public:
-  TCPSocket(){};
+  TCPSocket() {};
   ~TCPSocket() { close(); };
 
   int getFd() { return sockFd; }
@@ -59,7 +57,7 @@ class TCPSocket : public bell::Socket {
     // BELL_LOG(info, "http", "%s %d", host.c_str(), port);
 
     char portStr[6];
-    sprintf(portStr, "%u", port);
+    snprintf(portStr, sizeof(portStr), "%u", port);
     err = getaddrinfo(host.c_str(), portStr, &hints, &addr);
     if (err != 0) {
       throw std::runtime_error("Resolve failed");

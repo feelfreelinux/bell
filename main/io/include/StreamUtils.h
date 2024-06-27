@@ -36,7 +36,7 @@ struct MemoryBuffer : std::streambuf {
   std::size_t bytesWritten;
 };
 struct IMemoryStream : virtual MemoryBuffer, std::istream {
-  IMemoryStream(std::byte const* base, size_t size)
+  IMemoryStream(const std::byte* base, size_t size)
       : MemoryBuffer(base, size),
         std::istream(static_cast<std::streambuf*>(this)) {}
 };

@@ -2,9 +2,7 @@
 
 #include <array>
 #include <memory>
-#include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace bell {
 enum class SampleRate : uint32_t {
@@ -45,7 +43,7 @@ struct AudioParams {
    * @param milliseconds milliseconds of audio stream
    * @return bytes necessary to store the audio fragment 
    */
-  inline uint64_t getBytesPerDuration(uint32_t milliseconds) {
+  inline uint32_t getBytesPerDuration(uint32_t milliseconds) {
     return getBytesPerFrames(millisecondsToFrames(milliseconds));
   }
 
@@ -55,7 +53,7 @@ struct AudioParams {
    * @param milliseconds milliseconds of audio stream
    * @return frames in given timespan
    */
-  inline uint64_t millisecondsToFrames(uint64_t milliseconds) {
+  inline uint32_t millisecondsToFrames(uint32_t milliseconds) {
     return static_cast<int>(sampleRate) * milliseconds / 1000;
   }
 
@@ -65,7 +63,7 @@ struct AudioParams {
    * @param frames frames of audio stream
    * @return bytes necessary to store the audio fragment
    */
-  inline uint64_t getBytesPerFrames(uint64_t frames) {
+  inline uint32_t getBytesPerFrames(uint32_t frames) {
     return channels * (static_cast<int>(bitwidth) / 8) * frames;
   }
 
