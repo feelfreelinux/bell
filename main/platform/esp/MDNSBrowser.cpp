@@ -1,9 +1,9 @@
 #include "MDNSBrowser.h"
+#include <set>
 #include <stdexcept>
-#include "lwip/ip_addr.h"
-
 #include "BellLogger.h"
 #include "esp_netif_ip_addr.h"
+#include "lwip/ip_addr.h"
 #include "mdns.h"
 
 using namespace bell;
@@ -11,21 +11,23 @@ using namespace bell;
 class implMDNSBrowser : public MDNSBrowser {
  private:
   std::string serviceName, proto;
-  std::vector<DiscoveredRecord> lastDiscoveredDevices;
+  std::set<DiscoveredRecord> lastDiscoveredDevices;
 
  public:
   void publishDiscovered() {
-    auto fullyDiscovered = std::vector<DiscoveredRecord>();
+    auto fullyDiscovered = std::set<DiscoveredRecord>();
 
     for (auto service : discoveredRecords) {
       if (service.port != 0) {
-        fullyDiscovered.push_back(service);
+        fullyDiscovered.insert(service);
       }
     }
 
     if (fullyDiscovered.size() > 0 && recordsCallback &&
         fullyDiscovered != lastDiscoveredDevices) {
-      recordsCallback(fullyDiscovered);
+      std::vector<DiscoveredRecord> res(fullyDiscovered.begin(),
+                                        fullyDiscovered.end());
+      recordsCallback(res);
     }
 
     // Only notify on state changes
@@ -52,6 +54,7 @@ class implMDNSBrowser : public MDNSBrowser {
       if (r->instance_name) {
         record.name = r->instance_name;
       }
+
       if (r->hostname) {
         record.hostname = r->hostname;
         record.port = r->port;
@@ -65,6 +68,12 @@ class implMDNSBrowser : public MDNSBrowser {
           record.ipv4.push_back(std::string(strIp));
         }
         a = a->next;
+      }
+
+      for (auto& other : discoveredRecords) {
+        if (record.hostname == other.hostname && record.ipv4.empty()) {
+          record.ipv4 = other.ipv4;
+        }
       }
 
       // copy txt records int std::unordered_map

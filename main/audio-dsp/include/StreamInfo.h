@@ -43,7 +43,7 @@ struct AudioParams {
    * @param milliseconds milliseconds of audio stream
    * @return bytes necessary to store the audio fragment 
    */
-  inline uint32_t getBytesPerDuration(uint32_t milliseconds) {
+  inline int64_t getBytesPerDuration(int64_t milliseconds) {
     return getBytesPerFrames(millisecondsToFrames(milliseconds));
   }
 
@@ -53,8 +53,8 @@ struct AudioParams {
    * @param milliseconds milliseconds of audio stream
    * @return frames in given timespan
    */
-  inline uint32_t millisecondsToFrames(uint32_t milliseconds) {
-    return static_cast<int>(sampleRate) * milliseconds / 1000;
+  inline int64_t millisecondsToFrames(int64_t milliseconds) {
+    return static_cast<uint32_t>(sampleRate) * milliseconds / 1000;
   }
 
   /**
@@ -63,7 +63,7 @@ struct AudioParams {
    * @param frames frames of audio stream
    * @return bytes necessary to store the audio fragment
    */
-  inline uint32_t getBytesPerFrames(uint32_t frames) {
+  inline int64_t getBytesPerFrames(int64_t frames) {
     return channels * (static_cast<int>(bitwidth) / 8) * frames;
   }
 

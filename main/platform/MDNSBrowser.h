@@ -22,7 +22,12 @@ class MDNSBrowser {
     uint16_t port = 0;
 
     bool operator==(const DiscoveredRecord& rhs) const {
-      return name == rhs.name && type == rhs.type && domain == rhs.domain;
+      return name == rhs.name && type == rhs.type && domain == rhs.domain &&
+             port == rhs.port && ipv4 == rhs.ipv4;
+    }
+
+    bool operator<(const DiscoveredRecord& other) const {
+      return name < other.name;
     }
   };
 

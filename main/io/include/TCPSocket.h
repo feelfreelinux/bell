@@ -35,7 +35,7 @@ class TCPSocket : public bell::Socket {
   bool isClosed = true;
 
  public:
-  TCPSocket() {};
+  TCPSocket(){};
   ~TCPSocket() { close(); };
 
   int getFd() { return sockFd; }
@@ -68,8 +68,8 @@ class TCPSocket : public bell::Socket {
     err = connect(sockFd, addr->ai_addr, addr->ai_addrlen);
     if (err < 0) {
       close();
-      BELL_LOG(error, "http", "Could not connect to %s. Error %d", host.c_str(),
-               errno);
+      BELL_LOG(error, "http", "Could not connect to %s, port %d. Error %d",
+               host.c_str(), port, errno);
       throw std::runtime_error("Resolve failed");
     }
 
