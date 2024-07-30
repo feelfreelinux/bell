@@ -1,5 +1,8 @@
 #include "MDNSBrowser.h"
 
+// Currently avahi-only
+#ifndef BELL_DISABLE_AVAHI
+
 #include <arpa/inet.h>
 #include <avahi-common/address.h>
 #include <avahi-common/defs.h>
@@ -192,3 +195,4 @@ std::unique_ptr<MDNSBrowser> MDNSBrowser::startDiscovery(
 
   return std::make_unique<implMDNSBrowser>(type, callback);
 }
+#endif

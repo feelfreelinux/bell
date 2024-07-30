@@ -62,6 +62,7 @@ void bell::TLSSocket::open(const std::string& hostUrl, uint16_t port) {
   }
 
   mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
+  mbedtls_ssl_conf_max_tls_version(&conf, MBEDTLS_SSL_VERSION_TLS1_2);
   mbedtls_ssl_setup(&ssl, &conf);
 
   ret = mbedtls_ssl_set_hostname(&ssl, hostUrl.c_str());
