@@ -65,12 +65,20 @@ class TCPSocket : public bell::Socket {
 
     sockFd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
+    if (sockFd < 0) {
+      BELL_LOG(error, "http",
+               "Could not create socket to %s, port %d. Error %d", host.c_str(),
+               port, errno);
+      throw std::runtime_error("Sock create failed");
+    }
+
+    isClosed = false;
     err = connect(sockFd, addr->ai_addr, addr->ai_addrlen);
     if (err < 0) {
       close();
       BELL_LOG(error, "http", "Could not connect to %s, port %d. Error %d",
                host.c_str(), port, errno);
-      throw std::runtime_error("Resolve failed");
+      throw std::runtime_error("Sock connect failed");
     }
 
     int flag = 1;
