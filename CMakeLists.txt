@@ -140,7 +140,7 @@ if(ESP_PLATFORM)
         list(APPEND EXTRA_LIBS idf::espressif__mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
     endif()
 
-    add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation -Wno-stringop-overflow -Wno-error=format -Wno-format -Wno-stringop-overread -Wno-stringop-overflow)
+    add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation -Wno-stringop-overflow -Wno-error=format -Wno-format -Wno-stringop-overread -Wno-stringop-overflow -fno-if-conversion)
 elseif(ANDROID)
     add_subdirectory(${BELL_EXTERNAL_MBEDTLS_DIR} ${CMAKE_CURRENT_BINARY_DIR}/mbedtls)
     list(APPEND EXTERNAL_INCLUDES ${BELL_EXTERNAL_MBEDTLS_DIR}/include)
