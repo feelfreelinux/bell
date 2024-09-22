@@ -45,7 +45,7 @@ class AudioMixer : public bell::AudioTransform {
       }
     }
 
-    this->from = sources.size();
+    this->from = 2;
     this->to = 2;  // TODO: set it to actual number fo destinations
   }
 
