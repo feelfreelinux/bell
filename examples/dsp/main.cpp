@@ -12,6 +12,7 @@
 #include "AudioResampler.h"
 #include "BellHTTPServer.h"
 #include "BellTask.h"
+#include "BellUtils.h"
 #include "CentralAudioBuffer.h"
 #include "Compressor.h"
 #include "DecoderGlobals.h"
@@ -20,6 +21,9 @@
 #include "NamedPipeAudioSink.h"
 #include "PortAudioSink.h"
 #include "StreamInfo.h"
+#include "SyslogLogger.h"
+#include "TCPSocket.h"
+#include "TLSSocket.h"
 
 #include <BellDSP.h>
 #include <BellLogger.h>
@@ -66,31 +70,57 @@ class AudioPlayer : bell::Task {
 
 int main() {
   bell::setDefaultLogger();
-  bell::createDecoders();
-  audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
-  auto task = AudioPlayer();
+  auto syslogLogger = std::make_unique<bell::SyslogLogger>();
+  syslogLogger->enableTimestampLogging(false, false);
+  syslogLogger->enableSubmoduleLogging(true);
 
-  auto url = "https://s2.radio.co/s2b2b68744/listen";
-  // std::ifstream file("aactest.aac", std::ios::binary);
+  auto socket = std::make_unique<bell::TCPSocket>();
 
-  auto req = bell::HTTPClient::get(url);
-  auto container = AudioContainers::guessAudioContainer(req->stream());
-  auto codec = AudioCodecs::getCodec(container.get());
+  // TLS socket
+  socket->open("gkindustries.pl", 8088);
 
-  uint32_t dataLen;
+  std::string hostname = "rice-tortilla";
+  std::string appName = "syslog-test";
+
+  // Register the syslog logger
+  syslogLogger->setup(std::move(socket), hostname, appName);
+  bell::registerLogger(std::move(syslogLogger));
+
+  int rw = 0;
   while (true) {
-    uint8_t* data = codec->decode(container.get(), dataLen);
-
-    if (!data) {
-      continue;
+    BELL_SLEEP_MS(500);
+    BELL_LOG(info, "Testor", "hello octos %d", rw);
+    rw++;
+    if (rw % 12 == 0) {
+      BELL_LOG(error, "Testor", "rw % 12 == 0!");
     }
-
-    size_t toWrite = dataLen;
-    while (toWrite > 0) {
-      toWrite -= audioBuffer->writePCM(data + dataLen - toWrite, toWrite, 0);
-    }
-
-    // std::cout << dataLen << std::endl;
   }
+  // syslogLogger->setup(std::unique_ptr<bell::Socket> socket, const std::string &hostname, const std::string &appName)
+  // bell::createDecoders();
+  // audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
+  // auto task = AudioPlayer();
+
+  // auto url = "https://s2.radio.co/s2b2b68744/listen";
+  // // std::ifstream file("aactest.aac", std::ios::binary);
+
+  // auto req = bell::HTTPClient::get(url);
+  // auto container = AudioContainers::guessAudioContainer(req->stream());
+  // auto codec = AudioCodecs::getCodec(container.get());
+
+  // uint32_t dataLen;
+  // while (true) {
+  //   uint8_t* data = codec->decode(container.get(), dataLen);
+
+  //   if (!data) {
+  //     continue;
+  //   }
+
+  //   size_t toWrite = dataLen;
+  //   while (toWrite > 0) {
+  //     toWrite -= audioBuffer->writePCM(data + dataLen - toWrite, toWrite, 0);
+  //   }
+
+  //   // std::cout << dataLen << std::endl;
+  // }
   return 0;
 }

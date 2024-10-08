@@ -170,6 +170,7 @@ class implMDNSBrowser : public MDNSBrowser {
         avahi_client_new(avahi_simple_poll_get(avahiPoll), (AvahiClientFlags)0,
                          clientCallback, NULL, &error);
     if (avahiClient == NULL) {
+      BELL_LOG(error, "MDNSBrowser", "Could not create an client, err=%s", avahi_strerror(error));
       throw std::runtime_error("Could not create an client");
     }
 
@@ -177,7 +178,7 @@ class implMDNSBrowser : public MDNSBrowser {
         avahiClient, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, type.c_str(), NULL,
         (AvahiLookupFlags)0, avahiBrowseCallback, this);
     if (avahiSB == NULL) {
-      throw std::runtime_error("Could not create an client");
+      throw std::runtime_error("Could not create an browser");
     }
   }
 

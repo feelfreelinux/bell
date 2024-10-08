@@ -109,6 +109,7 @@ class TCPSocket : public bell::Socket {
   size_t read(uint8_t* buf, size_t len) {
     ssize_t res = recv(sockFd, (char*)buf, len, 0);
     if (res < 0) {
+      isClosed = true;
       throw std::runtime_error("error in recv");
     }
     return res;
@@ -117,6 +118,7 @@ class TCPSocket : public bell::Socket {
   size_t write(const uint8_t* buf, size_t len) {
     ssize_t res = send(sockFd, (char*)buf, len, 0);
     if (res < 0) {
+      isClosed = true;
       throw std::runtime_error("error in read");
     }
     return res;
