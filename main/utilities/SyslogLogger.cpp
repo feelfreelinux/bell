@@ -1,18 +1,43 @@
 #include "SyslogLogger.h"
+#include <chrono>
 #include <memory>
+#include <string>
 #include "BellSocket.h"
 #include "SocketStream.h"
+#include "TCPSocket.h"
+#include "UDPSocket.h"
 
 using namespace bell;
 
-void SyslogLogger::setup(std::unique_ptr<bell::Socket> socket,
-                         const std::string& hostname,
-                         const std::string& appName, Protocol protocol) {
-  this->hostname = hostname;
-  this->appName = appName;
-  this->protocol = protocol;
+SyslogLogger::SyslogLogger(const std::string& hostname,
+                           const std::string& appName)
+    : hostname(hostname), appName(appName) {}
 
-  // Open the socket stream
+void SyslogLogger::connect(const std::string& url, int port,
+                           Transport transport, Protocol protocol) {
+  this->protocol = protocol;
+  this->transport = transport;
+
+  auto currentTimeMs = std::chrono::duration_cast<std::chrono::microseconds>(
+                           std::chrono::steady_clock::now().time_since_epoch())
+                           .count();
+
+  if (lastConnectionTimestamp + reconnectIntervalMs > currentTimeMs) {
+    return;  // only allow for initial connection, and reconnection every reconnectIntervals
+  }
+
+  std::unique_ptr<bell::Socket> socket;
+
+  // Open either TCP or UDP connection, depending on the transport
+  if (transport == Transport::UDP) {
+    socket = std::make_unique<UDPSocket>();
+    socket->open(url, port);
+  } else if (transport == Transport::TCP) {
+    socket = std::make_unique<TCPSocket>();
+    socket->open(url, port);
+  }
+
+  // open syslogsocketstream
   syslogSocketStream.open(std::move(socket));
 }
 
@@ -20,15 +45,17 @@ void SyslogLogger::sendLog(int severity, const std::string& submodule,
                            const std::string& filename,
                            std::string_view logMessage) {
   if (!syslogSocketStream.isOpen()) {
-    std::cout << "Invalid syslog connection" << std::endl;
+    // attempt to reconnect to the syslog server
+    connect(serverUrl, serverPort, transport, protocol);
     return;  // invalid syslog connection
   }
 
   // Write the priority value, defined as facility * 8 + severity
-  syslogSocketStream << "<" << (facilityCode * 8) + severity << ">"; 
+  syslogSocketStream << "<" << (facilityCode * 8) + severity << ">";
 
   // Write the version
-  syslogSocketStream << "1" << " ";
+  syslogSocketStream << "1"
+                     << " ";
 
   // Write the timestamp value
   if (enableTimestamp) {

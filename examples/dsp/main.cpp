@@ -70,20 +70,12 @@ class AudioPlayer : bell::Task {
 
 int main() {
   bell::setDefaultLogger();
-  auto syslogLogger = std::make_unique<bell::SyslogLogger>();
+  auto syslogLogger = std::make_unique<bell::SyslogLogger>("macboor-filip", "syslog-test");
   syslogLogger->enableTimestampLogging(false, false);
   syslogLogger->enableSubmoduleLogging(true);
 
-  auto socket = std::make_unique<bell::TCPSocket>();
-
-  // TLS socket
-  socket->open("gkindustries.pl", 8088);
-
-  std::string hostname = "rice-tortilla";
-  std::string appName = "syslog-test";
-
   // Register the syslog logger
-  syslogLogger->setup(std::move(socket), hostname, appName);
+  syslogLogger->connect("gkindustries.pl", 8088, bell::SyslogLogger::Transport::UDP);
   bell::registerLogger(std::move(syslogLogger));
 
   int rw = 0;
