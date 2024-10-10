@@ -39,6 +39,21 @@ class UDPSocket : public bell::Socket {
   int getFd() override { return sockFd; }
 
   void open(const std::string& host, uint16_t port) override {
+    struct addrinfo hints {
+    };
+    struct addrinfo *resolveAddr;
+
+    // Set up the hints structure
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;       // IPv4
+    hints.ai_socktype = SOCK_DGRAM;  // UDP
+
+    // Get address information
+    int err = getaddrinfo(host.c_str(), NULL, &hints, &resolveAddr);
+    if (err != 0) {
+      throw std::runtime_error("Resolve failed");
+    }
+
     sockFd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockFd < 0) {
       BELL_LOG(error, "udp", "Could not connect to %s. Error %d", host.c_str(),
@@ -68,8 +83,11 @@ class UDPSocket : public bell::Socket {
     //
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(host.c_str());
+    addr.sin_addr =
+        reinterpret_cast<struct sockaddr_in*>(resolveAddr->ai_addr)->sin_addr;
     addr.sin_port = htons(port);
+
+    freeaddrinfo(resolveAddr);
 
     isClosed = false;
   }
@@ -77,7 +95,6 @@ class UDPSocket : public bell::Socket {
   void wrapFd(int fd) override {
     if (fd != -1) {
       sockFd = fd;
-
       isClosed = false;
     }
   }

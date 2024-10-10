@@ -70,7 +70,7 @@ class AudioPlayer : bell::Task {
 
 int main() {
   bell::setDefaultLogger();
-  auto syslogLogger = std::make_unique<bell::SyslogLogger>("macboor-filip", "syslog-test");
+  auto syslogLogger = std::make_unique<bell::SyslogLogger>("rice-tortilla", "syslog-test");
   syslogLogger->enableTimestampLogging(false, false);
   syslogLogger->enableSubmoduleLogging(true);
 
