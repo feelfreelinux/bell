@@ -105,11 +105,6 @@ class UDPSocket : public bell::Socket {
 
     // Set up destination address
     memset(&addr, 0, sizeof(addr));
-<<<<<<< Updated upstream
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(host.c_str());
-    addr.sin_port = htons(port);
-=======
     if (isIpAddress) {
       if (addr_ipv4.sin_family == AF_INET) {
         addr = addr_ipv4;  // Use IPv4 address
@@ -124,7 +119,6 @@ class UDPSocket : public bell::Socket {
       addr.sin_port = htons(port);
       freeaddrinfo(resolveAddr);
     }
->>>>>>> Stashed changes
 
     isClosed = false;
   }
