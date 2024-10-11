@@ -39,13 +39,55 @@ class UDPSocket : public bell::Socket {
   int getFd() override { return sockFd; }
 
   void open(const std::string& host, uint16_t port) override {
+<<<<<<< Updated upstream
     sockFd = socket(AF_INET, SOCK_DGRAM, 0);
+=======
+    struct addrinfo hints {};
+    struct addrinfo* resolveAddr = nullptr;
+    bool isIpAddress = false;
+
+    // Set up hints for domain resolution if needed
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;       // Default to IPv4
+    hints.ai_socktype = SOCK_DGRAM;  // UDP
+
+    struct sockaddr_in addr_ipv4 {};
+    struct sockaddr_in6 addr_ipv6 {};
+
+    // Try to detect if the host is an IP address (IPv4 or IPv6)
+    if (inet_pton(AF_INET, host.c_str(), &addr_ipv4.sin_addr) == 1) {
+      // Host is a valid IPv4 address
+      addr_ipv4.sin_family = AF_INET;
+      addr_ipv4.sin_port = htons(port);
+      isIpAddress = true;
+    } else if (inet_pton(AF_INET6, host.c_str(), &addr_ipv6.sin6_addr) == 1) {
+      // Host is a valid IPv6 address
+      addr_ipv6.sin6_family = AF_INET6;
+      addr_ipv6.sin6_port = htons(port);
+      hints.ai_family =
+          AF_INET6;  // Update the hints in case of domain fallback
+      isIpAddress = true;
+    }
+
+    // If it's not a valid IP, resolve it as a domain name
+    if (!isIpAddress) {
+      int err = getaddrinfo(host.c_str(), NULL, &hints, &resolveAddr);
+      if (err != 0) {
+        throw std::runtime_error("Resolve failed");
+      }
+    }
+
+    // Create the UDP socket (IPv4 or IPv6 depending on the resolution)
+    sockFd = socket(isIpAddress ? addr_ipv4.sin_family : hints.ai_family,
+                    SOCK_DGRAM, 0);
+>>>>>>> Stashed changes
     if (sockFd < 0) {
       BELL_LOG(error, "udp", "Could not connect to %s. Error %d", host.c_str(),
                errno);
-      throw std::runtime_error("Resolve failed");
+      throw std::runtime_error("Socket creation failed");
     }
 
+    // Set socket options (TOS, buffer size, etc.)
     int iptos = 0x10;
     if (setsockopt(sockFd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos)) < 0) {
       BELL_LOG(error, "udp", "Cannot set IP_TOS for UDP socket");
@@ -58,18 +100,35 @@ class UDPSocket : public bell::Socket {
       BELL_LOG(error, "udp", "Cannot set SO_NET_SERVICE_TYPE for UDP socket");
     }
 #endif
+
     int sndBufSize = 16 * 1024;
     if (setsockopt(sockFd, SOL_SOCKET, SO_SNDBUF, &sndBufSize, sizeof(int)) ==
         -1) {
-      BELL_LOG(error, "udp", "Setting recvbuf failed");
+      BELL_LOG(error, "udp", "Setting send buffer size failed");
     }
 
-    // set up destination address
-    //
+    // Set up destination address
     memset(&addr, 0, sizeof(addr));
+<<<<<<< Updated upstream
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(host.c_str());
     addr.sin_port = htons(port);
+=======
+    if (isIpAddress) {
+      if (addr_ipv4.sin_family == AF_INET) {
+        addr = addr_ipv4;  // Use IPv4 address
+      } else if (addr_ipv6.sin6_family == AF_INET6) {
+        memcpy(&addr, &addr_ipv6, sizeof(addr_ipv6));  // Use IPv6 address
+      }
+    } else {
+      // Domain name was resolved, use the resolved address
+      addr.sin_family = AF_INET;
+      addr.sin_addr =
+          reinterpret_cast<struct sockaddr_in*>(resolveAddr->ai_addr)->sin_addr;
+      addr.sin_port = htons(port);
+      freeaddrinfo(resolveAddr);
+    }
+>>>>>>> Stashed changes
 
     isClosed = false;
   }
