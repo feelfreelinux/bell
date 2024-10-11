@@ -39,9 +39,6 @@ class UDPSocket : public bell::Socket {
   int getFd() override { return sockFd; }
 
   void open(const std::string& host, uint16_t port) override {
-<<<<<<< Updated upstream
-    sockFd = socket(AF_INET, SOCK_DGRAM, 0);
-=======
     struct addrinfo hints {};
     struct addrinfo* resolveAddr = nullptr;
     bool isIpAddress = false;
@@ -80,7 +77,6 @@ class UDPSocket : public bell::Socket {
     // Create the UDP socket (IPv4 or IPv6 depending on the resolution)
     sockFd = socket(isIpAddress ? addr_ipv4.sin_family : hints.ai_family,
                     SOCK_DGRAM, 0);
->>>>>>> Stashed changes
     if (sockFd < 0) {
       BELL_LOG(error, "udp", "Could not connect to %s. Error %d", host.c_str(),
                errno);
