@@ -19,6 +19,7 @@ namespace bell {
 class BellHTTPServer : public CivetHandler {
  public:
   BellHTTPServer(int serverPort);
+  ~BellHTTPServer();
 
   enum class WSState { CONNECTED, READY, CLOSED };
 
@@ -99,6 +100,8 @@ class BellHTTPServer : public CivetHandler {
   Router postRequestsRouter;
   std::mutex responseMutex;
   HTTPHandler notFoundHandler;
+
+  static std::mutex initMutex;
 
   bool handleGet(CivetServer* server, struct mg_connection* conn);
   bool handlePost(CivetServer* server, struct mg_connection* conn);

@@ -12,6 +12,8 @@
 
 using namespace bell;
 
+std::mutex BellHTTPServer::initMutex;
+
 class WebSocketHandler : public CivetWebSocketHandler {
  public:
   BellHTTPServer::WSDataHandler dataHandler;
@@ -188,6 +190,7 @@ bool BellHTTPServer::handlePost(CivetServer* server,
 }
 
 BellHTTPServer::BellHTTPServer(int serverPort) {
+  std::lock_guard lock(initMutex);
   mg_init_library(0);
   BELL_LOG(info, "HttpServer", "Server listening on port %d", serverPort);
   this->serverPort = serverPort;
@@ -196,6 +199,11 @@ BellHTTPServer::BellHTTPServer(int serverPort) {
   civetWebOptions.push_back("listening_ports");
   civetWebOptions.push_back(port);
   server = std::make_unique<CivetServer>(civetWebOptions);
+}
+
+BellHTTPServer::~BellHTTPServer() {
+  std::lock_guard lock(initMutex);
+  mg_exit_library();
 }
 
 std::unique_ptr<BellHTTPServer::HTTPResponse> BellHTTPServer::makeJsonResponse(
