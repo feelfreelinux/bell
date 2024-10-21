@@ -4,6 +4,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <stdexcept>
+
 using namespace bell;
 
 // Helper to check if the hostname is an IP and populate sockaddr accordingly
