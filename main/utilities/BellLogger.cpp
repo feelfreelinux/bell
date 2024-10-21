@@ -1,16 +1,29 @@
 #include "BellLogger.h"
 
-bell::AbstractLogger* bell::bellGlobalLogger;
+using namespace bell;
 
-void bell::setDefaultLogger() {
-  bell::bellGlobalLogger = new bell::BellLogger();
+std::vector<std::unique_ptr<bell::AbstractLogger>> bell::bellRegisteredLoggers;
+
+void AbstractLogger::enableSubmoduleLogging(bool enable) {
+  this->enableSubmodule = enable;
 }
 
-void bell::enableSubmoduleLogging() {
-  bell::bellGlobalLogger->enableSubmodule = true;
+void AbstractLogger::enableTimestampLogging(bool enable,
+                                            bool localTimestampLogging) {
+  this->enableTimestamp = enable;
+  this->shortTime = localTimestampLogging;
 }
 
-void bell::enableTimestampLogging(bool local) {
-  bell::bellGlobalLogger->enableTimestamp = true;
-  bell::bellGlobalLogger->shortTime = local;
+void bell::registerLogger(std::unique_ptr<bell::AbstractLogger> logger) {
+  bellRegisteredLoggers.push_back(std::move(logger));
+}
+
+void bell::setDefaultLogger(bool enableSubmoduleLogging,
+                            bool enableTimestampLogging,
+                            bool localTimestampLogging) {
+  auto logger = std::make_unique<bell::StdoutLogger>();
+  logger->enableSubmoduleLogging(enableSubmoduleLogging);
+  logger->enableTimestampLogging(enableTimestampLogging, localTimestampLogging);
+
+  bellRegisteredLoggers.push_back(std::move(logger));
 }

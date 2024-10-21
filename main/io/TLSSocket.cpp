@@ -81,11 +81,25 @@ void bell::TLSSocket::open(const std::string& hostUrl, uint16_t port) {
 }
 
 size_t bell::TLSSocket::read(uint8_t* buf, size_t len) {
-  return mbedtls_ssl_read(&ssl, buf, len);
+  int res = mbedtls_ssl_read(&ssl, buf, len);
+
+  if (res < 0) {
+    isClosed = true;
+    throw std::runtime_error("error in recv");
+  }
+
+  return res;
 }
 
 size_t bell::TLSSocket::write(const uint8_t* buf, size_t len) {
-  return mbedtls_ssl_write(&ssl, buf, len);
+  int res = mbedtls_ssl_write(&ssl, buf, len);
+
+  if (res < 0) {
+    isClosed = true;
+    throw std::runtime_error("error in write");
+  }
+
+  return res;
 }
 
 size_t bell::TLSSocket::poll() {

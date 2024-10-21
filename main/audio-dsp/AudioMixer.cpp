@@ -9,7 +9,6 @@ AudioMixer::AudioMixer() {}
 std::unique_ptr<StreamInfo> AudioMixer::process(
     std::unique_ptr<StreamInfo> info) {
   std::scoped_lock lock(this->accessMutex);
-  float sample = 0.0f;
 
   if (info->numChannels != from) {
     throw std::runtime_error(
@@ -30,8 +29,7 @@ std::unique_ptr<StreamInfo> AudioMixer::process(
     } else {
       // Mix channels
       for (int i = 0; i < info->numSamples; i++) {
-        // sample = 0.0f;
-
+        float sample = 0.0f;
         for (auto& source : singleConf.source) {
           sample += info->data->at(source)[i];
         }

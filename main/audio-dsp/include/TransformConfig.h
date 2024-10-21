@@ -18,6 +18,12 @@ class TransformConfig {
   virtual ~TransformConfig() = default;
 
   int currentVolume = 60;
+  struct MixerConfig {
+    std::vector<int> source;
+    int destination;
+  };
+
+  virtual std::vector<MixerConfig> rawGetMixerConfig(const std::string& field) = 0;
 
   virtual std::string rawGetString(const std::string& field) = 0;
 
@@ -32,7 +38,7 @@ class TransformConfig {
   std::map<std::string, std::vector<Value>> rawValues;
 
   Value getRawValue(const std::string& field) {
-    int index = this->currentVolume * (rawValues[field].size()) / 100;
+    size_t index = this->currentVolume * (rawValues[field].size()) / 100;
     if (index >= rawValues[field].size())
       index = rawValues[field].size() - 1;
     return rawValues[field][index];

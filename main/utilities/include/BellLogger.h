@@ -1,20 +1,24 @@
-#ifndef BELL_LOGGER_H
-#define BELL_LOGGER_H
+#pragma once
 
 #include <stdarg.h>  // for va_end, va_list, va_start
 #include <stdio.h>   // for printf, vprintf
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <memory>
+#include <mutex>
 #include <string>  // for string, basic_string
+#include <vector>
 
 namespace bell {
 
 class AbstractLogger {
  public:
-  bool enableSubmodule = false;
-  bool enableTimestamp = false;
-  bool shortTime = false;
+  AbstractLogger() = default;
+  virtual ~AbstractLogger() = default;
+
+  void enableSubmoduleLogging(bool enable);
+  void enableTimestampLogging(bool enable, bool local = false);
 
   virtual void debug(std::string filename, int line, std::string submodule,
                      const char* format, ...) = 0;
@@ -22,12 +26,18 @@ class AbstractLogger {
                      const char* format, ...) = 0;
   virtual void info(std::string filename, int line, std::string submodule,
                     const char* format, ...) = 0;
+
+ protected:
+  bool enableSubmodule = false;
+  bool enableTimestamp = false;
+  bool shortTime = false;
 };
 
-extern bell::AbstractLogger* bellGlobalLogger;
-class BellLogger : public bell::AbstractLogger {
+static std::mutex bellRegisteredLoggersMutex;
+extern std::vector<std::unique_ptr<bell::AbstractLogger>> bellRegisteredLoggers;
+
+class StdoutLogger : public bell::AbstractLogger {
  public:
-  // static bool enableColors = true;
   void debug(std::string filename, int line, std::string submodule,
              const char* format, ...) {
     printTimestamp();
@@ -135,14 +145,27 @@ class BellLogger : public bell::AbstractLogger {
                                              91, 92, 93, 94, 95, 96, 97};
 };
 
-void setDefaultLogger();
-void enableSubmoduleLogging();
-void enableTimestampLogging(bool local = false);
+/**
+ * @brief Registers the Stdout logger
+ * 
+ * @param enableSubmoduleLogging whether to include the submodule part in the log
+ * @param enableTimestampLogging enables the timestamp logging
+ * @param localTimestampLogging whether to format the timestamp as local time since start, or full system time
+ */
+void setDefaultLogger(bool enableSubmoduleLogging = true,
+                      bool enableTimestampLogging = true,
+                      bool localTimestampLogging = false);
+
+/**
+ * @brief Registers a logger implementation. Multiple loggers can be used at the same time.
+ */
+void registerLogger(std::unique_ptr<bell::AbstractLogger> logger);
 }  // namespace bell
 
-#define BELL_LOG(type, ...)                                        \
-  do {                                                             \
-    bell::bellGlobalLogger->type(__FILE__, __LINE__, __VA_ARGS__); \
-  } while (0)
-
-#endif
+#define BELL_LOG(type, ...)                            \
+  {                                                    \
+    std::scoped_lock lock(bell::bellRegisteredLoggersMutex); \
+    for (auto& logger : bell::bellRegisteredLoggers) { \
+      logger->type(__FILE__, __LINE__, __VA_ARGS__);   \
+    }                                                  \
+  }

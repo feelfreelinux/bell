@@ -74,6 +74,24 @@ class NlohmannJSONTransformConfig : public bell::TransformConfig {
     return pipeline;
   }
 
+  std::vector<MixerConfig> rawGetMixerConfig(
+      const std::string& field) override {
+    if (!json.contains(field) || !json[field].is_array()) {
+      throw std::invalid_argument("Mixer configuration invalid");
+    }
+
+    std::vector<MixerConfig> result;
+
+    for (auto& field : json[field]) {
+      std::vector<int> sources = field["source"];
+      int destination = field["destination"];
+      result.push_back(
+          MixerConfig{.source = sources, .destination = destination});
+    }
+
+    return result;
+  }
+
   std::string rawGetString(const std::string& field) override {
     if (json.contains(field) && json[field].is_string()) {
       return json[field];
