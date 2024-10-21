@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <cstring>
 #include <string>
+#include "SocketUtils.h"
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -30,7 +31,7 @@ class UDPSocket : public bell::Socket {
  private:
   int sockFd{};
   bool isClosed = true;
-  struct sockaddr_in addr {};
+  SocketUtils::ResolvedAddress addr;
 
  public:
   UDPSocket() = default;
@@ -39,44 +40,11 @@ class UDPSocket : public bell::Socket {
   int getFd() override { return sockFd; }
 
   void open(const std::string& host, uint16_t port) override {
-    struct addrinfo hints {};
-    struct addrinfo* resolveAddr = nullptr;
-    bool isIpAddress = false;
-
-    // Set up hints for domain resolution if needed
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;       // Default to IPv4
-    hints.ai_socktype = SOCK_DGRAM;  // UDP
-
-    struct sockaddr_in addr_ipv4 {};
-    struct sockaddr_in6 addr_ipv6 {};
-
-    // Try to detect if the host is an IP address (IPv4 or IPv6)
-    if (inet_pton(AF_INET, host.c_str(), &addr_ipv4.sin_addr) == 1) {
-      // Host is a valid IPv4 address
-      addr_ipv4.sin_family = AF_INET;
-      addr_ipv4.sin_port = htons(port);
-      isIpAddress = true;
-    } else if (inet_pton(AF_INET6, host.c_str(), &addr_ipv6.sin6_addr) == 1) {
-      // Host is a valid IPv6 address
-      addr_ipv6.sin6_family = AF_INET6;
-      addr_ipv6.sin6_port = htons(port);
-      hints.ai_family =
-          AF_INET6;  // Update the hints in case of domain fallback
-      isIpAddress = true;
-    }
-
-    // If it's not a valid IP, resolve it as a domain name
-    if (!isIpAddress) {
-      int err = getaddrinfo(host.c_str(), NULL, &hints, &resolveAddr);
-      if (err != 0) {
-        throw std::runtime_error("Resolve failed");
-      }
-    }
+    addr = SocketUtils::resolveDomain(host, SOCK_DGRAM);
+    addr.setPort(port);
 
     // Create the UDP socket (IPv4 or IPv6 depending on the resolution)
-    sockFd = socket(isIpAddress ? addr_ipv4.sin_family : hints.ai_family,
-                    SOCK_DGRAM, 0);
+    sockFd = socket(addr.family, SOCK_DGRAM, 0);
     if (sockFd < 0) {
       BELL_LOG(error, "udp", "Could not connect to %s. Error %d", host.c_str(),
                errno);
@@ -103,23 +71,6 @@ class UDPSocket : public bell::Socket {
       BELL_LOG(error, "udp", "Setting send buffer size failed");
     }
 
-    // Set up destination address
-    memset(&addr, 0, sizeof(addr));
-    if (isIpAddress) {
-      if (addr_ipv4.sin_family == AF_INET) {
-        addr = addr_ipv4;  // Use IPv4 address
-      } else if (addr_ipv6.sin6_family == AF_INET6) {
-        memcpy(&addr, &addr_ipv6, sizeof(addr_ipv6));  // Use IPv6 address
-      }
-    } else {
-      // Domain name was resolved, use the resolved address
-      addr.sin_family = AF_INET;
-      addr.sin_addr =
-          reinterpret_cast<struct sockaddr_in*>(resolveAddr->ai_addr)->sin_addr;
-      addr.sin_port = htons(port);
-      freeaddrinfo(resolveAddr);
-    }
-
     isClosed = false;
   }
 
@@ -136,16 +87,15 @@ class UDPSocket : public bell::Socket {
   }
 
   size_t read(uint8_t* buf, size_t len) override {
-    socklen_t addrlen = sizeof(addr);
+    socklen_t addrlen = addr.addrLen;
     return recvfrom(sockFd, reinterpret_cast<char*>(buf), len, 0,
-                    reinterpret_cast<struct sockaddr*>(&addr), &addrlen);
+                    reinterpret_cast<struct sockaddr*>(&addr.addr), &addrlen);
   }
 
   size_t write(const uint8_t* buf, size_t len) override {
-
     ssize_t result =
         sendto(sockFd, reinterpret_cast<const char*>(buf), len, 0,
-               reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr));
+               reinterpret_cast<struct sockaddr*>(&addr.addr), addr.addrLen);
 
     if (result < 0) {
       BELL_LOG(error, "UDPSocket", "sendto failed, errno=%s", strerror(errno));

@@ -70,49 +70,33 @@ class AudioPlayer : bell::Task {
 
 int main() {
   bell::setDefaultLogger();
-  auto syslogLogger = std::make_unique<bell::SyslogLogger>("macboor-filip", "syslog-test");
-  syslogLogger->enableTimestampLogging(false, false);
-  syslogLogger->enableSubmoduleLogging(true);
 
-  // Register the syslog logger
-  syslogLogger->connect("gkindustries.pl", 8088, bell::SyslogLogger::Transport::UDP);
-  bell::registerLogger(std::move(syslogLogger));
 
-  int rw = 0;
+  bell::createDecoders();
+  audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
+  auto task = AudioPlayer();
+
+  auto url = "https://s2.radio.co/s2b2b68744/listen";
+  // std::ifstream file("aactest.aac", std::ios::binary);
+
+  auto req = bell::HTTPClient::get(url);
+  auto container = AudioContainers::guessAudioContainer(req->stream());
+  auto codec = AudioCodecs::getCodec(container.get());
+
+  uint32_t dataLen;
   while (true) {
-    BELL_SLEEP_MS(500);
-    BELL_LOG(info, "Testor", "hello octos %d", rw);
-    rw++;
-    if (rw % 12 == 0) {
-      BELL_LOG(error, "Testor", "rw % 12 == 0!");
+    uint8_t* data = codec->decode(container.get(), dataLen);
+
+    if (!data) {
+      continue;
     }
+
+    size_t toWrite = dataLen;
+    while (toWrite > 0) {
+      toWrite -= audioBuffer->writePCM(data + dataLen - toWrite, toWrite, 0);
+    }
+
+    // std::cout << dataLen << std::endl;
   }
-  // syslogLogger->setup(std::unique_ptr<bell::Socket> socket, const std::string &hostname, const std::string &appName)
-  // bell::createDecoders();
-  // audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
-  // auto task = AudioPlayer();
-
-  // auto url = "https://s2.radio.co/s2b2b68744/listen";
-  // // std::ifstream file("aactest.aac", std::ios::binary);
-
-  // auto req = bell::HTTPClient::get(url);
-  // auto container = AudioContainers::guessAudioContainer(req->stream());
-  // auto codec = AudioCodecs::getCodec(container.get());
-
-  // uint32_t dataLen;
-  // while (true) {
-  //   uint8_t* data = codec->decode(container.get(), dataLen);
-
-  //   if (!data) {
-  //     continue;
-  //   }
-
-  //   size_t toWrite = dataLen;
-  //   while (toWrite > 0) {
-  //     toWrite -= audioBuffer->writePCM(data + dataLen - toWrite, toWrite, 0);
-  //   }
-
-  //   // std::cout << dataLen << std::endl;
-  // }
   return 0;
 }

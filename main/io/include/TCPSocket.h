@@ -1,16 +1,11 @@
 #ifndef BELL_BASIC_SOCKET_H
 #define BELL_BASIC_SOCKET_H
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <cstring>
-#include <iostream>
-#include <memory>
-#include <stdexcept>
 #include <string>
-#include <vector>
-#include "BellSocket.h"
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -26,7 +21,10 @@
 #include <sys/filio.h>
 #endif
 #endif
+
 #include <BellLogger.h>
+#include "BellSocket.h"
+#include "SocketUtils.h"
 
 namespace bell {
 class TCPSocket : public bell::Socket {
@@ -42,28 +40,11 @@ class TCPSocket : public bell::Socket {
 
   void open(const std::string& host, uint16_t port) {
     int err;
-    int domain = AF_INET;
-    int socketType = SOCK_STREAM;
 
-    struct addrinfo hints {
-    }, *addr;
-    //fine-tune hints according to which socket you want to open
-    hints.ai_family = domain;
-    hints.ai_socktype = socketType;
-    hints.ai_protocol =
-        IPPROTO_IP;  // no enum : possible value can be read in /etc/protocols
-    hints.ai_flags = AI_CANONNAME | AI_ALL | AI_ADDRCONFIG;
+    auto resolvedAddress = SocketUtils::resolveDomain(host, SOCK_STREAM);
+    resolvedAddress.setPort(port);
 
-    // BELL_LOG(info, "http", "%s %d", host.c_str(), port);
-
-    char portStr[6];
-    snprintf(portStr, sizeof(portStr), "%u", port);
-    err = getaddrinfo(host.c_str(), portStr, &hints, &addr);
-    if (err != 0) {
-      throw std::runtime_error("Resolve failed");
-    }
-
-    sockFd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+    sockFd = socket(resolvedAddress.family, SOCK_STREAM, IPPROTO_IP);
 
     if (sockFd < 0) {
       BELL_LOG(error, "http",
@@ -73,7 +54,9 @@ class TCPSocket : public bell::Socket {
     }
 
     isClosed = false;
-    err = connect(sockFd, addr->ai_addr, addr->ai_addrlen);
+    err = connect(sockFd,
+                  reinterpret_cast<struct sockaddr*>(&resolvedAddress.addr),
+                  resolvedAddress.addrLen);
     if (err < 0) {
       close();
       BELL_LOG(error, "http", "Could not connect to %s, port %d. Error %d",
@@ -87,9 +70,6 @@ class TCPSocket : public bell::Socket {
                TCP_NODELAY,  /* name of option */
                (char*)&flag, /* the cast is historical cruft */
                sizeof(int)); /* length of option value */
-
-    freeaddrinfo(addr);
-    isClosed = false;
   }
 
   void wrapFd(int fd) {
