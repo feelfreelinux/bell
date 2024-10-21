@@ -1,0 +1,5 @@
+CompileFlags:
+   CompilationDatabase: build/
+   Remove: [-fstrict-volatile-bitfields, -fno-tree-switch-conversion, -fno-shrink-wrap]
+Diagnostics:
+  UnusedIncludes: Strict
