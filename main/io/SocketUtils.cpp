@@ -67,8 +67,8 @@ SocketUtils::ResolvedAddress SocketUtils::resolveDomain(
 
   int result = getaddrinfo(hostname.c_str(), nullptr, &hints, &res);
   if (result != 0) {
-    throw std::runtime_error("Failed to resolve domain: " +
-                             std::string(gai_strerror(result)));
+    throw std::runtime_error("Failed to resolve domain: err " +
+                             std::to_string(result));
   }
 
   // We'll use the first valid result
@@ -79,12 +79,12 @@ SocketUtils::ResolvedAddress SocketUtils::resolveDomain(
     // IPv4
     resolved.family = AF_INET;
     resolved.addrLen = sizeof(struct sockaddr_in);
-    memcpy(&resolved.addr, addr->ai_addr, resolved.addrLen);
+    memcpy((void*)&resolved.addr, addr->ai_addr, resolved.addrLen);
   } else if (addr->ai_family == AF_INET6) {
     // IPv6
     resolved.family = AF_INET6;
     resolved.addrLen = sizeof(struct sockaddr_in6);
-    memcpy(&resolved.addr, addr->ai_addr, resolved.addrLen);
+    memcpy((void*)&resolved.addr, addr->ai_addr, resolved.addrLen);
   } else {
     freeaddrinfo(res);
     throw std::runtime_error("Unsupported address family");
