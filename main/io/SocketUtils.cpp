@@ -1,5 +1,7 @@
 #include "SocketUtils.h"
 
+#include <stdexcept>
+
 // Socket includes
 #include <arpa/inet.h>
 #include <netdb.h>
