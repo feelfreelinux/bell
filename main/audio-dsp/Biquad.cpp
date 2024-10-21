@@ -10,7 +10,7 @@ Biquad::Biquad() {
 
 void Biquad::sampleRateChanged(uint32_t sampleRate) {
   this->sampleRate = sampleRate;
-  //this->configure(this->type, this->currentConfig);
+  this->configure(this->type, this->currentConfig);
 }
 
 void Biquad::configure(Type type, std::map<std::string, float>& newConf) {
@@ -204,7 +204,6 @@ void Biquad::highShelfCoEffs(float f, float gain, float q) {
   float w0 = 2 * M_PI * f / this->sampleRate;
   float c = cosf(w0);
   float s = sinf(w0);
-  float alpha = s / (2 * q);
   float beta = s * sqrtf(A) / q;
   float b0 = A * ((A + 1.0) + (A - 1.0) * c + beta);
   float b1 = -2.0 * A * ((A - 1.0) + (A + 1.0) * c);
@@ -298,7 +297,6 @@ void Biquad::lowShelfFOCoEffs(float f, float gain) {
 }
 
 void Biquad::notchCoEffs(float f, float gain, float q) {
-  float A = std::pow(10.0f, gain / 40.0f);
   float w0 = 2 * M_PI * f / this->sampleRate;
   float c = cosf(w0);
   float s = sinf(w0);
@@ -314,7 +312,6 @@ void Biquad::notchCoEffs(float f, float gain, float q) {
   this->normalizeCoEffs(a0, a1, a2, b0, b1, b2);
 }
 void Biquad::notchCoEffsBandwidth(float f, float gain, float bandwidth) {
-  float A = std::pow(10.0f, gain / 40.0f);
   float w0 = 2 * M_PI * f / this->sampleRate;
   float c = cosf(w0);
   float s = sinf(w0);
@@ -420,11 +417,11 @@ std::unique_ptr<StreamInfo> Biquad::process(
     std::unique_ptr<StreamInfo> stream) {
   std::scoped_lock lock(accessMutex);
 
-  auto input = stream->data[this->channel];
+  auto& input = stream->data->at(this->channel);
   auto numSamples = stream->numSamples;
 
 #ifdef ESP_PLATFORM
-  dsps_biquad_f32_ae32(input, input, numSamples, coeffs, w);
+  dsps_biquad_f32_ae32(input.data(), input.data(), numSamples, coeffs, w);
 #else
   // Apply the set coefficients
   for (int i = 0; i < numSamples; i++) {

@@ -75,6 +75,8 @@
 #
 #elif defined (ESP_PLATFORM)
 #
+#elif defined (__ANDROID__)
+#
 #else
 #error No platform defined. See valid options in mp3dec.h
 #endif

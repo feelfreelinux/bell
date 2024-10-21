@@ -59,6 +59,7 @@ class BinaryStream {
   // Read operations
   BinaryStream& operator>>(char& value);
   BinaryStream& operator>>(std::byte& value);
+  BinaryStream& operator>>(uint8_t& value);
   BinaryStream& operator>>(int16_t& value);
   BinaryStream& operator>>(uint16_t& value);
   BinaryStream& operator>>(int32_t& value);
@@ -69,6 +70,7 @@ class BinaryStream {
   // Write operations
   BinaryStream& operator<<(char value);
   BinaryStream& operator<<(std::byte value);
+  BinaryStream& operator<<(uint8_t value);
   BinaryStream& operator<<(int16_t value);
   BinaryStream& operator<<(uint16_t value);
   BinaryStream& operator<<(int32_t value);

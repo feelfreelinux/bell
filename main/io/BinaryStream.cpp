@@ -28,6 +28,24 @@ void BinaryStream::ensureWritable() {
     throw std::runtime_error("No output provided for binary stream");
 }
 
+BinaryStream& BinaryStream::operator>>(char& value) {
+  ensureReadable();
+  istr->read((char*)&value, 1);
+  return *this;
+}
+
+BinaryStream& BinaryStream::operator>>(uint8_t& value) {
+  ensureReadable();
+  istr->read((char*)&value, 1);
+  return *this;
+}
+
+BinaryStream& BinaryStream::operator>>(std::byte& value) {
+  ensureReadable();
+  istr->read((char*)&value, 1);
+  return *this;
+}
+
 BinaryStream& BinaryStream::operator>>(int16_t& value) {
   ensureReadable();
   istr->read((char*)&value, sizeof(value));
@@ -42,7 +60,7 @@ BinaryStream& BinaryStream::operator>>(uint16_t& value) {
   ensureReadable();
   istr->read((char*)&value, sizeof(value));
   if (flipBytes)
-    swap16(value);
+    value = swap16(value);
 
   return *this;
 }
@@ -91,6 +109,13 @@ BinaryStream& BinaryStream::operator<<(char value) {
 }
 
 BinaryStream& BinaryStream::operator<<(std::byte value) {
+  ensureWritable();
+  ostr->write((const char*)&value, sizeof(value));
+
+  return *this;
+}
+
+BinaryStream& BinaryStream::operator<<(uint8_t value) {
   ensureWritable();
   ostr->write((const char*)&value, sizeof(value));
 

@@ -26,8 +26,6 @@ std::vector<float> BiquadCombo::calculateBWQ(int order) {
     qValues.push_back(-1.0);
   }
 
-  printf("%d\n", qValues.size());
-
   return qValues;
 }
 

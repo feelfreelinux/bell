@@ -50,6 +50,7 @@ class implMDNSService : public MDNSService {
 #ifndef BELL_DISABLE_AVAHI
   implMDNSService(AvahiEntryGroup* avahiGroup) : avahiGroup(avahiGroup){};
 #endif
+  ~implMDNSService() { unregisterService(); }
   void unregisterService();
 };
 

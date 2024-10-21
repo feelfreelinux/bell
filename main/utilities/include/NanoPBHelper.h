@@ -45,7 +45,6 @@ void pbDecode(T& result, const pb_msgdesc_t* fields,
 }
 
 void pbPutString(const std::string& stringToPack, char* dst);
-void pbPutCharArray(const char* stringToPack, char* dst);
 void pbPutBytes(const std::vector<uint8_t>& data, pb_bytes_array_t& dst);
 
 const char* pb_encode_to_string(const pb_msgdesc_t* fields, const void* data);

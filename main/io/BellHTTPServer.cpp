@@ -49,9 +49,8 @@ class WebSocketHandler : public CivetWebSocketHandler {
     return true;
   }
 
-  virtual void handleClose(CivetServer* server,
-                           const struct mg_connection* conn) {
-    stateHandler(conn, BellHTTPServer::WSState::CLOSED);
+  void handleClose(CivetServer* server, const mg_connection* conn) {
+    stateHandler((struct mg_connection*)conn, BellHTTPServer::WSState::CLOSED);
   }
 };
 

@@ -44,7 +44,7 @@ VorbisDecoder::VorbisDecoder() {
   op.packetno = 10;
 
   pcmData = (int16_t*)malloc(VORBIS_BUF_SAMPLES * VORBIS_BUF_CHANNELS *
-                             sizeof(uint16_t));
+                             sizeof(int16_t));
 }
 
 VorbisDecoder::~VorbisDecoder() {

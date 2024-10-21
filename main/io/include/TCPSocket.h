@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include "BellSocket.h"
@@ -26,8 +27,6 @@
 #endif
 #endif
 #include <BellLogger.h>
-#include <fstream>
-#include <sstream>
 
 namespace bell {
 class TCPSocket : public bell::Socket {
@@ -58,7 +57,7 @@ class TCPSocket : public bell::Socket {
     // BELL_LOG(info, "http", "%s %d", host.c_str(), port);
 
     char portStr[6];
-    sprintf(portStr, "%u", port);
+    snprintf(portStr, sizeof(portStr), "%u", port);
     err = getaddrinfo(host.c_str(), portStr, &hints, &addr);
     if (err != 0) {
       throw std::runtime_error("Resolve failed");
@@ -66,12 +65,20 @@ class TCPSocket : public bell::Socket {
 
     sockFd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
+    if (sockFd < 0) {
+      BELL_LOG(error, "http",
+               "Could not create socket to %s, port %d. Error %d", host.c_str(),
+               port, errno);
+      throw std::runtime_error("Sock create failed");
+    }
+
+    isClosed = false;
     err = connect(sockFd, addr->ai_addr, addr->ai_addrlen);
     if (err < 0) {
       close();
-      BELL_LOG(error, "http", "Could not connect to %s. Error %d", host.c_str(),
-               errno);
-      throw std::runtime_error("Resolve failed");
+      BELL_LOG(error, "http", "Could not connect to %s, port %d. Error %d",
+               host.c_str(), port, errno);
+      throw std::runtime_error("Sock connect failed");
     }
 
     int flag = 1;
@@ -85,12 +92,34 @@ class TCPSocket : public bell::Socket {
     isClosed = false;
   }
 
-  size_t read(uint8_t* buf, size_t len) {
-    return recv(sockFd, (char*)buf, len, 0);
+  void wrapFd(int fd) {
+    if (fd != -1) {
+      sockFd = fd;
+      int flag = 1;
+      setsockopt(sockFd,       /* socket affected */
+                 IPPROTO_TCP,  /* set option at TCP level */
+                 TCP_NODELAY,  /* name of option */
+                 (char*)&flag, /* the cast is historical cruft */
+                 sizeof(int)); /* length of option value */
+
+      isClosed = false;
+    }
   }
 
-  size_t write(uint8_t* buf, size_t len) {
-    return send(sockFd, (char*)buf, len, 0);
+  size_t read(uint8_t* buf, size_t len) {
+    ssize_t res = recv(sockFd, (char*)buf, len, 0);
+    if (res < 0) {
+      throw std::runtime_error("error in recv");
+    }
+    return res;
+  }
+
+  size_t write(const uint8_t* buf, size_t len) {
+    ssize_t res = send(sockFd, (char*)buf, len, 0);
+    if (res < 0) {
+      throw std::runtime_error("error in read");
+    }
+    return res;
   }
 
   size_t poll() {
@@ -103,9 +132,8 @@ class TCPSocket : public bell::Socket {
 #endif
     return value;
   }
-  bool isOpen() {
-    return !isClosed;
-  }
+
+  bool isOpen() { return !isClosed; }
 
   void close() {
     if (!isClosed) {

@@ -3,14 +3,16 @@
 
 #include <stdint.h>  // for int32_t, int64_t
 #include <string.h>  // for NULL
+#include <cmath>
 #ifdef _WIN32
 #include <WinSock2.h>
 #else
-#include <sys/time.h>  // for timeval, gettimeofday
+#include <sys/time.h>  // for tv, gettimeofday
 #include <unistd.h>    // for usleep
 #endif
-#include <cmath>   // for floor
-#include <string>  // for string
+#include <chrono>
+#include <cstdlib>  // for floor
+#include <string>   // for string
 
 #ifdef ESP_PLATFORM
 #include "esp_system.h"
@@ -21,70 +23,59 @@ namespace bell {
 std::string generateRandomUUID();
 void freeAndNull(void*& ptr);
 std::string getMacAddress();
+
 struct tv {
-  tv() {}
-  tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec){};
-  tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec){};
-  static tv now() {
-    tv timestampNow;
-#if _WIN32
-    static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
+  int64_t sec;   // seconds
+  int64_t usec;  // microseconds
 
-    SYSTEMTIME system_time;
-    FILETIME file_time;
-    uint64_t time;
+  // Default constructor
+  tv() : sec(0), usec(0) {}
 
-    GetSystemTime(&system_time);
-    SystemTimeToFileTime(&system_time, &file_time);
-    time = ((uint64_t)file_time.dwLowDateTime);
-    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+  // Constructor with seconds and microseconds
+  tv(int64_t sec, int64_t usec) : sec(sec), usec(usec) { normalize(); }
 
-    timestampNow.sec = (long)((time - EPOCH) / 10000000L);
-    timestampNow.usec = (long)(system_time.wMilliseconds * 1000);
-#else
-    timeval t;
-    gettimeofday(&t, NULL);
-    timestampNow.sec = t.tv_sec;
-    timestampNow.usec = t.tv_usec;
-#endif
-    return timestampNow;
+  // Normalize the tv to ensure usec is within [-1,000,000, 1,000,000]
+  void normalize() {
+    if (usec >= 1000000) {
+      sec += usec / 1000000;
+      usec %= 1000000;
+    } else if (usec < 0) {
+      long borrow_sec = std::abs(usec / 1000000) + 1;
+      sec -= borrow_sec;
+      usec += borrow_sec * 1000000;
+    }
   }
-  int32_t sec;
-  int32_t usec;
-
-  int64_t ms() {
-    return (sec * (int64_t)1000) + (usec / 1000);
-  }
-
+  // Overloading addition operator
   tv operator+(const tv& other) const {
-    tv result(*this);
-    result.sec += other.sec;
-    result.usec += other.usec;
-    if (result.usec > 1000000) {
-      result.sec += result.usec / 1000000;
-      result.usec %= 1000000;
-    }
+    tv result(sec + other.sec, usec + other.usec);
     return result;
   }
 
-  tv operator/(const int& other) const {
-    tv result(*this);
-    int64_t millis = result.ms();
-    millis = millis / other;
-    result.sec = std::floor(millis / 1000.0);
-    result.usec = (int32_t)((int64_t)(millis * 1000) % 1000000);
-    return result;
-  }
-
+  // Overloading subtraction operator
   tv operator-(const tv& other) const {
-    tv result(*this);
-    result.sec -= other.sec;
-    result.usec -= other.usec;
-    while (result.usec < 0) {
-      result.sec -= 1;
-      result.usec += 1000000;
-    }
+    tv result(sec - other.sec, usec - other.usec);
     return result;
+  }
+
+  // Overloading division operator
+  tv operator/(long divisor) const {
+    tv result(sec / divisor, usec / divisor);
+    return result;
+  }
+
+  uint64_t ms() { return (sec * 1000) + (usec / 1000); }
+
+  // Static method to get the current time
+  static tv now() {
+    auto now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    auto seconds =
+        std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    auto microseconds =
+        std::chrono::duration_cast<std::chrono::microseconds>(duration)
+            .count() %
+        1000000;
+    return tv(seconds, microseconds);
   }
 };
 }  // namespace bell

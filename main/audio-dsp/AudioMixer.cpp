@@ -9,6 +9,8 @@ AudioMixer::AudioMixer() {}
 std::unique_ptr<StreamInfo> AudioMixer::process(
     std::unique_ptr<StreamInfo> info) {
   std::scoped_lock lock(this->accessMutex);
+  float sample = 0.0f;
+
   if (info->numChannels != from) {
     throw std::runtime_error(
         "AudioMixer: Input channel count does not match configuration");
@@ -22,19 +24,19 @@ std::unique_ptr<StreamInfo> AudioMixer::process(
       }
       // Copy channel
       for (int i = 0; i < info->numSamples; i++) {
-        info->data[singleConf.destination][i] =
-            info->data[singleConf.source[0]][i];
+        info->data->at(singleConf.destination)[i] =
+            info->data->at(singleConf.source[0])[i];
       }
     } else {
       // Mix channels
-      float sample = 0.0f;
       for (int i = 0; i < info->numSamples; i++) {
-        sample = 0.0;
+        // sample = 0.0f;
+
         for (auto& source : singleConf.source) {
-          sample += info->data[source][i];
+          sample += info->data->at(source)[i];
         }
 
-        info->data[singleConf.destination][i] =
+        info->data->at(singleConf.destination)[i] =
             sample / (float)singleConf.source.size();
       }
     }

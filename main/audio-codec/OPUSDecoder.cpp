@@ -42,7 +42,7 @@ uint8_t* OPUSDecoder::decode(uint8_t* inData, uint32_t& inLen,
     return nullptr;
   outLen =
       opus_decode(opus, static_cast<unsigned char*>(inData),
-                  static_cast<int32_t>(inLen), pcmData, MAX_FRAME_SIZE, false);
+                  static_cast<int32_t>(inLen), pcmData, MAX_FRAME_SIZE, true);
   outLen *= opus->channels * sizeof(int16_t);
   inLen = 0;
   return (uint8_t*)pcmData;

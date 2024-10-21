@@ -8,7 +8,7 @@ namespace bell {
 
 class MDNSService {
  public:
-  virtual ~MDNSService() {}
+  virtual ~MDNSService() = default;
   static std::unique_ptr<MDNSService> registerService(
       const std::string& serviceName, const std::string& serviceType,
       const std::string& serviceProto, const std::string& serviceHost,

@@ -83,6 +83,7 @@ class Biquad : public bell::AudioTransform {
     float slope = config->getFloat("slope", false, invalid);
     float gain = config->getFloat("gain", false, invalid);
     float frequency = config->getFloat("frequency", false, invalid);
+
     float q = config->getFloat("q", false, invalid);
 
     if (currentConfig["bandwidth"] == bandwidth &&
@@ -122,7 +123,7 @@ class Biquad : public bell::AudioTransform {
   float coeffs[5];
   float w[2] = {1.0, 1.0};
 
-  float sampleRate = 44100;
+  float sampleRate = 48000;
 
   // Generator methods for different filter types
   void highPassCoEffs(float f, float q);

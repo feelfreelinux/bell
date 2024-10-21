@@ -8,6 +8,8 @@
 #include <vector>
 #include "AudioCodecs.h"
 #include "AudioContainers.h"
+#include "AudioPipeline.h"
+#include "AudioResampler.h"
 #include "BellHTTPServer.h"
 #include "BellTask.h"
 #include "CentralAudioBuffer.h"
@@ -15,7 +17,9 @@
 #include "DecoderGlobals.h"
 #include "EncodedAudioStream.h"
 #include "HTTPClient.h"
+#include "NamedPipeAudioSink.h"
 #include "PortAudioSink.h"
+#include "StreamInfo.h"
 
 #include <BellDSP.h>
 #include <BellLogger.h>
@@ -25,26 +29,35 @@ std::atomic<bool> isPaused = false;
 
 class AudioPlayer : bell::Task {
  public:
-  std::unique_ptr<PortAudioSink> audioSink;
+  std::unique_ptr<NamedPipeAudioSink> audioSink;
   std::unique_ptr<bell::BellDSP> dsp;
 
   AudioPlayer() : bell::Task("player", 1024, 0, 0) {
-    this->audioSink = std::make_unique<PortAudioSink>();
-    this->audioSink->setParams(44100, 2, 16);
-    this->dsp = std::make_unique<bell::BellDSP>(audioBuffer);
+    this->audioSink = std::make_unique<NamedPipeAudioSink>();
+    this->audioSink->setParams(48000, 2, 16);
+
+    auto pipeline = std::make_shared<AudioPipeline>();
+    auto resampler = std::make_shared<AudioResampler>();
+    resampler->configure(2, bell::SampleRate::SR_44100,
+                         bell::SampleRate::SR_48000);
+    pipeline->addTransform(resampler);
+    this->dsp = std::make_unique<bell::BellDSP>();
+    this->dsp->applyPipeline(pipeline);
     startTask();
   }
 
   void runTask() override {
+    uint8_t outputChunk[4096 * 2];
     while (true) {
       if (audioBuffer->hasAtLeast(64) || isPaused) {
         auto chunk = audioBuffer->readChunk();
 
         if (chunk != nullptr && chunk->pcmSize > 0) {
-          // this->dsp->process(chunk->pcmData, chunk->pcmSize, 2, 44100,
-          //                    bell::BitWidth::BW_16);
+          auto res = this->dsp->process(
+              chunk->pcmData, chunk->pcmSize, outputChunk, sizeof(outputChunk),
+              2, SampleRate::SR_44100, bell::BitWidth::BW_16);
 
-          this->audioSink->feedPCMFrames(chunk->pcmData, chunk->pcmSize);
+          this->audioSink->feedPCMFrames(outputChunk, res->numSamples * 4);
         }
       }
     }
@@ -54,11 +67,10 @@ class AudioPlayer : bell::Task {
 int main() {
   bell::setDefaultLogger();
   bell::createDecoders();
-    size_t size = sizeof(void*);
   audioBuffer = std::make_shared<bell::CentralAudioBuffer>(512);
   auto task = AudioPlayer();
 
-  auto url = "http://193.222.135.71/378";
+  auto url = "https://s2.radio.co/s2b2b68744/listen";
   // std::ifstream file("aactest.aac", std::ios::binary);
 
   auto req = bell::HTTPClient::get(url);
@@ -70,7 +82,6 @@ int main() {
     uint8_t* data = codec->decode(container.get(), dataLen);
 
     if (!data) {
-      std::cout << "data invalid" << std::endl;
       continue;
     }
 
@@ -81,23 +92,5 @@ int main() {
 
     // std::cout << dataLen << std::endl;
   }
-
-  // return 0;
-
-  // std::vector<uint8_t> frameData(1024 * 10);
-  // /*
-  // while (true) {
-  //   size_t bytes =audioStream->decodeFrame(frameData.data());
-  //   std::cout << bytes <<std::endl;
-
-  //   size_t toWrite = bytes;
-
-  //   if (!isPaused) {
-  //     while (toWrite > 0) {
-  //       toWrite -= audioBuffer->writePCM(frameData.data() + bytes - toWrite,
-  //                                        toWrite, 0);
-  //     }
-  //   }
-  // }*/
   return 0;
 }
