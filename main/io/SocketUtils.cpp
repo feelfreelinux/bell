@@ -4,7 +4,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include <stdexcept>
+// memcpy
+#include <cstring>
 
 using namespace bell;
 
@@ -19,7 +20,7 @@ bool isIpAddress(const std::string& hostname,
     resolved.family = AF_INET;
     ipv4Addr.sin_family = AF_INET;
     resolved.addrLen = sizeof(struct sockaddr_in);
-    memcpy((void*)&resolved.addr, &ipv4Addr, resolved.addrLen);
+    memcpy(&resolved.addr, &ipv4Addr, resolved.addrLen);
     return true;
   }
 
@@ -28,7 +29,7 @@ bool isIpAddress(const std::string& hostname,
     resolved.family = AF_INET6;
     ipv6Addr.sin6_family = AF_INET6;
     resolved.addrLen = sizeof(struct sockaddr_in6);
-    memcpy((void*)&resolved.addr, &ipv6Addr, resolved.addrLen);
+    memcpy(&resolved.addr, &ipv6Addr, resolved.addrLen);
     return true;
   }
 
@@ -67,7 +68,7 @@ SocketUtils::ResolvedAddress SocketUtils::resolveDomain(
 
   int result = getaddrinfo(hostname.c_str(), nullptr, &hints, &res);
   if (result != 0) {
-    throw std::runtime_error("Failed to resolve domain: err " +
+    throw std::runtime_error("Failed to resolve domain, err=" +
                              std::to_string(result));
   }
 
@@ -79,12 +80,12 @@ SocketUtils::ResolvedAddress SocketUtils::resolveDomain(
     // IPv4
     resolved.family = AF_INET;
     resolved.addrLen = sizeof(struct sockaddr_in);
-    memcpy((void*)&resolved.addr, addr->ai_addr, resolved.addrLen);
+    memcpy(&resolved.addr, addr->ai_addr, resolved.addrLen);
   } else if (addr->ai_family == AF_INET6) {
     // IPv6
     resolved.family = AF_INET6;
     resolved.addrLen = sizeof(struct sockaddr_in6);
-    memcpy((void*)&resolved.addr, addr->ai_addr, resolved.addrLen);
+    memcpy(&resolved.addr, addr->ai_addr, resolved.addrLen);
   } else {
     freeaddrinfo(res);
     throw std::runtime_error("Unsupported address family");
