@@ -19,7 +19,7 @@ bool isIpAddress(const std::string& hostname,
     resolved.family = AF_INET;
     ipv4Addr.sin_family = AF_INET;
     resolved.addrLen = sizeof(struct sockaddr_in);
-    memcpy(&resolved.addr, &ipv4Addr, resolved.addrLen);
+    memcpy((void*)&resolved.addr, &ipv4Addr, resolved.addrLen);
     return true;
   }
 
@@ -28,7 +28,7 @@ bool isIpAddress(const std::string& hostname,
     resolved.family = AF_INET6;
     ipv6Addr.sin6_family = AF_INET6;
     resolved.addrLen = sizeof(struct sockaddr_in6);
-    memcpy(&resolved.addr, &ipv6Addr, resolved.addrLen);
+    memcpy((void*)&resolved.addr, &ipv6Addr, resolved.addrLen);
     return true;
   }
 
