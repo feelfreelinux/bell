@@ -51,44 +51,6 @@ class UDPSocket : public bell::Socket {
       throw std::runtime_error("Socket creation failed");
     }
 
-<<<<<<< Updated upstream
-    // Set socket options (TOS, buffer size, etc.)
-    int iptos = 0x10;
-    if (setsockopt(sockFd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos)) < 0) {
-      BELL_LOG(error, "udp", "Cannot set IP_TOS for UDP socket");
-    }
-
-#ifdef __APPLE__
-    int nt = NET_SERVICE_TYPE_VO;
-    if (setsockopt(sockFd, SOL_SOCKET, SO_NET_SERVICE_TYPE, &nt, sizeof(nt)) <
-        0) {
-      BELL_LOG(error, "udp", "Cannot set SO_NET_SERVICE_TYPE for UDP socket");
-    }
-#endif
-
-    int sndBufSize = 16 * 1024;
-    if (setsockopt(sockFd, SOL_SOCKET, SO_SNDBUF, &sndBufSize, sizeof(int)) ==
-        -1) {
-      BELL_LOG(error, "udp", "Setting send buffer size failed");
-=======
-    // Set up destination address
-    memset(&addr, 0, sizeof(addr));
-    if (isIpAddress) {
-      if (addr_ipv4.sin_family == AF_INET) {
-        addr = addr_ipv4;  // Use IPv4 address
-      } else if (addr_ipv6.sin6_family == AF_INET6) {
-        memcpy(&addr, &addr_ipv6, sizeof(addr_ipv6));  // Use IPv6 address
-      }
-    } else {
-      // Domain name was resolved, use the resolved address
-      addr.sin_family = AF_INET;
-      addr.sin_addr =
-          reinterpret_cast<struct sockaddr_in*>(resolveAddr->ai_addr)->sin_addr;
-      addr.sin_port = htons(port);
-      freeaddrinfo(resolveAddr);
->>>>>>> Stashed changes
-    }
-
     isClosed = false;
   }
 
