@@ -67,6 +67,26 @@ struct AudioParams {
     return channels * (static_cast<int>(bitwidth) / 8) * frames;
   }
 
+  /**
+   * @brief Converts bytes to audio frames at given parameters
+   *
+   * @param bytes bytes of audio stream
+   * @return frames that can be fit in the provided bytes
+   */
+  inline int64_t bytesToFrames(int64_t bytes) {
+    return bytes / (channels * (static_cast<int>(bitwidth) / 8));
+  }
+
+  /**
+   * @brief Converts frames to milliseconds at given parameters
+   *
+   * @param frames frames of audio stream
+   * @return milliseconds that can be fit in the provided frames
+   */
+  inline int64_t framesToMilliseconds(int64_t frames) {
+    return frames * 1000 / static_cast<uint32_t>(sampleRate);
+  }
+
   bool operator!=(const AudioParams& other) const {
     return (bitwidth != other.bitwidth) || (sampleRate != other.sampleRate) ||
            (channels != other.channels);
