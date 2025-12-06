@@ -20,7 +20,8 @@ class BellHTTPServer : public CivetHandler {
  public:
   BellHTTPServer(int serverPort);
   ~BellHTTPServer();
-
+  BellHTTPServer(int serverPort,
+                 const std::vector<std::pair<std::string, std::string>>& opts);
   enum class WSState { CONNECTED, READY, CLOSED };
 
   struct HTTPResponse {
@@ -88,6 +89,8 @@ class BellHTTPServer : public CivetHandler {
   void registerWS(const std::string&, WSDataHandler dataHandler,
                   WSStateHandler stateHandler);
 
+  void unregisterEndpoint(const std::string& url);
+
   static std::unordered_map<std::string, std::string> extractParams(
       struct mg_connection* conn);
 
@@ -105,6 +108,7 @@ class BellHTTPServer : public CivetHandler {
 
   bool handleGet(CivetServer* server, struct mg_connection* conn);
   bool handlePost(CivetServer* server, struct mg_connection* conn);
+  bool handleHead(CivetServer* server, struct mg_connection* conn) override;
 };
 
 }  // namespace bell
