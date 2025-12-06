@@ -215,6 +215,7 @@ mg_static_assert(sizeof(void *) >= sizeof(int), "data type size check");
 
 #define NI_NUMERICHOST    (1)
 #define EAI_OVERFLOW 14
+#define MAX_WORKER_THREADS (5)
 
 int getnameinfo(const struct sockaddr *sa, socklen_t salen,
 		    char *host, socklen_t hostlen,
@@ -248,7 +249,7 @@ int getnameinfo(const struct sockaddr *sa, socklen_t salen,
 }
 
 
-#define HTTP_ESP_STACK (1024 * 18)
+#define HTTP_ESP_STACK (1024 * 4)
 
 #endif
 
@@ -2017,6 +2018,7 @@ enum {
 	LINGER_TIMEOUT,
 	CONNECTION_QUEUE_SIZE,
 	LISTEN_BACKLOG_SIZE,
+	THREAD_STACK_SIZE,
 #if defined(__linux__)
 	ALLOW_SENDFILE_CALL,
 #endif
@@ -2166,6 +2168,7 @@ static const struct mg_option config_options[] = {
     {"linger_timeout_ms", MG_CONFIG_TYPE_NUMBER, NULL},
     {"connection_queue", MG_CONFIG_TYPE_NUMBER, "20"},
     {"listen_backlog", MG_CONFIG_TYPE_NUMBER, "200"},
+		{"thread_stack_size", MG_CONFIG_TYPE_NUMBER,    "0"},
 #if defined(__linux__)
     {"allow_sendfile_call", MG_CONFIG_TYPE_BOOLEAN, "yes"},
 #endif
@@ -2476,7 +2479,7 @@ struct mg_context {
 	pthread_t masterthreadid;            /* The master thread ID */
 	unsigned int cfg_max_worker_threads; /* How many worker-threads we are
 	                                        allowed to create, total */
-
+	size_t       cfg_thread_stack_size;  /* NEW: bytes, 0 = use default */
 	unsigned int spawned_worker_threads; /* How many worker-threads currently
 	                                        exist (modified by master thread) */
 	unsigned int
@@ -5863,10 +5866,47 @@ mg_start_thread(mg_thread_func_t func, void *param)
 #if defined(__ZEPHYR__)
 	pthread_attr_setstack(&attr, &civetweb_main_stack, ZEPHYR_STACK_SIZE);
 #elif defined(ESP_PLATFORM)
-    esp_pthread_cfg_t esp_pthread_cfg = esp_pthread_get_default_config();
+		esp_pthread_cfg_t esp_pthread_cfg = esp_pthread_get_default_config();
     esp_pthread_cfg.pin_to_core = 1;
-    ESP_ERROR_CHECK( esp_pthread_set_cfg(&esp_pthread_cfg) );
-	(void)pthread_attr_setstacksize(&attr, (HTTP_ESP_STACK + sizeof(StackType_t) - 1) / sizeof(StackType_t));
+    /* Use per-context stack size if available; else fallback to default macro */
+    size_t _stk = 0;
+    /* Try to derive ctx from param: workers get mg_connection*, master gets ctx */
+    struct mg_context *_ctx_guess = NULL;
+    if (param) {
+        struct mg_connection *pconn = (struct mg_connection *)param;
+        /* If it “looks like” an mg_connection with a phys_ctx, use that */
+        if (pconn && pconn->phys_ctx) {
+            _ctx_guess = pconn->phys_ctx;
+        } else {
+            _ctx_guess = (struct mg_context *)param;
+        }
+    }
+		size_t port = ntohs(USA_IN_PORT_UNSAFE(&(_ctx_guess->listening_sockets[0].lsa)));
+
+		char thread_name[24];
+				switch (_ctx_guess->context_type) {
+		case CONTEXT_SERVER:
+		sprintf(thread_name, "civet-http-server-%d", port);
+		break;
+		case CONTEXT_HTTP_CLIENT:
+		sprintf(thread_name, "civet-http-client-%d", port);
+		break;
+		case CONTEXT_WS_CLIENT:
+		sprintf(thread_name, "civet-ws-client-%d", port);
+		break;
+		default:
+		sprintf(thread_name, "civet-%d", port);
+		break;
+		}
+
+		esp_pthread_cfg.thread_name = thread_name;
+    ESP_ERROR_CHECK(esp_pthread_set_cfg(&esp_pthread_cfg));
+    if (_ctx_guess && _ctx_guess->cfg_thread_stack_size > 0) {
+        _stk = _ctx_guess->cfg_thread_stack_size;
+    } else {
+        _stk = (HTTP_ESP_STACK + sizeof(StackType_t) - 1) / sizeof(StackType_t);
+    }
+    (void)pthread_attr_setstacksize(&attr, _stk);
 #elif defined(USE_STACK_SIZE) && (USE_STACK_SIZE > 1)
 	/* Compile-time option to control stack size,
 	 * e.g. -DUSE_STACK_SIZE=16384 */
@@ -5878,8 +5918,55 @@ mg_start_thread(mg_thread_func_t func, void *param)
 
 	return result;
 }
+static inline void log_tid(pthread_t t) {
+    fprintf(stderr, "[tid=%p] ", (void*)t);
+}
+typedef void *(*thread_fn)(void *);
 
+struct start_trampoline_args {
+    thread_fn fn;
+    void     *arg;
+};
 
+static void cleanup_log(void *unused) {
+    (void)unused;
+    fprintf(stderr, "[thread] ");
+    log_tid(pthread_self());
+    fprintf(stderr, "leaving (canceled or pthread_exit)\n");
+}
+
+/* Wrapper that logs start/end, and also logs if the thread is canceled */
+/* Wrapper that logs start/end, and also logs if the thread is canceled */
+static void *start_trampoline(void *p) {
+    struct start_trampoline_args *st = (struct start_trampoline_args *)p;
+    thread_fn fn = st->fn;
+    void *arg    = st->arg;
+    mg_free(st);
+
+    fprintf(stderr, "[thread] "); log_tid(pthread_self()); fprintf(stderr, "started\n");
+
+    void *ret_value = fn(arg);
+
+    fprintf(stderr, "[thread] "); log_tid(pthread_self()); fprintf(stderr, "finished\n");
+    return ret_value;
+}
+/* Drop-in replacement for pthread_create that installs the wrapper */
+int pthread_create_logged(pthread_t *thread,
+                          const pthread_attr_t *attr,
+                          void *(*start_routine)(void *),
+                          void *arg)
+{
+    struct start_trampoline_args *st =
+        (struct start_trampoline_args *)mg_malloc(sizeof *st);
+    if (!st) return ENOMEM;
+
+    st->fn  = start_routine;
+    st->arg = arg;
+
+    int rc = pthread_create(thread, attr, start_trampoline, st);
+    if (rc != 0) mg_free(st); /* if thread creation failed, avoid leak */
+    return rc;
+}
 /* Start a thread storing the thread context. */
 static int
 mg_start_thread_with_id(mg_thread_func_t func,
@@ -5899,15 +5986,52 @@ mg_start_thread_with_id(mg_thread_func_t func,
 #elif defined(ESP_PLATFORM)
     esp_pthread_cfg_t esp_pthread_cfg = esp_pthread_get_default_config();
     esp_pthread_cfg.pin_to_core = 1;
-    ESP_ERROR_CHECK( esp_pthread_set_cfg(&esp_pthread_cfg) );
-	(void)pthread_attr_setstacksize(&attr, (HTTP_ESP_STACK + sizeof(StackType_t) - 1) / sizeof(StackType_t));
+    /* Use per-context stack size if available; else fallback to default macro */
+    size_t _stk = 0;
+    /* Try to derive ctx from param: workers get mg_connection*, master gets ctx */
+    struct mg_context *_ctx_guess = NULL;
+    if (param) {
+        struct mg_connection *pconn = (struct mg_connection *)param;
+        /* If it “looks like” an mg_connection with a phys_ctx, use that */
+        if (pconn && pconn->phys_ctx) {
+            _ctx_guess = pconn->phys_ctx;
+        } else {
+            _ctx_guess = (struct mg_context *)param;
+        }
+    }
+		size_t port = ntohs(USA_IN_PORT_UNSAFE(&(_ctx_guess->listening_sockets[0].lsa)));
+
+		char thread_name[24];
+				switch (_ctx_guess->context_type) {
+		case CONTEXT_SERVER:
+		sprintf(thread_name, "civet-http-server-%d", port);
+		break;
+		case CONTEXT_HTTP_CLIENT:
+		sprintf(thread_name, "civet-http-client-%d", port);
+		break;
+		case CONTEXT_WS_CLIENT:
+		sprintf(thread_name, "civet-ws-client-%d", port);
+		break;
+		default:
+		sprintf(thread_name, "civet-%d", port);
+		break;
+		}
+
+		esp_pthread_cfg.thread_name = thread_name;
+    ESP_ERROR_CHECK(esp_pthread_set_cfg(&esp_pthread_cfg));
+    if (_ctx_guess && _ctx_guess->cfg_thread_stack_size > 0) {
+        _stk = _ctx_guess->cfg_thread_stack_size;
+    } else {
+        _stk = (HTTP_ESP_STACK + sizeof(StackType_t) - 1) / sizeof(StackType_t);
+    }
+    (void)pthread_attr_setstacksize(&attr, _stk);
 #elif defined(USE_STACK_SIZE) && (USE_STACK_SIZE > 1)
 	/* Compile-time option to control stack size,
 	 * e.g. -DUSE_STACK_SIZE=16384 */
 	(void)pthread_attr_setstacksize(&attr, USE_STACK_SIZE);
 #endif /* defined(USE_STACK_SIZE) && USE_STACK_SIZE > 1 */
 
-	result = pthread_create(&thread_id, &attr, func, param);
+	result = pthread_create_logged(&thread_id, &attr, func, param);
 	pthread_attr_destroy(&attr);
 	if ((result == 0) && (threadidptr != NULL)) {
 		*threadidptr = thread_id;
@@ -21277,6 +21401,13 @@ mg_start2(struct mg_init_data *init, struct mg_error_data *error)
 	}
 	ctx->sq_size = itmp;
 #endif
+
+    /* Thread stack size (bytes, 0 = default) */
+    itmp = atoi(ctx->dd.config[THREAD_STACK_SIZE]);
+    if (itmp < 0) {
+        itmp = 0;
+    }
+    ctx->cfg_thread_stack_size = (size_t)itmp;
 
 	/* Worker thread count option */
 	workerthreadcount = atoi(ctx->dd.config[NUM_THREADS]);
