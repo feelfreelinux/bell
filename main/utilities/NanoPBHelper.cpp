@@ -16,25 +16,40 @@ static bool vectorWrite(pb_ostream_t* stream, const pb_byte_t* buf,
 
   return true;
 }
-
+static bool vector_write(pb_ostream_t* stream, const pb_byte_t* buf,
+                         size_t count) {
+  auto* out = static_cast<std::vector<uint8_t>*>(stream->state);
+  if (!buf)
+    return true;  // sizing pass
+  out->insert(out->end(), buf, buf + count);
+  stream->bytes_written += count;
+  return true;
+}
 pb_ostream_t pb_ostream_from_vector(std::vector<uint8_t>& vec) {
   pb_ostream_t stream;
 
-  stream.callback = &vectorWrite;
+  stream.callback = &vector_write;
   stream.state = &vec;
-  stream.max_size = 100000;
+  stream.max_size = SIZE_MAX;
   stream.bytes_written = 0;
 
   return stream;
 }
 
-std::vector<uint8_t> pbEncode(const pb_msgdesc_t* fields,
-                              const void* src_struct) {
-  std::vector<uint8_t> vecData(0);
-  pb_ostream_t stream = pb_ostream_from_vector(vecData);
-  pb_encode(&stream, fields, src_struct);
-
-  return vecData;
+std::vector<uint8_t> pbEncode(const pb_msgdesc_t* fields, const void* src) {
+  size_t enc_size = 0;
+  if (!pb_get_encoded_size(&enc_size, fields, src)) {
+    printf("pb_get_encoded_size failed\n");
+    return {};
+  }
+  std::vector<uint8_t> out(enc_size);
+  pb_ostream_t s = pb_ostream_from_buffer(out.data(), out.size());
+  if (!pb_encode(&s, fields, src)) {
+    printf("pb_encode failed: %s\n", PB_GET_ERROR(&s));
+    return {};
+  }
+  out.resize(s.bytes_written);
+  return out;
 }
 
 void packString(char*& dst, std::string stringToPack) {
@@ -48,6 +63,30 @@ pb_bytes_array_t* vectorToPbArray(const std::vector<uint8_t>& vectorToPack) {
       static_cast<pb_bytes_array_t*>(malloc(PB_BYTES_ARRAY_T_ALLOCSIZE(size)));
   result->size = size;
   memcpy(result->bytes, vectorToPack.data(), size);
+  return result;
+}
+pb_bytes_array_t* stringToPbArray(const std::string& stringToPack) {
+  auto size = static_cast<pb_size_t>(stringToPack.size());
+  auto result =
+      static_cast<pb_bytes_array_t*>(malloc(PB_BYTES_ARRAY_T_ALLOCSIZE(size)));
+  result->size = size;
+  memcpy(result->bytes, stringToPack.data(), size);
+  return result;
+}
+pb_bytes_array_t* charArrayToPbArray(const char* stringToPack) {
+  auto size = static_cast<pb_size_t>(strlen(stringToPack));
+  auto result =
+      static_cast<pb_bytes_array_t*>(malloc(PB_BYTES_ARRAY_T_ALLOCSIZE(size)));
+  result->size = size;
+  memcpy(result->bytes, stringToPack, size);
+  return result;
+}
+pb_bytes_array_t* dataToPbArray(const uint8_t* dataToPack, size_t size) {
+  auto size2 = static_cast<pb_size_t>(size);
+  auto result =
+      static_cast<pb_bytes_array_t*>(malloc(PB_BYTES_ARRAY_T_ALLOCSIZE(size2)));
+  result->size = size2;
+  memcpy(result->bytes, dataToPack, size2);
   return result;
 }
 
@@ -70,7 +109,12 @@ void pbPutBytes(const std::vector<uint8_t>& data, pb_bytes_array_t& dst) {
 std::vector<uint8_t> pbArrayToVector(pb_bytes_array_t* pbArray) {
   return std::vector<uint8_t>(pbArray->bytes, pbArray->bytes + pbArray->size);
 }
-
+std::vector<uint8_t> pbArrayTToVector(const pb_bytes_array_t* a) {
+  if (!a)
+    return {};
+  const auto* b = a->bytes;
+  return std::vector<uint8_t>(b, b + a->size);
+}
 const char* pb_encode_to_string(const pb_msgdesc_t* fields, const void* data) {
   size_t len;
   pb_get_encoded_size(&len, fields, data);
