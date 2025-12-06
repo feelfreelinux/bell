@@ -7,9 +7,9 @@
 #include <iomanip>
 #include <iostream>
 #include <string>  // for string, basic_string
-#include "WrappedSemaphore.h"
+#include "WrappedMutex.h"
 
-static bell::WrappedSemaphore logMutex(1, 1);
+extern bell::WrappedMutex logMutex;
 namespace bell {
 
 class AbstractLogger {
@@ -62,7 +62,6 @@ class BellLogger : public bell::AbstractLogger {
   void logMessage(const char* level, const std::string& filename, int line,
                   const std::string& submodule, const char* color,
                   const char* format, va_list args) {
-    logMutex.twait(200);  // Ensure exclusive access for logging
 
     printTimestamp();     // Print timestamp if enabled
     printf("%s", color);  // Set the desired color for this log level
@@ -79,8 +78,6 @@ class BellLogger : public bell::AbstractLogger {
 
     printf("\n");
     printf(colorReset);  // Reset color for future logs
-
-    logMutex.give();  // Release exclusive access
   }
 
   void printTimestamp() {
@@ -135,8 +132,15 @@ void enableSubmoduleLogging();
 void enableTimestampLogging(bool local = false);
 }  // namespace bell
 
+// Thread-safe, self-initializing logging macro.
+// Locks the global mutex for the duration of the log call,
+// and auto-installs a default logger on first use.
 #define BELL_LOG(type, ...)                                        \
   do {                                                             \
+    bell::LockGuard _bell_log_guard(::logMutex);                   \
+    if (!bell::bellGlobalLogger) {                                 \
+      bell::setDefaultLogger();                                    \
+    }                                                              \
     bell::bellGlobalLogger->type(__FILE__, __LINE__, __VA_ARGS__); \
   } while (0)
 
