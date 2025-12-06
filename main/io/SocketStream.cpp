@@ -7,7 +7,24 @@
 #include "TLSSocket.h"  // for TLSSocket
 
 using namespace bell;
-
+ssize_t SocketStream::readSome(char* dst, size_t len) {
+  auto* sb = rdbuf();
+  if (!sb)
+    throw std::runtime_error("No streambuf");
+  return sb->readSome(dst, len);
+}
+ssize_t SocketStream::writeSome(const char* src, size_t len) {
+  auto* sb = rdbuf();
+  if (!sb)
+    throw std::runtime_error("No streambuf");
+  return sb->writeSome(src, len);
+}
+size_t SocketStream::available() {
+  auto* sb = rdbuf();
+  if (!sb)
+    throw std::runtime_error("No streambuf");
+  return sb->available();
+}
 int SocketBuffer::open(const std::string& hostname, int port, bool isSSL) {
   if (internalSocket != nullptr) {
     close();
@@ -30,7 +47,40 @@ int SocketBuffer::close() {
   }
   return 0;
 }
+ssize_t SocketBuffer::readSome(char* dst, size_t len) {
+  if (!internalSocket)
+    throw std::runtime_error("Internal socket is null");
+  if (!dst && len)
+    throw std::invalid_argument("Destination buffer is null");
+  return internalSocket->read(reinterpret_cast<uint8_t*>(dst), len);
+}
 
+ssize_t SocketBuffer::writeSome(const char* src, size_t len) {
+  if (!internalSocket)
+    throw std::runtime_error("Internal socket is null");
+  if (!src && len)
+    throw std::invalid_argument("Source buffer is null");
+  return internalSocket->write(reinterpret_cast<const uint8_t*>(src), len);
+}
+
+size_t SocketBuffer::available() {
+  if (!internalSocket)
+    throw std::runtime_error("Internal socket is null");
+  return internalSocket->poll();
+}
+std::streamsize SocketBuffer::showmanyc() {
+  // bytes already buffered in get area
+  const std::streamsize bn = egptr() - gptr();
+  if (bn > 0)
+    return bn;
+
+  // If TLS/socket reports extra bytes available, tell iostream about it.
+  if (internalSocket) {
+    return static_cast<std::streamsize>(
+        internalSocket->poll());  // TLS: mbedtls_ssl_get_bytes_avail
+  }
+  return 0;
+}
 int SocketBuffer::sync() {
   if (!internalSocket) {
     throw std::runtime_error("Internal socket is null");

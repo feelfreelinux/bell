@@ -3,48 +3,82 @@
 namespace bell {
 
 #ifdef BELL_DISABLE_REGEX
+static bool starts_with(const char* s, const char* p) {
+  while (*p && *s && *p == *s) {
+    ++p;
+    ++s;
+  }
+  return *p == '\0';
+}
+
 void URLParser::parse(const char* url, std::vector<std::string>& match) {
-  match[0] = url;
-  char scratch[512];
-
-  /* Parsing the following (http|https://[host][/path][?query]#hash] as in regex 
-     * below. This needs to be changed if you update that regex */
-
-  // get the schema
-  if (sscanf(url, "%[^:]:/", scratch) > 0)
-    match[1] = scratch;
-
-  // get the host
-  if (sscanf(url, "htt%*[^:]://%512[^/#?]", scratch) > 0)
-    match[2] = scratch;
-
-  // get the path
-  url = strstr(url, match[2].c_str()) + match[2].size();
-  if (sscanf(url, "/%512[^?]", scratch) > 0)
-    match[3] = scratch;
-  else if (*url && *url != '?' && *url != '#')
-    url++;
-
-  // get the query
-  if (match[3].size())
-    url += match[3].size() + 1;
-  if (sscanf(url, "?%512[^#]", scratch) > 0)
-    match[4] = scratch;
-
-  // get the hash
-  if (match[4].size())
-    url += match[4].size() + 1;
-  if (sscanf(url, "#%512s", scratch) > 0)
-    match[5] = scratch;
-
-  // fix the acquired items
-  match[3] = "/" + match[3];
-  if (match[4].size())
-    match[4] = "?" + match[4];
-
-  // need at least schema and host
-  if (match[1].size() == 0 || match[2].size() == 0)
+  // [0] full, [1] scheme, [2] host[:port], [3] path, [4] ?query, [5] #hash
+  match.assign(6, std::string());
+  if (!url || !*url) {
     match.clear();
+    return;
+  }
+  match[0] = url;
+
+  const char* p = url;
+
+  // scheme
+  const char* colon = strchr(p, ':');
+  if (colon) {
+    match[1].assign(p, colon - p);
+    p = colon + 1;
+  }
+
+  // "//" authority
+  if (starts_with(p, "//")) {
+    p += 2;
+    // authority runs until '/', '?', or '#'
+    const char* auth_end = p;
+    while (*auth_end && *auth_end != '/' && *auth_end != '?' &&
+           *auth_end != '#')
+      ++auth_end;
+    if (auth_end == p) {
+      match.clear();
+      return;
+    }
+    match[2].assign(p, auth_end - p);
+    p = auth_end;
+  }
+
+  // path
+  if (*p == '/') {
+    const char* path_end = p;
+    while (*path_end && *path_end != '?' && *path_end != '#')
+      ++path_end;
+    match[3].assign(p, path_end - p);
+    p = path_end;
+  } else {
+    match[3] = "/";  // RFC: empty path ⇒ "/"
+  }
+
+  // query
+  if (*p == '?') {
+    const char* q = ++p;
+    while (*p && *p != '#')
+      ++p;
+    match[4] = "?";
+    match[4].append(q, p - q);
+  }
+
+  // fragment
+  if (*p == '#') {
+    ++p;
+    match[5] = "#";
+    match[5].append(p);
+  }
+
+  // minimal validity
+  if (match[1].empty())
+    match[1] = "http";
+  if (match[2].empty()) {
+    match.clear();
+    return;
+  }
 }
 #else
 const std::regex URLParser::urlParseRegex = std::regex(

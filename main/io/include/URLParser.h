@@ -1,6 +1,7 @@
 #pragma once
-
-#include <cstdlib>    // for strtol, size_t
+#define BELL_DISABLE_REGEX
+#include <cstdlib>  // for strtol, size_t
+#include <cstring>
 #include <regex>      // for match_results, match_results<>::value_type, sub...
 #include <stdexcept>  // for invalid_argument
 #include <string>     // for string, allocator, operator+, char_traits, oper...

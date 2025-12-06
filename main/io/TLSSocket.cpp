@@ -1,5 +1,6 @@
 #include "TLSSocket.h"
 
+#include <lwip/sockets.h>         // for close
 #include <mbedtls/ctr_drbg.h>     // for mbedtls_ctr_drbg_free, mbedtls_ctr_...
 #include <mbedtls/entropy.h>      // for mbedtls_entropy_free, mbedtls_entro...
 #include <mbedtls/error.h>        // for mbedtls_ssl_conf_authmode, mbedtls_...
@@ -15,14 +16,10 @@
 /**
  * Platform TLSSocket implementation for the mbedtls
  */
-bell::TLSSocket::TLSSocket() : isClosed(false) {
+bell::TLSSocket::TLSSocket() : isClosed(true) {
   mbedtls_net_init(&server_fd);
   mbedtls_ssl_init(&ssl);
   mbedtls_ssl_config_init(&conf);
-
-  if (bell::X509Bundle::shouldVerify()) {
-    bell::X509Bundle::attach(&conf);
-  }
 
   mbedtls_ctr_drbg_init(&ctr_drbg);
   mbedtls_entropy_init(&entropy);
@@ -37,73 +34,101 @@ bell::TLSSocket::TLSSocket() : isClosed(false) {
   }
 }
 
-void bell::TLSSocket::open(const std::string& hostUrl, uint16_t port) {
+// TLSSocket.cpp
+int bell::TLSSocket::open(const std::string& host, uint16_t port) {
   int ret =
-      mbedtls_net_connect(&server_fd, hostUrl.c_str(),
+      mbedtls_net_connect(&server_fd, host.c_str(),
                           std::to_string(port).c_str(), MBEDTLS_NET_PROTO_TCP);
   if (ret != 0) {
-    BELL_LOG(error, "http_tls", "Connection failed for %s:%d with error %d\n",
-             hostUrl.c_str(), port, ret);
-    //    throw std::runtime_error("Connection failed");
+    BELL_LOG(error, "http_tls", "net_connect %d", ret);
+    return ret;
   }
 
   ret = mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_CLIENT,
                                     MBEDTLS_SSL_TRANSPORT_STREAM,
                                     MBEDTLS_SSL_PRESET_DEFAULT);
   if (ret != 0) {
-    BELL_LOG(error, "http_tls", "SSL config setup failed: %d\n", ret);
-    throw std::runtime_error("SSL configuration failed");
+    BELL_LOG(error, "http_tls", "config %d", ret);
+    return ret;
   }
 
   if (bell::X509Bundle::shouldVerify()) {
+    bell::X509Bundle::attach(&conf);
     mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_REQUIRED);
   } else {
     mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_NONE);
   }
-
   mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
   //  mbedtls_ssl_conf_max_tls_version(&conf, MBEDTLS_SSL_VERSION_TLS1_2);
-  mbedtls_ssl_setup(&ssl, &conf);
-
-  if ((ret = mbedtls_ssl_set_hostname(&ssl, hostUrl.c_str())) != 0) {
-    throw std::runtime_error("Failed to set SSL hostname");
+  ret = mbedtls_ssl_setup(&ssl, &conf);
+  if (ret != 0) {
+    BELL_LOG(error, "http_tls", "ssl_setup %d", ret);
+    mbedtls_net_free(&server_fd);
+    return ret;  // DO NOT call handshake if setup failed
   }
 
+  ret = mbedtls_ssl_set_hostname(&ssl, host.c_str());
+  if (ret != 0) {
+    BELL_LOG(error, "http_tls", "set_hostname %d", ret);
+    mbedtls_net_free(&server_fd);
+    return ret;
+  }
   mbedtls_ssl_set_bio(&ssl, &server_fd, mbedtls_net_send, mbedtls_net_recv,
                       NULL);
-
-  // Retry the handshake a limited number of times
-  const int maxRetries = 5;
-  int retries = maxRetries;
-  while ((ret = mbedtls_ssl_handshake(&ssl)) != 0) {
-    if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-      BELL_LOG(error, "http_tls", "SSL handshake failed with error %d\n", ret);
-      throw std::runtime_error("SSL handshake failed");
+  for (int tries = 0; tries < 2; ++tries) {
+    int retries = 5;
+    while ((ret = mbedtls_ssl_handshake(&ssl)) != 0) {
+      if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
+          ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+        BELL_SLEEP_MS(10);
+        continue;
+      }
+      BELL_LOG(error, "http_tls", "handshake %d", ret);
+      if (--retries > 0) {
+        BELL_SLEEP_MS(50);
+        continue;
+      }
+      // fatal for this TCP socket: break to reconnect once
+      break;
     }
-    if (--retries <= 0) {
-      BELL_LOG(error, "http_tls", "SSL handshake retry limit reached");
-      throw std::runtime_error("SSL handshake retries exhausted");
+    if (ret == 0) {
+      isClosed = false;
+      return 0;
     }
-    BELL_SLEEP_MS(10);  // Delay between retries
+    // Reconnect TCP and try handshake again once
+    close();
+    ret = mbedtls_net_connect(&server_fd, host.c_str(),
+                              std::to_string(port).c_str(),
+                              MBEDTLS_NET_PROTO_TCP);
+    if (ret != 0) {
+      BELL_LOG(error, "http_tls", "reconnect %d", ret);
+      return ret;
+    }
+    mbedtls_ssl_session_reset(&ssl);
+    mbedtls_ssl_set_bio(&ssl, &server_fd, mbedtls_net_send, mbedtls_net_recv,
+                        NULL);
   }
-  isClosed = false;
+  return ret ? ret : 0;
 }
 
 ssize_t bell::TLSSocket::read(uint8_t* buf, size_t len) {
-  int ret;
-  do {
-    ret = mbedtls_ssl_read(&ssl, buf, len);
-  } while (ret == MBEDTLS_ERR_SSL_WANT_READ ||
-           ret == MBEDTLS_ERR_SSL_WANT_WRITE);
+  int ret = mbedtls_ssl_read(&ssl, buf, len);
+
+  if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+    close();
+    return 0;
+  }
+  if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE)
+    return 0;  // <- was -EAGAIN: treat as "no data yet"
+  if (ret == 0) {
+    close();
+    return 0;
+  }  // orderly close from peer
   if (ret < 0) {
-    char error_buf[100];
-    mbedtls_strerror(ret, error_buf, sizeof(error_buf));
-    BELL_LOG(error, "http_tls", "Error: %s\n", error_buf);
-    BELL_LOG(error, "http_tls", "Read error with code %x", ret);
-    close();  //isClosed = true;
-  } else
-    return static_cast<ssize_t>(ret);
-  return -1;
+    close();
+    return -1;
+  }  // real error
+  return static_cast<ssize_t>(ret);
 }
 
 ssize_t bell::TLSSocket::write(const uint8_t* buf, size_t len) {
@@ -119,7 +144,27 @@ ssize_t bell::TLSSocket::write(const uint8_t* buf, size_t len) {
   }
   return static_cast<ssize_t>(ret);
 }
+int bell::TLSSocket::poll_readable(
+    int timeout_ms) {  // Fast path: already-decrypted bytes waiting inside mbedTLS
+  if (mbedtls_ssl_get_bytes_avail(&ssl) > 0)
+    return 1;
 
+  // Raw socket readiness via lwIP
+  if (server_fd.fd < 0)
+    return -1;
+  fd_set rfds;
+  FD_ZERO(&rfds);
+  FD_SET(server_fd.fd, &rfds);
+
+  struct timeval tv;
+  tv.tv_sec = timeout_ms / 1000;
+  tv.tv_usec = (timeout_ms % 1000) * 1000;
+
+  int rc = lwip_select(server_fd.fd + 1, &rfds, nullptr, nullptr,
+                       (timeout_ms >= 0 ? &tv : nullptr));
+  // rc > 0: readable, 0: timeout, <0: error
+  return rc;
+}
 size_t bell::TLSSocket::poll() {
   return mbedtls_ssl_get_bytes_avail(&ssl);
 }
@@ -129,13 +174,11 @@ bool bell::TLSSocket::isOpen() {
 }
 
 void bell::TLSSocket::close() {
-  if (!isClosed) {
-    mbedtls_ssl_close_notify(&ssl);
-    mbedtls_net_free(&server_fd);
-    mbedtls_ssl_free(&ssl);
-    mbedtls_ssl_config_free(&conf);
-    mbedtls_ctr_drbg_free(&ctr_drbg);
-    mbedtls_entropy_free(&entropy);
-    isClosed = true;
-  }
+  if (isClosed)
+    return;
+  (void)mbedtls_ssl_close_notify(&ssl);
+  mbedtls_net_free(&server_fd);
+  mbedtls_net_init(&server_fd);
+  mbedtls_ssl_session_reset(&ssl);
+  isClosed = true;
 }

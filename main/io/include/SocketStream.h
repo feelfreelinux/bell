@@ -5,6 +5,7 @@
 #include <string>    // for char_traits, string
 
 #include "BellSocket.h"  // for Socket
+#include "BellUtils.h"
 
 namespace bell {
 class SocketBuffer : public std::streambuf {
@@ -28,8 +29,11 @@ class SocketBuffer : public std::streambuf {
   bool isOpen() {
     return internalSocket != nullptr && internalSocket->isOpen();
   }
-
+  ssize_t readSome(char* dst, size_t len);
+  ssize_t writeSome(const char* src, size_t len);
+  size_t available();
   ~SocketBuffer() { close(); }
+  virtual std::streamsize showmanyc() override;
 
  protected:
   virtual int sync();
@@ -65,7 +69,29 @@ class SocketStream : public std::iostream {
   }
 
   int close() { return socketBuf.close(); }
-
+  ssize_t readSome(char* dst, size_t len);
+  ssize_t writeSome(const char* src, size_t len);
+  size_t available();
+  size_t readExact(char* dst, size_t n, uint32_t idle_timeout_ms = 5000) {
+    size_t total = 0;
+    uint32_t idle = 0;
+    while (total < n) {
+      this->read(dst + total, n - total);
+      std::streamsize got = this->gcount();
+      if (got <= 0) {
+        if (!isOpen())
+          break;  // bubble up closed socket
+        BELL_SLEEP_MS(5);
+        idle += 5;
+        if (idle >= idle_timeout_ms)
+          break;
+        continue;
+      }
+      idle = 0;
+      total += size_t(got);
+    }
+    return total;  // == n on success
+  }
   bool isOpen() { return socketBuf.isOpen(); }
 };
 }  // namespace bell
