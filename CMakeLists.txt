@@ -17,7 +17,10 @@ option(BELL_DISABLE_SINKS "Disable all built-in audio sink implementations" OFF)
 # These are default OFF, as they're OS-dependent (ESP32 sinks are always enabled - no external deps)
 option(BELL_SINK_ALSA "Enable ALSA audio sink" OFF)
 option(BELL_SINK_PORTAUDIO "Enable PortAudio sink" OFF)
-
+option(BELL_SINK_VS1053 "Enable VS1053 sink" ON)
+if(BELL_SINK_VS1053)
+    set(BELL_DISABLE_CODECS ON)
+endif()
 # cJSON wrapper
 option(BELL_ONLY_CJSON "Use only cJSON, not Nlohmann")
 set(BELL_EXTERNAL_CJSON "" CACHE STRING "External cJSON library target name, optional")
@@ -68,7 +71,10 @@ message(STATUS "    Disable Fmt: ${BELL_DISABLE_FMT}")
 message(STATUS "    Disable Mqtt: ${BELL_DISABLE_MQTT}")
 message(STATUS "    Disable Regex: ${BELL_DISABLE_REGEX}")
 message(STATUS "    Disable Web server: ${BELL_DISABLE_WEBSERVER}")
-
+message(STATUS "BELL_ROOT                = ${BELL_ROOT}")
+message(STATUS "CMAKE_CURRENT_LIST_DIR   = ${CMAKE_CURRENT_LIST_DIR}")
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "CMAKE_SOURCE_DIR         = ${CMAKE_SOURCE_DIR}")
 # Include nanoPB library
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/nanopb/extra")
 find_package(Nanopb REQUIRED)
@@ -137,9 +143,9 @@ endfunction()
 
 if(ESP_PLATFORM)
     if (IDF_VERSION_MAJOR LESS_EQUAL 4)
-        list(APPEND EXTRA_LIBS idf::mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
+        list(APPEND EXTRA_LIBS idf::mdns idf::mbedtls idf::pthread idf::driver idf::lwip idf::nvs_flash)
     else()	
-        list(APPEND EXTRA_LIBS idf::espressif__mdns idf::mbedtls idf::pthread idf::driver idf::lwip)
+        list(APPEND EXTRA_LIBS idf::espressif__mdns idf::mbedtls idf::pthread idf::driver idf::lwip idf::nvs_flash idf::efuse)
     endif()
     add_definitions(-Wunused-const-variable -Wchar-subscripts -Wunused-label -Wmaybe-uninitialized -Wmisleading-indentation -Wno-stringop-overflow -Wno-error=format -Wno-format -Wno-stringop-overread -Wno-stringop-overflow)
 else()
@@ -250,31 +256,34 @@ if(NOT BELL_DISABLE_SINKS)
     set(PLATFORM "unix")
 
     if(ESP_PLATFORM)
-        set(PLATFORM "esp")
+        set(PLATFORM "esp")  
+    endif()  
+    if(BELL_SINK_VS1053)
+        file(GLOB SINK_SOURCES "${AUDIO_SINKS_DIR}/${PLATFORM}/VS1053.cpp")
+        list(APPEND EXTRA_INCLUDES "main/audio-sinks/include/${PLATFORM}/VS1053")
+    else()    
+        # Add all built-in audio sinks
+        file(GLOB SINK_SOURCES "${AUDIO_SINKS_DIR}/${PLATFORM}/*.cpp" "${AUDIO_SINKS_DIR}/${PLATFORM}/*.c")
+        list(APPEND EXTRA_INCLUDES "main/audio-sinks/include/${PLATFORM}")
+
+        # Find ALSA if required, else remove the sink
+        if(BELL_SINK_ALSA)
+            find_package(ALSA REQUIRED)
+            list(APPEND EXTERNAL_INCLUDES ${ALSA_INCLUDE_DIRS})
+            list(APPEND EXTRA_LIBS ${ALSA_LIBRARIES})
+        else()
+            list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/ALSAAudioSink.cpp")
+        endif()
+
+        # Find PortAudio if required, else remove the sink
+        if(BELL_SINK_PORTAUDIO)
+            find_package(Portaudio REQUIRED)
+            list(APPEND EXTERNAL_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
+            list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
+        else()
+            list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/PortAudioSink.cpp")
+        endif()
     endif()
-
-    # Add all built-in audio sinks
-    file(GLOB SINK_SOURCES "${AUDIO_SINKS_DIR}/${PLATFORM}/*.cpp" "${AUDIO_SINKS_DIR}/${PLATFORM}/*.c")
-    list(APPEND EXTRA_INCLUDES "main/audio-sinks/include/${PLATFORM}")
-
-    # Find ALSA if required, else remove the sink
-    if(BELL_SINK_ALSA)
-        find_package(ALSA REQUIRED)
-        list(APPEND EXTERNAL_INCLUDES ${ALSA_INCLUDE_DIRS})
-        list(APPEND EXTRA_LIBS ${ALSA_LIBRARIES})
-    else()
-        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/ALSAAudioSink.cpp")
-    endif()
-
-    # Find PortAudio if required, else remove the sink
-    if(BELL_SINK_PORTAUDIO)
-        find_package(Portaudio REQUIRED)
-        list(APPEND EXTERNAL_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
-        list(APPEND EXTRA_LIBS ${PORTAUDIO_LIBRARIES})
-    else()
-        list(REMOVE_ITEM SINK_SOURCES "${AUDIO_SINKS_DIR}/unix/PortAudioSink.cpp")
-    endif()
-
     list(APPEND SOURCES ${SINK_SOURCES})
 endif()
 

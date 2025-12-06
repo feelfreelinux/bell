@@ -6,8 +6,8 @@
 
 using namespace bell;
 
-WrappedSemaphore::WrappedSemaphore(int count) {
-  semaphoreHandle = xSemaphoreCreateCounting(count, 0);
+WrappedSemaphore::WrappedSemaphore(int maxCount, int count) {
+  semaphoreHandle = xSemaphoreCreateCounting(maxCount, count);
 }
 
 WrappedSemaphore::~WrappedSemaphore() {

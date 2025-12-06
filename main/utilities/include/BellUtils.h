@@ -4,8 +4,11 @@
 #include <stdint.h>  // for int32_t, int64_t
 #include <string.h>  // for NULL
 #ifdef _WIN32
+// Winsock must be included before windows.h
 #include <WinSock2.h>
+#include <windows.h>  // Sleep, SYSTEMTIME/FILETIME used by tv::now()
 #else
+#include <sched.h>     // for sched_yield
 #include <sys/time.h>  // for timeval, gettimeofday
 #include <unistd.h>    // for usleep
 #endif
@@ -23,8 +26,8 @@ void freeAndNull(void*& ptr);
 std::string getMacAddress();
 struct tv {
   tv() {}
-  tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec){};
-  tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec){};
+  tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec) {};
+  tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec) {};
   static tv now() {
     tv timestampNow;
 #if _WIN32
@@ -52,9 +55,7 @@ struct tv {
   int32_t sec;
   int32_t usec;
 
-  int64_t ms() {
-    return (sec * (int64_t)1000) + (usec / 1000);
-  }
+  int64_t ms() { return (sec * (int64_t)1000) + (usec / 1000); }
 
   tv operator+(const tv& other) const {
     tv result(*this);
@@ -96,12 +97,13 @@ struct tv {
 #define BELL_YIELD() taskYIELD()
 
 #elif defined(_WIN32)
+// Windows
 #define BELL_SLEEP_MS(ms) Sleep(ms)
-#define BELL_YIELD() ;
+#define BELL_YIELD() SwitchToThread()
 #else
-
-#define BELL_SLEEP_MS(ms) usleep(ms * 1000)
-#define BELL_YIELD() ;
+// POSIX (Linux/macOS)
+#define BELL_SLEEP_MS(ms) usleep((ms) * 1000)
+#define BELL_YIELD() sched_yield()
 
 #endif
 #endif

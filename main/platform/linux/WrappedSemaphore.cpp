@@ -3,8 +3,8 @@
 
 using namespace bell;
 
-WrappedSemaphore::WrappedSemaphore(int count) {
-  sem_init(&this->semaphoreHandle, 0, 0);  // eek pointer
+WrappedSemaphore::WrappedSemaphore(int maxCount, int count) {
+  sem_init(&this->semaphoreHandle, 0, count);
 }
 
 WrappedSemaphore::~WrappedSemaphore() {

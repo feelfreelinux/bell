@@ -30,19 +30,25 @@ class TLSSocket : public bell::Socket {
 
  public:
   TLSSocket();
-  ~TLSSocket() { close(); };
+  inline ~TLSSocket() {
+    mbedtls_ssl_free(&ssl);
+    mbedtls_ssl_config_free(&conf);
+    mbedtls_ctr_drbg_free(&ctr_drbg);
+    mbedtls_entropy_free(&entropy);
+  }
+  int open(const std::string& host, uint16_t port);
+  void wrapFd(int fd) {};  // @TODO: implement
 
-  void open(const std::string& host, uint16_t port);
-
-  size_t read(uint8_t* buf, size_t len);
-  size_t write(uint8_t* buf, size_t len);
+  ssize_t read(uint8_t* buf, size_t len);
+  ssize_t write(const uint8_t* buf, size_t len);
   size_t poll();
+  int poll_readable(int timeout_ms = 0);
+
   bool isOpen();
 
   void close();
   int getFd() { return server_fd.fd; }
 };
-
 }  // namespace bell
 
 #endif

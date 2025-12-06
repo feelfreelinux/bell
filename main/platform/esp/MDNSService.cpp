@@ -13,7 +13,10 @@ class implMDNSService : public MDNSService {
 
  public:
   implMDNSService(std::string type, std::string proto)
-      : type(type), proto(proto){};
+      : type(type), proto(proto) {};
+  ~implMDNSService() override {
+    esp_err_t err = mdns_service_remove(type.c_str(), proto.c_str());
+  }
 };
 
 /**
@@ -27,20 +30,12 @@ std::unique_ptr<MDNSService> MDNSService::registerService(
     int servicePort, const std::map<std::string, std::string> txtData) {
   std::vector<mdns_txt_item_t> txtItems;
   txtItems.reserve(txtData.size());
-  for (auto& data : txtData) {
-    mdns_txt_item_t item;
-    item.key = data.first.c_str();
-    item.value = data.second.c_str();
-    txtItems.push_back(item);
+  for (auto& kv : txtData) {
+    txtItems.push_back(mdns_txt_item_t{kv.first.c_str(), kv.second.c_str()});
   }
-
-  mdns_service_add(serviceName.c_str(),  /* instance_name */
-                   serviceType.c_str(),  /* service_type */
-                   serviceProto.c_str(), /* proto */
-                   servicePort,          /* port */
-                   txtItems.data(),      /* txt */
-                   txtItems.size()       /* num_items */
-  );
+  ESP_ERROR_CHECK(mdns_service_add(
+      serviceName.c_str(), serviceType.c_str(), serviceProto.c_str(),
+      static_cast<uint16_t>(servicePort), txtItems.data(), txtItems.size()));
 
   return std::make_unique<implMDNSService>(serviceType, serviceProto);
 }

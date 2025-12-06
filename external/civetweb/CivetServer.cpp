@@ -406,12 +406,12 @@ CivetServer::CivetServer(const char **options,
 		userCloseHandler = NULL;
 	}
 	callbacks.connection_close = closeHandler;
-	struct mg_init_data mg_start_init_data = {0};
+	struct mg_init_data mg_start_init_data = {};
 	mg_start_init_data.callbacks = &callbacks;
 	mg_start_init_data.user_data = this;
 	mg_start_init_data.configuration_options = options;
 
-	struct mg_error_data mg_start_error_data = {0};
+	struct mg_error_data mg_start_error_data = {};
 	char errtxtbuf[256] = {0};
 	mg_start_error_data.text = errtxtbuf;
 	mg_start_error_data.text_buffer_size = sizeof(errtxtbuf);
@@ -419,13 +419,10 @@ CivetServer::CivetServer(const char **options,
 	context = mg_start2(&mg_start_init_data, &mg_start_error_data);
 
 	if (context == NULL) {
-
 		std::string exceptionMsg =
 		    "null context when constructing CivetServer. "
 		    "Possible problem binding to port. Error: ";
 		exceptionMsg += errtxtbuf;
-
-		printf("CivetServer: %s\n", exceptionMsg.c_str());
 		throw CivetException(exceptionMsg);
 	}
 }
@@ -453,12 +450,12 @@ CivetServer::CivetServer(const std::vector<std::string> &options,
 	}
 	pointers.back() = NULL;
 
-	struct mg_init_data mg_start_init_data = {0};
+	struct mg_init_data mg_start_init_data = {};
 	mg_start_init_data.callbacks = &callbacks;
 	mg_start_init_data.user_data = this;
 	mg_start_init_data.configuration_options = &pointers[0];
 
-	struct mg_error_data mg_start_error_data = {0};
+	struct mg_error_data mg_start_error_data = {};
 	char errtxtbuf[256] = {0};
 	mg_start_error_data.text = errtxtbuf;
 	mg_start_error_data.text_buffer_size = sizeof(errtxtbuf);
@@ -564,7 +561,9 @@ CivetServer::getCookie(struct mg_connection *conn,
 	                          _cookieValue,
 	                          sizeof(_cookieValue));
 	cookieValue.clear();
-	cookieValue.append(_cookieValue);
+	if (lRead >= 0) {
+		cookieValue.append(_cookieValue);
+	}
 	return lRead;
 }
 

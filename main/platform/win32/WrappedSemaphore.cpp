@@ -2,8 +2,8 @@
 
 using namespace bell;
 
-WrappedSemaphore::WrappedSemaphore(int count) {
-  this->semaphoreHandle = CreateSemaphore(NULL, 0, count, NULL);
+WrappedSemaphore::WrappedSemaphore(int maxCount, int count) {
+  this->semaphoreHandle = CreateSemaphore(NULL, count, maxCount, NULL);
 }
 
 WrappedSemaphore::~WrappedSemaphore() {

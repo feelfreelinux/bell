@@ -35,7 +35,7 @@ mg_match_impl(const char *pat,
 	size_t i_pat = 0; /* Pattern index */
 	size_t i_str = 0; /* Pattern index */
 
-	uint8_t case_sensitive = ((mcx != NULL) ? mcx->case_sensitive : 0);
+	int case_sensitive = ((mcx != NULL) ? mcx->case_sensitive : 0); /* 0 or 1 */
 
 	while (i_pat < pat_len) {
 
@@ -47,8 +47,8 @@ mg_match_impl(const char *pat,
 				/* Advance as long as there are ? */
 				i_pat++;
 				i_str++;
-			} while ((pat[i_pat] == '?') && (str[i_str] != '\0')
-			         && (str[i_str] != '/') && (i_pat < pat_len));
+			} while ((i_pat < pat_len) && (pat[i_pat] == '?')
+			         && (str[i_str] != '\0') && (str[i_str] != '/'));
 
 			/* If we have a match context, add the substring we just found */
 			if (mcx) {
@@ -68,11 +68,11 @@ mg_match_impl(const char *pat,
 
 		/* Pattern * or ** matches multiple characters */
 		if (pat[i_pat] == '*') {
-			size_t len; /* lenght matched by "*" or "**" */
+			size_t len; /* length matched by "*" or "**" */
 			ptrdiff_t ret;
 
 			i_pat++;
-			if ((pat[i_pat] == '*') && (i_pat < pat_len)) {
+			if ((i_pat < pat_len) && (pat[i_pat] == '*')) {
 				/* Pattern ** matches all */
 				i_pat++;
 				len = strlen(str + i_str);
@@ -86,7 +86,7 @@ mg_match_impl(const char *pat,
 				if (mcx) {
 					match_context_push(str + i_str, len, mcx);
 				}
-				return (i_str + len);
+				return ((ptrdiff_t)(i_str + len));
 			}
 
 			/* This loop searches for the longest possible match */
@@ -102,7 +102,7 @@ mg_match_impl(const char *pat,
 				if (mcx) {
 					match_context_push(str + i_str, len, mcx);
 				}
-				return (i_str + ret + len);
+				return ((ptrdiff_t)i_str + ret + (ptrdiff_t)len);
 			}
 
 			return -1;

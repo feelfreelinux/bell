@@ -218,7 +218,7 @@ std::vector<uint8_t> CryptoMbedTLS::generateVectorWithRandomData(
   mbedtls_entropy_context entropy;
   mbedtls_ctr_drbg_context ctrDrbg;
   // Personification string
-  const char* pers = "cspotGen";
+  const char* pers = "spotifyGen";
 
   // init entropy and random num generator
   mbedtls_entropy_init(&entropy);

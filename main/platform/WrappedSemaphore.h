@@ -27,7 +27,7 @@ class WrappedSemaphore {
 #endif
 
  public:
-  WrappedSemaphore(int maxVal = 200);
+  WrappedSemaphore(int maxVal = 200, int val = 0);
   ~WrappedSemaphore();
 
   int wait();

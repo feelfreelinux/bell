@@ -1,22 +1,23 @@
 #ifndef BELL_TASK_H
 #define BELL_TASK_H
 
+#include <atomic>
+#include <cstdint>
 #include <string>
-
+#include "BellUtils.h"
 #ifdef ESP_PLATFORM
+#include <esp_heap_caps.h>
 #include <esp_pthread.h>
 #include <esp_task.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/timers.h>
 #elif _WIN32
-#include <winsock2.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #else
 #include <pthread.h>
 #endif
-
-#include <iostream>
-#include <string>
 
 namespace bell {
 class Task {
@@ -32,16 +33,22 @@ class Task {
     this->runOnPSRAM = runOnPSRAM;
 #ifdef ESP_PLATFORM
     this->xStack = NULL;
-    this->priority = CONFIG_ESP32_PTHREAD_TASK_PRIO_DEFAULT + priority;
+    this->priority = priority;
     if (this->priority <= ESP_TASK_PRIO_MIN)
       this->priority = ESP_TASK_PRIO_MIN + 1;
     if (runOnPSRAM) {
-      this->xStack = (StackType_t*)heap_caps_malloc(
-          this->stackSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      const size_t stack_words =
+          (this->stackSize + sizeof(StackType_t) - 1) / sizeof(StackType_t);
+      this->xStack =
+          (StackType_t*)heap_caps_malloc(stack_words * sizeof(StackType_t),
+                                         MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     }
 #endif
   }
   virtual ~Task() {
+    while (!isRunning.empty()) {
+      BELL_SLEEP_MS(10);
+    };
 #ifdef ESP_PLATFORM
     if (xStack)
       heap_caps_free(xStack);
@@ -50,11 +57,26 @@ class Task {
 
   bool startTask() {
 #ifdef ESP_PLATFORM
+    const size_t stack_words =
+        (this->stackSize + sizeof(StackType_t) - 1) / sizeof(StackType_t);
     if (runOnPSRAM) {
-      xTaskBuffer = (StaticTask_t*)heap_caps_malloc(
-          sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+      if (!xStack) {
+        xStack =
+            (StackType_t*)heap_caps_malloc(stack_words * sizeof(StackType_t),
+                                           MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (!xStack) {
+          printf("[Task %s] PSRAM stack alloc failed\n", TASK.c_str());
+          return false;
+        }
+      }
+      xTaskBuffer = (StaticTask_t*)heap_caps_calloc(
+          1, sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+      if (!xTaskBuffer) {
+        printf("[Task %s] Internal DRAM alloc for TCB failed\n", TASK.c_str());
+        return false;  // <- prevents the assert
+      }
       return (xTaskCreateStaticPinnedToCore(
-                  taskEntryFuncPSRAM, this->TASK.c_str(), this->stackSize, this,
+                  taskEntryFuncPSRAM, this->TASK.c_str(), stack_words, this,
                   this->priority, xStack, xTaskBuffer, this->core) != NULL);
     } else {
       printf("task on internal %s", this->TASK.c_str());
@@ -89,6 +111,7 @@ class Task {
 #else
   pthread_t thread;
 #endif
+  std::vector<bool> isRunning;
 #ifdef ESP_PLATFORM
   int priority;
   StaticTask_t* xTaskBuffer;
@@ -96,6 +119,7 @@ class Task {
 
   static void taskEntryFuncPSRAM(void* This) {
     Task* self = (Task*)This;
+    self->isRunning.push_back(true);
     self->runTask();
 
     // TCB are cleanup in IDLE task, so give it some time
@@ -106,13 +130,15 @@ class Task {
                        xTimerDelete(xTimer, portMAX_DELAY);
                      });
     xTimerStart(timer, portMAX_DELAY);
-
+    self->isRunning.pop_back();
     vTaskDelete(NULL);
   }
 #endif
 
   static void* taskEntryFunc(void* This) {
+    ((Task*)This)->isRunning.push_back(true);
     ((Task*)This)->runTask();
+    ((Task*)This)->isRunning.pop_back();
     return NULL;
   }
 };

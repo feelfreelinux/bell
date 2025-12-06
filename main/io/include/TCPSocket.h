@@ -36,18 +36,17 @@ class TCPSocket : public bell::Socket {
   bool isClosed = true;
 
  public:
-  TCPSocket(){};
+  TCPSocket() {};
   ~TCPSocket() { close(); };
 
   int getFd() { return sockFd; }
 
-  void open(const std::string& host, uint16_t port) {
+  int open(const std::string& host, uint16_t port) {
     int err;
     int domain = AF_INET;
     int socketType = SOCK_STREAM;
 
-    struct addrinfo hints {
-    }, *addr;
+    struct addrinfo hints{}, *addr;
     //fine-tune hints according to which socket you want to open
     hints.ai_family = domain;
     hints.ai_socktype = socketType;
@@ -61,35 +60,29 @@ class TCPSocket : public bell::Socket {
     sprintf(portStr, "%u", port);
     err = getaddrinfo(host.c_str(), portStr, &hints, &addr);
     if (err != 0) {
-      throw std::runtime_error("Resolve failed");
+      BELL_LOG(error, "http", "getaddrinfo failed: %s", strerror(err));
+      return err;
     }
 
     sockFd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
-    err = connect(sockFd, addr->ai_addr, addr->ai_addrlen);
-    if (err < 0) {
-      close();
-      BELL_LOG(error, "http", "Could not connect to %s. Error %d", host.c_str(),
-               errno);
-      throw std::runtime_error("Resolve failed");
-    }
-
     int flag = 1;
-    setsockopt(sockFd,       /* socket affected */
-               IPPROTO_TCP,  /* set option at TCP level */
-               TCP_NODELAY,  /* name of option */
-               (char*)&flag, /* the cast is historical cruft */
-               sizeof(int)); /* length of option value */
+    err = setsockopt(sockFd,       /* socket affected */
+                     IPPROTO_TCP,  /* set option at TCP level */
+                     TCP_NODELAY,  /* name of option */
+                     (char*)&flag, /* the cast is historical cruft */
+                     sizeof(int)); /* length of option value */
 
     freeaddrinfo(addr);
     isClosed = false;
+    return err;
   }
 
-  size_t read(uint8_t* buf, size_t len) {
+  ssize_t read(uint8_t* buf, size_t len) {
     return recv(sockFd, (char*)buf, len, 0);
   }
 
-  size_t write(uint8_t* buf, size_t len) {
+  ssize_t write(const uint8_t* buf, size_t len) {
     return send(sockFd, (char*)buf, len, 0);
   }
 
@@ -103,9 +96,7 @@ class TCPSocket : public bell::Socket {
 #endif
     return value;
   }
-  bool isOpen() {
-    return !isClosed;
-  }
+  bool isOpen() { return !isClosed; }
 
   void close() {
     if (!isClosed) {

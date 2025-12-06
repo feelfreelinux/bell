@@ -1,6 +1,7 @@
 #include "BellHTTPServer.h"
 
 #include <string.h>   // for memcpy
+#include <atomic>     // for atomic
 #include <cassert>    // for assert
 #include <exception>  // for exception
 #include <mutex>      // for scoped_lock
@@ -13,6 +14,7 @@
 using namespace bell;
 
 std::mutex BellHTTPServer::initMutex;
+static std::atomic<int> s_civet_users{0};
 
 class WebSocketHandler : public CivetWebSocketHandler {
  public:
@@ -24,7 +26,6 @@ class WebSocketHandler : public CivetWebSocketHandler {
     this->dataHandler = dataHandler;
     this->stateHandler = stateHandler;
   }
-
   virtual bool handleConnection(CivetServer* server,
                                 struct mg_connection* conn) {
     this->stateHandler(conn, BellHTTPServer::WSState::CONNECTED);
@@ -49,8 +50,9 @@ class WebSocketHandler : public CivetWebSocketHandler {
     return true;
   }
 
-  virtual void handleClose(CivetServer* server, struct mg_connection* conn) {
-    stateHandler(conn, BellHTTPServer::WSState::CLOSED);
+  virtual void handleClose(CivetServer* server,
+                           const struct mg_connection* conn) {
+    stateHandler((struct mg_connection*)conn, BellHTTPServer::WSState::CLOSED);
   }
 };
 
@@ -141,17 +143,61 @@ bool BellHTTPServer::handleGet(CivetServer* server,
     if (reply->body == nullptr) {
       return true;
     }
-
-    mg_printf(
-        conn,
-        "HTTP/1.1 %d OK\r\nContent-Type: "
-        "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
-        reply->status, reply->headers["Content-Type"].c_str());
+    mg_printf(conn,
+              "HTTP/1.1 %d OK\r\n"
+              "Content-Type: %s\r\n"
+              "Content-Length: %zu\r\n"
+              "Access-Control-Allow-Origin: *\r\n"
+              "Connection: close\r\n\r\n",
+              reply->status, reply->headers["Content-Type"].c_str(),
+              (size_t)reply->bodySize);
     mg_write(conn, reply->body, reply->bodySize);
 
     return true;
   } catch (std::exception& e) {
     BELL_LOG(error, "HttpServer", "Exception occured in handler: %s", e.what());
+    return false;
+  }
+}
+bool BellHTTPServer::handleHead(CivetServer* server,
+                                struct mg_connection* conn) {
+  std::scoped_lock lock(this->responseMutex);
+  const mg_request_info* requestInfo = mg_get_request_info(conn);
+
+  auto handler = getRequestsRouter.find(requestInfo->local_uri);
+  std::unique_ptr<HTTPResponse> reply;
+
+  try {
+    if (handler.first == nullptr) {
+      if (this->notFoundHandler != nullptr) {
+        reply = this->notFoundHandler(conn);
+      } else {
+        return false;
+      }
+    } else {
+      mg_set_user_connection_data(conn, &handler.second);
+      reply = handler.first(conn);
+    }
+
+    if (!reply)
+      return true;
+
+    if (!reply->headers.count("Content-Type")) {
+      reply->headers["Content-Type"] = "application/octet-stream";
+    }
+    reply->headers["Content-Length"] = std::to_string((size_t)reply->bodySize);
+    reply->headers["Connection"] = "close";
+    reply->headers["Access-Control-Allow-Origin"] = "*";
+
+    mg_printf(conn, "HTTP/1.1 %d OK\r\n", reply->status);
+    for (auto& h : reply->headers) {
+      mg_printf(conn, "%s: %s\r\n", h.first.c_str(), h.second.c_str());
+    }
+    mg_printf(conn, "\r\n");
+    // HEAD: no body write
+    return true;
+
+  } catch (...) {
     return false;
   }
 }
@@ -173,12 +219,14 @@ bool BellHTTPServer::handlePost(CivetServer* server,
     if (reply->body == nullptr) {
       return true;
     }
-
-    mg_printf(
-        conn,
-        "HTTP/1.1 %d OK\r\nContent-Type: "
-        "%s\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n",
-        reply->status, reply->headers["Content-Type"].c_str());
+    mg_printf(conn,
+              "HTTP/1.1 %d OK\r\n"
+              "Content-Type: %s\r\n"
+              "Content-Length: %zu\r\n"
+              "Access-Control-Allow-Origin: *\r\n"
+              "Connection: close\r\n\r\n",
+              reply->status, reply->headers["Content-Type"].c_str(),
+              (size_t)reply->bodySize);
     mg_write(conn, reply->body, reply->bodySize);
 
     return true;
@@ -190,7 +238,8 @@ bool BellHTTPServer::handlePost(CivetServer* server,
 
 BellHTTPServer::BellHTTPServer(int serverPort) {
   std::lock_guard lock(initMutex);
-  mg_init_library(0);
+  if (s_civet_users++ == 0)
+    mg_init_library(0);
   BELL_LOG(info, "HttpServer", "Server listening on port %d", serverPort);
   this->serverPort = serverPort;
   auto port = std::to_string(this->serverPort);
@@ -199,10 +248,38 @@ BellHTTPServer::BellHTTPServer(int serverPort) {
   civetWebOptions.push_back(port);
   server = std::make_unique<CivetServer>(civetWebOptions);
 }
+BellHTTPServer::BellHTTPServer(
+    int serverPort,
+    const std::vector<std::pair<std::string, std::string>>& given_opts) {
+  std::lock_guard lock(initMutex);
+  if (s_civet_users++ == 0)
+    mg_init_library(0);
+  BELL_LOG(info, "HttpServer", "Server listening on port %d", serverPort);
+  this->serverPort = serverPort;
+  auto port = std::to_string(this->serverPort);
 
+  try {
+
+    civetWebOptions.push_back("listening_ports");
+    civetWebOptions.push_back(port);
+    for (auto& kv : given_opts) {
+      civetWebOptions.push_back(kv.first);
+      civetWebOptions.push_back(kv.second);
+    }
+    server = std::make_unique<CivetServer>(civetWebOptions);
+  } catch (const std::exception& e) {
+    BELL_LOG(error,
+             "Civet start failed: null context when constructing CivetServer. "
+             "Possible problem binding to port. Error: %s",
+             e.what());
+    // leave 'server' null and return gracefully, do not abort
+    return;
+  }
+}
 BellHTTPServer::~BellHTTPServer() {
   std::lock_guard lock(initMutex);
-  mg_exit_library();
+  if (--s_civet_users == 0)
+    mg_exit_library();
 }
 
 std::unique_ptr<BellHTTPServer::HTTPResponse> BellHTTPServer::makeJsonResponse(
@@ -241,6 +318,10 @@ void BellHTTPServer::registerWS(const std::string& url,
                                 BellHTTPServer::WSStateHandler stateHandler) {
   server->addWebSocketHandler(url,
                               new WebSocketHandler(dataHandler, stateHandler));
+}
+
+void BellHTTPServer::unregisterEndpoint(const std::string& url) {
+  server->removeHandler(url);
 }
 
 void BellHTTPServer::registerNotFound(HTTPHandler handler) {

@@ -1,13 +1,14 @@
-
 #pragma once
 
-#include <stddef.h>     // for size_t
+#include <stddef.h>  // for size_t
+#include <chrono>
 #include <cstdint>      // for uint8_t, int32_t
 #include <memory>       // for make_unique, unique_ptr
 #include <string>       // for string
 #include <string_view>  // for string_view
-#include <utility>      // for pair
-#include <vector>       // for vector
+#include <unordered_map>
+#include <utility>  // for pair
+#include <vector>   // for vector
 
 #include "SocketStream.h"  // for SocketStream
 #include "URLParser.h"     // for URLParser
@@ -17,6 +18,7 @@
 #include "picohttpparser.h"  // for phr_header
 
 namespace bell {
+
 class HTTPClient {
  public:
   // most basic header type, represents by a key-val
@@ -26,7 +28,7 @@ class HTTPClient {
 
   // Helper over ValueHeader, formatting a HTTP bytes range
   struct RangeHeader {
-    static ValueHeader range(int32_t from, int32_t to) {
+    static ValueHeader range(size_t from, size_t to) {
 #ifndef BELL_DISABLE_FMT
       return ValueHeader{"Range", fmt::format("bytes={}-{}", from, to)};
 #else
@@ -35,32 +37,77 @@ class HTTPClient {
 #endif
     }
 
-    static ValueHeader last(int32_t nbytes) {
+    static ValueHeader last(size_t nbytes) {
 #ifndef BELL_DISABLE_FMT
       return ValueHeader{"Range", fmt::format("bytes=-{}", nbytes)};
 #else
       return ValueHeader{"Range", "bytes=-" + std::to_string(nbytes)};
 #endif
     }
+    static ValueHeader open(size_t from = 0) {
+#ifndef BELL_DISABLE_FMT
+      return ValueHeader{"Range", fmt::format("bytes={}-", from)};
+#else
+      return ValueHeader{"Range", "bytes=" + std::to_string(from) + "-"};
+#endif
+    }
+  };
+  // --- Simple CookieJar -------------------------------------------------
+  struct CookieJar {
+    struct Cookie {
+      std::string name, value, domain, path = "/";
+      bool secure = false;
+      // session cookie by default; we only keep Max-Age (seconds) for simplicity
+      // (Expires parsing omitted to stay tiny)
+      long long maxAge = -1;  // -1 = session cookie
+      long long setAtMs =
+          0;  // monotonic-ish timestamp in ms (we'll store std::chrono::steady_clock)
+    };
+
+    // host -> vector of cookies
+    std::unordered_map<std::string, std::vector<Cookie>> store;
+
+    // Parse all Set-Cookie headers and store cookies for this URL
+    void ingestSetCookieHeaders(
+        const std::vector<std::pair<std::string, std::string>>& headers,
+        const bell::URLParser& url);
+
+    // Build the "Cookie:" header value for this request URL
+    std::string cookieHeaderFor(const bell::URLParser& url) const;
+
+   private:
+    static bool domainMatches(const std::string& host,
+                              const std::string& cookieDomain);
+    static bool pathMatches(const std::string& reqPath,
+                            const std::string& cookiePath);
+    static std::string toLower(std::string s);
   };
 
   class Response {
    public:
-    Response(){};
+    Response(size_t numHeaders = 32)
+        : phResponseHeaders(new phr_header[numHeaders]),
+          maxHeaders(numHeaders) {}
     ~Response();
 
     /**
     * Initializes a connection with a given url.
     */
-    void connect(const std::string& url);
+    int connect(const std::string& url, size_t numHeaders = 32);
+    int reconnect();
 
-    void rawRequest(const std::string& method, const std::string& url,
-                    const std::vector<uint8_t>& content, Headers& headers);
-    void get(const std::string& url, Headers headers = {});
-    void post(const std::string& url, Headers headers = {},
-              const std::vector<uint8_t>& body = {});
+    bool rawRequest(const std::string& url, const std::string& method,
+                    const std::vector<uint8_t>& content, Headers& headers,
+                    bool keepAlive);
+    bool get(const std::string& url, Headers headers = {},
+             bool keepAlive = true);
+    bool post(const std::string& url, Headers headers = {},
+              const std::vector<uint8_t>& body = {}, bool keepAlive = false);
+    void setCookieJar(CookieJar* jar) { cookieJar_ = jar; }
+    int status() { return this->statusCode; }
 
     std::string_view body();
+    std::string body_string();
     std::vector<uint8_t> bytes();
 
     std::string_view header(const std::string& headerName);
@@ -68,24 +115,38 @@ class HTTPClient {
 
     size_t contentLength();
     size_t totalLength();
+    size_t read(uint8_t* dst, size_t n);
+    size_t readExact(uint8_t* dst, size_t n, uint32_t idle_timeout_ms = 5000);
+    bool isChunked() {
+      std::string v(header("transfer-encoding"));
+      std::transform(v.begin(), v.end(), v.begin(), ::tolower);
+      return v.find("chunked") != std::string::npos;
+    }
+    Headers& headers() { return this->responseHeaders; }
+
+    void drainBody(uint32_t max_ms = 200);
 
    private:
     bell::URLParser urlParser;
     bell::SocketStream socketStream;
 
-    struct phr_header phResponseHeaders[32];
-    const size_t HTTP_BUF_SIZE = 1024;
+    Headers responseHeaders;
+    phr_header* phResponseHeaders;
+    size_t maxHeaders;  // Store max headers to handle numHeaders limit
+    const size_t HTTP_BUF_SIZE = 4096;
 
     std::vector<uint8_t> httpBuffer = std::vector<uint8_t>(HTTP_BUF_SIZE);
     std::vector<uint8_t> rawBody = std::vector<uint8_t>();
+    size_t rawBodyReadPos = 0;
     size_t httpBufferAvailable;
-
     size_t contentSize = 0;
+    uint8_t retries__ = 5;
+    int statusCode = 0;
     bool hasContentSize = false;
 
-    Headers responseHeaders;
+    CookieJar* cookieJar_ = nullptr;
 
-    void readResponseHeaders();
+    bool readResponseHeaders();
     void readRawBody();
   };
 
@@ -98,20 +159,25 @@ class HTTPClient {
   };
 
   static std::unique_ptr<Response> get(const std::string& url,
-                                       Headers headers = {}) {
-    auto response = std::make_unique<Response>();
-    response->connect(url);
-    response->get(url, headers);
+                                       Headers headers = {},
+                                       bool keepAlive = true,
+                                       size_t numHeaders = 32) {
+    auto response = std::make_unique<Response>(numHeaders);
+    response->connect(url, numHeaders);
+    response->get(url, headers, keepAlive);
     return response;
   }
 
   static std::unique_ptr<Response> post(const std::string& url,
                                         Headers headers = {},
-                                        const std::vector<uint8_t>& body = {}) {
-    auto response = std::make_unique<Response>();
-    response->connect(url);
-    response->post(url, headers, body);
+                                        const std::vector<uint8_t>& body = {},
+                                        bool keepAlive = false,
+                                        size_t numHeaders = 32) {
+    auto response = std::make_unique<Response>(numHeaders);
+    response->connect(url, numHeaders);
+    response->post(url, headers, body, keepAlive);
     return response;
   }
 };
+
 }  // namespace bell

@@ -2,8 +2,8 @@
 
 using namespace bell;
 
-WrappedSemaphore::WrappedSemaphore(int count) {
-  semaphoreHandle = dispatch_semaphore_create(0);
+WrappedSemaphore::WrappedSemaphore(int maxCount, int count) {
+  semaphoreHandle = dispatch_semaphore_create(count);
 }
 
 WrappedSemaphore::~WrappedSemaphore() {
