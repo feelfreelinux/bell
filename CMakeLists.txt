@@ -23,9 +23,6 @@ target_link_libraries(bell PUBLIC ${BELL_LIBS})
 target_include_directories(bell PUBLIC ${BELL_INCLUDES} ${BELL_EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 
 # Force bell's vendored fmt include to win over anything system-provided
-# (e.g. /opt/homebrew/include when consumers pull PortAudio via pkg-config).
-# Homebrew ships a newer fmt that removed fmt::localtime, which breaks
-# Logger.cpp if its header is picked up instead of bell's pinned fmt.
 target_include_directories(bell BEFORE PUBLIC
     $<TARGET_PROPERTY:fmt::fmt,INTERFACE_INCLUDE_DIRECTORIES>
 )

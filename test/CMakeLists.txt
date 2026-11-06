@@ -11,6 +11,7 @@ include(../external/doctest/scripts/cmake/doctest.cmake)
 add_executable(bell-test
   main.cpp
   BinaryStreamTest.cpp
+  VectorStreamTest.cpp
   SocketsTest.cpp
   URIParserTest.cpp
   HTTPReaderTest.cpp
