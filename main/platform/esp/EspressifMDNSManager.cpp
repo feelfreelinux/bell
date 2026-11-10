@@ -1,9 +1,7 @@
-// Own header
 #include "bell/mdns/Manager.h"
 
 #ifndef BELL_DISABLE_MDNS
 
-// Standard includes
 #include <array>
 #include <atomic>
 #include <condition_variable>
@@ -19,16 +17,12 @@
 #include <utility>
 #include <vector>
 
-// Bell includes
 #include "bell/Logger.h"
 #include "bell/Result.h"
 #include "bell/mdns/Error.h"
 #include "bell/net/IpAddress.h"
-
-// Library includes
 #include "bell/utils/Task.h"
 
-// Espressif includes
 #include "esp_log.h"
 #include "mdns.h"
 
@@ -48,9 +42,8 @@ void logBrowseDrop(const char* reason) {
   }
 }
 
-// Copy of a single browser result
 struct BrowseResult {
-  std::string serviceType;  // "_service._proto", matches the browse regType
+  std::string serviceType;  // "_service._proto", the browse regType
   std::string instanceName;
   std::string hostname;
   uint16_t port = 0;
@@ -99,53 +92,65 @@ BrowseResult snapshotResult(mdns_result_t* r) {
                        IP4ADDR_STRLEN_MAX);
       out.ipv4 = bell::net::IpAddress::fromString(strCharData.data());
     }
-    // TODO: Implement IPv6 support
+    // TODO: IPv6
   }
 
   return out;
 }
 
-}  // namespace
+// Points into txtRecords, mdns copies the items
+std::vector<mdns_txt_item_t> toTxtItems(
+    const std::unordered_map<std::string, std::string>& txtRecords) {
+  std::vector<mdns_txt_item_t> items;
+  items.reserve(txtRecords.size());
+  for (const auto& [key, value] : txtRecords) {
+    items.push_back({.key = key.c_str(), .value = value.c_str()});
+  }
+  return items;
+}
 
-// Hands browse updates from the mdns service task to a bell-owned task, so
-// user callbacks run with the same threading and stack guarantees the query
-// executor used to provide.
+// Runs browse callbacks on a bell task, off the mdns service task. Handlers
+// run under dispatchMutex, so they must not register or unregister
 class BrowseDispatcher : public bell::Task {
  public:
   BrowseDispatcher()
       : bell::Task("mdns_browse_dispatch", 1024 * 8, 1,
                    bell::utils::TaskCore::Core0, /*espStackOnPsram=*/true) {
     if (startTask()) {
-      activeDispatcher = this;
+      activeDispatcher.store(this, std::memory_order_release);
     } else {
       ESP_LOGE(dispatcherLogTag, "Failed to start mDNS browse dispatcher task");
     }
   }
 
   ~BrowseDispatcher() {
-    if (activeDispatcher == this) {
-      activeDispatcher = nullptr;
-    }
+    BrowseDispatcher* self = this;
+    activeDispatcher.compare_exchange_strong(self, nullptr);
     stopTask();
   }
 
   using ResultHandler = std::function<void(const BrowseResult&)>;
 
-  void registerHandler(const std::string& regType, ResultHandler handler) {
+  // One handler per type, the latest registration owns it
+  void registerHandler(const std::string& regType, const void* owner,
+                       ResultHandler handler) {
     std::scoped_lock lock(dispatchMutex);
-    handlers[regType] = std::move(handler);
+    handlers[regType] = {owner, std::move(handler)};
   }
 
-  // Blocks until an in-flight dispatch has finished, so after return no
-  // handler for this type can still be running
-  void unregisterHandler(const std::string& regType) {
+  // Removed only while owner holds it, so an old browser leaves a newer one's
+  // handler alone. Waits out an in-flight dispatch
+  bool unregisterHandler(const std::string& regType, const void* owner) {
     std::scoped_lock lock(dispatchMutex);
-    handlers.erase(regType);
+    auto it = handlers.find(regType);
+    if (it == handlers.end() || it->second.owner != owner)
+      return false;
+    handlers.erase(it);
+    return true;
   }
 
-  // Called from the mdns service task. Keep this bounded and quick: if this
-  // queue grows without limit, normal C++ heap allocations here can starve the
-  // mDNS task and make the component's action queue stop draining.
+  // On the mdns task. Bounded, an unbounded backlog starves the mdns task of
+  // heap and stalls its action queue
   void enqueue(BrowseResult&& result) {
     {
       std::scoped_lock lock(queueMutex);
@@ -158,9 +163,7 @@ class BrowseDispatcher : public bell::Task {
     queueCv.notify_one();
   }
 
-  // Single process-wide instance; the component's notifier callback carries
-  // no user context, so it reaches the dispatcher through this pointer
-  static inline BrowseDispatcher* activeDispatcher = nullptr;
+  static inline std::atomic<BrowseDispatcher*> activeDispatcher{nullptr};
 
  protected:
   void wakeTask() override {
@@ -177,7 +180,7 @@ class BrowseDispatcher : public bell::Task {
       std::unique_lock lock(queueMutex);
       queueCv.wait(lock, [this] { return wakeSignal || !queue.empty(); });
       if (queue.empty()) {
-        // stopTask() wake; runTask() observes the cleared running flag
+        // stopTask() wake
         wakeSignal = false;
         return;
       }
@@ -188,7 +191,7 @@ class BrowseDispatcher : public bell::Task {
     std::scoped_lock lock(dispatchMutex);
     auto it = handlers.find(result.serviceType);
     if (it != handlers.end()) {
-      it->second(result);
+      it->second.handler(result);
     }
   }
 
@@ -198,15 +201,18 @@ class BrowseDispatcher : public bell::Task {
   bool wakeSignal = false;
   std::deque<BrowseResult> queue;
 
+  struct OwnedHandler {
+    const void* owner = nullptr;
+    ResultHandler handler;
+  };
   std::mutex dispatchMutex;
-  std::unordered_map<std::string, ResultHandler> handlers;
+  std::unordered_map<std::string, OwnedHandler> handlers;
 };
-
-namespace {
 
 // One result per call, next points to the sibling
 void browseNotifier(mdns_result_t* result) {
-  auto* dispatcher = BrowseDispatcher::activeDispatcher;
+  auto* dispatcher =
+      BrowseDispatcher::activeDispatcher.load(std::memory_order_acquire);
   if (!dispatcher || !result) {
     return;
   }
@@ -222,11 +228,8 @@ void browseNotifier(mdns_result_t* result) {
   }
 }
 
-}  // namespace
-
 class EspressifMdnsBrowser : public Browser {
  public:
-  // Constructor
   EspressifMdnsBrowser(std::shared_ptr<BrowseDispatcher> dispatcher)
       : dispatcher(std::move(dispatcher)) {}
 
@@ -234,7 +237,6 @@ class EspressifMdnsBrowser : public Browser {
 
   bell::Result<> browse(const std::string& regType,
                         const DiscoveryEventCallback& onEvent) {
-    // Ensure no previous browse is active
     stopDiscovery();
 
     this->regType = regType;
@@ -242,14 +244,15 @@ class EspressifMdnsBrowser : public Browser {
     this->regProto = regType.substr(regType.find_first_of('.') + 1);
     this->onEvent = onEvent;
 
-    // Handler registered first so no result of the fresh browse is missed
-    dispatcher->registerHandler(
-        regType, [this](const BrowseResult& r) { this->handleResult(r); });
+    // Before the browse starts, so none of its results are missed
+    dispatcher->registerHandler(regType, this, [this](const BrowseResult& r) {
+      this->handleResult(r);
+    });
 
     if (!mdns_browse_new(regService.c_str(), regProto.c_str(),
                          browseNotifier)) {
       BELL_LOG(error, LOG_TAG, "Failed to start mDNS browse for {}", regType);
-      dispatcher->unregisterHandler(regType);
+      dispatcher->unregisterHandler(regType, this);
       this->regType.clear();
       return nonstd::make_unexpected(
           bell::mdns::MdnsErrc::service_discovery_failed);
@@ -258,49 +261,33 @@ class EspressifMdnsBrowser : public Browser {
     return {};
   }
 
-  bell::Result<> resolveService(const ServiceRecord& service) override {
-    (void)service;
-    BELL_LOG(warn, LOG_TAG,
-             "No need to manually resolve the services on Espressif platforms, "
-             "the mDNS service is automatically resolved.");
-    return {};
-  }
-
-  bell::Result<> resolveAddress(const ServiceRecord& service) override {
-    (void)service;
-    BELL_LOG(warn, LOG_TAG,
-             "No need to manually resolve addresses on Espressif platforms, "
-             "the mDNS service's address is automatically resolved.");
-    return {};
-  }
+  // Resolution is automatic on Espressif
+  bell::Result<> resolveService(const ServiceRecord&) override { return {}; }
+  bell::Result<> resolveAddress(const ServiceRecord&) override { return {}; }
 
   void stopDiscovery() override {
     if (!regType.empty()) {
-      // Unregister first
-      dispatcher->unregisterHandler(regType);
-      (void)mdns_browse_delete(regService.c_str(), regProto.c_str());
+      // Browses are deleted by name, a browser that lost its type leaves the
+      // newer browse alone
+      if (dispatcher->unregisterHandler(regType, this))
+        (void)mdns_browse_delete(regService.c_str(), regProto.c_str());
       regType.clear();
     }
   }
 
  private:
-  const char* LOG_TAG = "EspressifMdnsBrowser";
+  static constexpr const char* LOG_TAG = "EspressifMdnsBrowser";
 
-  // Pointer to the event callback
   DiscoveryEventCallback onEvent = {};
-
-  // Pointer to the browse dispatcher
   std::shared_ptr<BrowseDispatcher> dispatcher;
 
-  // Service type and protocol
   std::string regService;
   std::string regProto;
   std::string regType;  // regService.regProto
 
-  // Set of discovered services
   std::set<ServiceRecord> recordsCache{};
 
-  // Fold one browse update into the cache and emit the resulting events
+  // Folds one browse update into the cache and emits its events
   void handleResult(const BrowseResult& result) {
     if (!onEvent) {
       return;
@@ -310,7 +297,6 @@ class EspressifMdnsBrowser : public Browser {
                           result.netifIndex);
 
     if (!result.hostname.empty()) {
-      // Service is resolved
       service.hostname = result.hostname;
       service.port = result.port;
       service.txtRecords = result.txtRecords;
@@ -319,50 +305,35 @@ class EspressifMdnsBrowser : public Browser {
 
     service.ipv4 = result.ipv4;
 
-    if (!service.ipv4) {
-      // Ugly fix for espressif mdns sometimes missing an address when two instances of the same service are registered
-      for (auto& it : recordsCache) {
-        if (it.hostname == service.hostname && it.ipv4.has_value()) {
-          service.ipv4 = it.ipv4;
+    if (!service.ipv4 && !service.hostname.empty()) {
+      // Espressif mdns can drop the address when a host has two instances of
+      // the same service
+      for (const auto& cached : recordsCache) {
+        if (cached.hostname == service.hostname && cached.ipv4.has_value()) {
+          service.ipv4 = cached.ipv4;
           break;
         }
       }
     }
 
-    bool freshRecord = false;
-
-    if (recordsCache.find(service) == recordsCache.end()) {
-      if (result.ttl == 0) {
-        // Goodbye for a service that was never surfaced
-        return;
-      }
-
-      // New service, notify the event callback
-      DiscoveryEvent event{
-          .type = EventType::Added,
-          .service = service,
-          .error = {},
-      };
-      onEvent(event);
-
-      // Insert the service into the cache
-      recordsCache.insert(service);
-
-      freshRecord = true;
-    }
+    auto emit = [&](EventType type) {
+      onEvent(DiscoveryEvent{.type = type, .service = service, .error = {}});
+    };
 
     auto it = recordsCache.find(service);
+    const bool freshRecord = it == recordsCache.end();
+
+    if (freshRecord) {
+      if (result.ttl == 0) {
+        // Goodbye for a service never reported
+        return;
+      }
+      emit(EventType::Added);
+      it = recordsCache.insert(service).first;
+    }
 
     if (result.ttl == 0) {
-      // Service is being removed
-      DiscoveryEvent event{
-          .type = EventType::Removed,
-          .service = service,
-          .error = {},
-      };
-      onEvent(event);
-
-      // Remove the service from the cache
+      emit(EventType::Removed);
       recordsCache.erase(it);
       return;
     }
@@ -370,72 +341,47 @@ class EspressifMdnsBrowser : public Browser {
     bool serviceUpdated = false;
     if ((!it->serviceResolved && service.serviceResolved) ||
         (it->serviceResolved && freshRecord)) {
-      // Service is resolved, notify the event callback
-      DiscoveryEvent event{
-          .type = EventType::Resolved,
-          .service = service,
-          .error = {},
-      };
-      onEvent(event);
-
-      // Update the service in the cache
+      emit(EventType::Resolved);
       serviceUpdated = true;
     }
 
     if ((!it->ipv4.has_value() && service.ipv4.has_value()) ||
         (it->ipv4.has_value() && freshRecord)) {
-      // Address is resolved, notify the event callback
-      DiscoveryEvent event{
-          .type = EventType::AddressResolved,
-          .service = service,
-          .error = {},
-      };
-      onEvent(event);
-
-      // Update the service in the cache
+      emit(EventType::AddressResolved);
       serviceUpdated = true;
     }
 
     if (serviceUpdated && !freshRecord) {
-      // Update the service in the cache
       recordsCache.erase(it);
       recordsCache.insert(service);
     }
   }
 };
 
-class EspressifMDNAdvertiser : public Advertiser {
+class EspressifMdnsAdvertiser : public Advertiser {
  public:
-  EspressifMDNAdvertiser() = default;
-  ~EspressifMDNAdvertiser() override { stopAdvertising(); }
+  EspressifMdnsAdvertiser() = default;
+  ~EspressifMdnsAdvertiser() override { stopAdvertising(); }
 
-  // Remoce the copy constructor and assignment operator
-  EspressifMDNAdvertiser(const EspressifMDNAdvertiser&) = delete;
-  EspressifMDNAdvertiser& operator=(const EspressifMDNAdvertiser&) = delete;
+  EspressifMdnsAdvertiser(const EspressifMdnsAdvertiser&) = delete;
+  EspressifMdnsAdvertiser& operator=(const EspressifMdnsAdvertiser&) = delete;
 
   bell::Result<> advertise(
       const std::string& serviceName, const std::string& serviceType,
       uint16_t port,
       const std::unordered_map<std::string, std::string>& txtRecords) {
-    // Create a new mDNS service
-    this->regService = serviceType.substr(0, serviceType.find_first_of('.'));
-    this->regProto = serviceType.substr(serviceType.find_first_of('.') + 1);
+    regService = serviceType.substr(0, serviceType.find_first_of('.'));
+    regProto = serviceType.substr(serviceType.find_first_of('.') + 1);
 
-    txtItems.reserve(txtRecords.size());
-
-    // Parse the TXT records
-    for (const auto& data : txtRecords) {
-      mdns_txt_item_t item;
-      item.key = data.first.c_str();
-      item.value = data.second.c_str();
-      txtItems.push_back(item);
-    }
-
-    auto res = mdns_service_add(serviceName.c_str(), this->regService.c_str(),
-                                this->regProto.c_str(), port, txtItems.data(),
+    auto txtItems = toTxtItems(txtRecords);
+    auto res = mdns_service_add(serviceName.c_str(), regService.c_str(),
+                                regProto.c_str(), port, txtItems.data(),
                                 txtItems.size());
 
     if (res != ESP_OK) {
+      // Nothing to remove or update later
+      regService.clear();
+      regProto.clear();
       return nonstd::make_unexpected(
           bell::mdns::MdnsErrc::service_registration_failed);
     }
@@ -451,7 +397,7 @@ class EspressifMDNAdvertiser : public Advertiser {
           bell::mdns::MdnsErrc::service_registration_failed);
     }
 
-    // Rename the existing service rather than adding a new one
+    // Renamed in place, not re-added
     auto res = mdns_service_instance_name_set(
         regService.c_str(), regProto.c_str(), serviceName.c_str());
     if (res != ESP_OK) {
@@ -459,17 +405,9 @@ class EspressifMDNAdvertiser : public Advertiser {
           bell::mdns::MdnsErrc::service_registration_failed);
     }
 
-    std::vector<mdns_txt_item_t> items;
-    items.reserve(txtRecords.size());
-    for (const auto& data : txtRecords) {
-      mdns_txt_item_t item;
-      item.key = data.first.c_str();
-      item.value = data.second.c_str();
-      items.push_back(item);
-    }
-
+    auto txtItems = toTxtItems(txtRecords);
     res = mdns_service_txt_set(regService.c_str(), regProto.c_str(),
-                               items.data(), items.size());
+                               txtItems.data(), txtItems.size());
     if (res != ESP_OK) {
       return nonstd::make_unexpected(
           bell::mdns::MdnsErrc::service_registration_failed);
@@ -483,14 +421,12 @@ class EspressifMDNAdvertiser : public Advertiser {
       (void)mdns_service_remove(regService.c_str(), regProto.c_str());
       regService.clear();
       regProto.clear();
-      txtItems.clear();
     }
   }
 
  private:
   std::string regService;
   std::string regProto;
-  std::vector<mdns_txt_item_t> txtItems;
 };
 
 class EspressifMDNSManager : public Manager {
@@ -518,7 +454,7 @@ class EspressifMDNSManager : public Manager {
       uint16_t port,
       const std::unordered_map<std::string, std::string>& txtRecords,
       int /*interfaceIndex*/) override {
-    auto advertiser = std::make_unique<EspressifMDNAdvertiser>();
+    auto advertiser = std::make_unique<EspressifMdnsAdvertiser>();
     auto res =
         advertiser->advertise(serviceName, serviceType, port, txtRecords);
 
@@ -529,21 +465,18 @@ class EspressifMDNSManager : public Manager {
     return advertiser;
   }
 
-  // Returns a pointer to the singleton instance
   static EspressifMDNSManager* getDefaultManager() {
-    static EspressifMDNSManager* defaultManagerInstance = nullptr;
-
-    if (!defaultManagerInstance) {
-      defaultManagerInstance = new EspressifMDNSManager();
-    }
-    return defaultManagerInstance;
+    // Never destroyed, its dispatcher task runs for the program's lifetime
+    static auto* instance = new EspressifMDNSManager();
+    return instance;
   }
 
  private:
-  // Pointer to the browse dispatcher
   std::shared_ptr<BrowseDispatcher> browseDispatcher =
       std::make_shared<BrowseDispatcher>();
 };
+
+}  // namespace
 
 Manager* bell::mdns::getDefaultManager() {
   return EspressifMDNSManager::getDefaultManager();
