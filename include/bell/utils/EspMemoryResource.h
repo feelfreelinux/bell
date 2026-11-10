@@ -3,8 +3,10 @@
 #include "bell/Logger.h"
 #ifdef ESP_PLATFORM
 
+#include <memory>
 #include <memory_resource>
 #include <new>
+#include <utility>
 
 #include "esp_heap_caps.h"
 #include "esp_log.h"
@@ -65,6 +67,26 @@ static InternalMemoryResource internalMemoryResource{};
 
 // Static instance of the PSRAM memory resource
 static PsramMemoryResource psramMemoryResource{};
+
+// For objects an ISR touches, which must sit in internal RAM, as a default
+// malloc above the SPIRAM threshold goes to PSRAM first
+template <typename T>
+struct InternalDeleter {
+  void operator()(T* p) const {
+    p->~T();
+    internalMemoryResource.deallocate(p, sizeof(T), alignof(T));
+  }
+};
+
+template <typename T>
+using InternalPtr = std::unique_ptr<T, InternalDeleter<T>>;
+
+// Cpp allocation helper that goes to the internal memory
+template <typename T, typename... Args>
+InternalPtr<T> makeInternal(Args&&... args) {
+  void* memory = internalMemoryResource.allocate(sizeof(T), alignof(T));
+  return InternalPtr<T>(new (memory) T(std::forward<Args>(args)...));
+}
 
 }  // namespace bell::utils
 
