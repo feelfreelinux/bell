@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cstring>
+#include <utility>
 
 #include "bell/Logger.h"
 
@@ -58,6 +59,15 @@ SocketPollListener::SocketPollListener(bool registerWakeSocket) {
 }
 
 SocketPollListener::~SocketPollListener() {
+  // Callbacks can refer to the handlers by itself
+  // so we swap it making handlers valid while remaining is cleared
+  std::unordered_map<int, Handler> remaining;
+  {
+    std::scoped_lock lock(pollMutex);
+    remaining.swap(handlers);
+  }
+  remaining.clear();
+
   if (wakeFd_ >= 0)
     ::close(wakeFd_);
 }
@@ -119,12 +129,16 @@ SocketPollListener::Registration SocketPollListener::watch(
   }
 
   {
+    // A replaced callback is destroyed after the lock, see unregister()
+    EventCallback replaced;
+
     std::scoped_lock lock(pollMutex);
     int fd = socket->getFd();
     auto& handler = handlers[fd];
     if (!handler.socket)
       handler.socket = socket;
-    handler.callbacks[polledEvent] = std::move(onEvent);
+    auto& slot = handler.callbacks[polledEvent];
+    replaced = std::exchange(slot, std::move(onEvent));
     updateFdListLocked();
   }
 
@@ -136,12 +150,21 @@ SocketPollListener::Registration SocketPollListener::watch(
 }
 
 void SocketPollListener::unregister(int fd, Event event) {
+  // Destroy after the lock is released
+  EventCallback removed;
+  std::shared_ptr<Socket> removedSocket;
+
   std::scoped_lock lock(pollMutex);
   auto it = handlers.find(fd);
   if (it == handlers.end())
     return;
-  it->second.callbacks.erase(event);
+  auto cb = it->second.callbacks.find(event);
+  if (cb != it->second.callbacks.end()) {
+    removed = std::move(cb->second);
+    it->second.callbacks.erase(cb);
+  }
   if (it->second.callbacks.empty()) {
+    removedSocket = std::move(it->second.socket);
     handlers.erase(it);
   }
   updateFdListLocked();
