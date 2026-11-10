@@ -18,10 +18,6 @@ list(APPEND BELL_LIBS fmt::fmt)
 add_subdirectory(external/picohttpparser)
 list(APPEND BELL_LIBS picohttpparser)
 
-# Include iqmath
-add_subdirectory(external/iqmath)
-list(APPEND BELL_LIBS iqmath)
-
 # Include pthread
 find_package(Threads REQUIRED)
 list(APPEND BELL_LIBS Threads::Threads)

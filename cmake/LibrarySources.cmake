@@ -19,6 +19,7 @@ file(GLOB BELL_SOURCES
     "main/utils/*.cpp" # bell::utils
     "main/audio/*.cpp" # bell::audio
     "main/dsp/*.cpp" # bell::dsp
+    "main/dsp/nodes/*.cpp" # bell::dsp nodes
 )
 
 # Add platform-specific sources

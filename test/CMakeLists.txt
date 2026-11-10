@@ -34,5 +34,11 @@ target_compile_options(bell-test PRIVATE -Wall -Wextra -Werror)
 # Link the doctest library to the test executable
 target_link_libraries(bell-test PRIVATE bell doctest::doctest trompeloeil::trompeloeil)
 
+add_executable(bell-dsp-test DspTest.cpp)
+
+target_compile_options(bell-dsp-test PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(bell-dsp-test PRIVATE bell doctest::doctest)
+add_test(NAME bell-dsp-test COMMAND bell-dsp-test)
+
 # Discover and register tests using doctest's module
 # doctest_discover_tests(bell-test)

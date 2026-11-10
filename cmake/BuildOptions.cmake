@@ -25,6 +25,9 @@ option(BELL_DISABLE_MQTT "Disable the built-in MQTT wrapper" OFF)
 # Audio sinks
 option(BELL_BACKEND_PORTAUDIO "Enable PortAudio output backend" OFF)
 
+# DSP
+option(BELL_DSP_FLOAT_FILTERS "Run DSP filter sections in single-precision float (needs a hardware FPU)" OFF)
+
 # Misc
 option(BELL_DISABLE_TAOJSON "Don't include TaoJSON" OFF)
 option(BELL_DISABLE_MBEDTLS "Don't include MbedTLS" OFF)
@@ -56,6 +59,7 @@ endif()
 
 message(STATUS " Enable PortAudio backend: ${BELL_PORTAUDIO_BACKEND}")
 
+message(STATUS "  DSP float filters: ${BELL_DSP_FLOAT_FILTERS}")
 message(STATUS "  Disable TaoJSON: ${BELL_DISABLE_TAOJSON}")
 message(STATUS "  Disable MQTT: ${BELL_DISABLE_MQTT}")
 message(STATUS "  Disable MbedTLS: ${BELL_DISABLE_MBEDTLS}")

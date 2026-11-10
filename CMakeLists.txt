@@ -28,6 +28,11 @@ target_include_directories(bell BEFORE PUBLIC
 )
 
 # Set flags
+if(BELL_DSP_FLOAT_FILTERS)
+    # Only decides bell::dsp::defaultArithmetic(), which lives in the library
+    target_compile_definitions(bell PRIVATE BELL_DSP_FLOAT_FILTERS)
+endif()
+
 if(BELL_DISABLE_TAOJSON)
     target_compile_definitions(bell PUBLIC BELL_DISABLE_TAOJSON)
 endif()
